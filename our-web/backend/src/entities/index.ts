@@ -1,0 +1,10 @@
+export { User } from './user.entity';
+export { Profile } from './profile.entity';
+export { Course } from './course.entity';
+export { Schedule } from './schedule.entity';
+export { Lesson } from './lesson.entity';
+export { Exam } from './exam.entity';
+export { Question } from './question.entity';
+export { Choice } from './choice.entity';
+export { Booking } from './booking.entity';
+export { ExamResult } from './exam-result.entity';
