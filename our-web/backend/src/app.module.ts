@@ -14,6 +14,7 @@ import {
   Booking,
   ExamResult,
 } from './entities';
+import { AuthModule } from './auth/auth.module';
 import { UserModule } from './modules/users/user.module';
 import { CourseModule } from './modules/courses/course.module';
 import { ExamModule } from './modules/exams/exam.module';
@@ -43,6 +44,7 @@ import { BookingModule } from './modules/bookings/booking.module';
       synchronize: true,
       logging: true,
     }),
+    AuthModule,
     UserModule,
     CourseModule,
     ExamModule,

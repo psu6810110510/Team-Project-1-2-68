@@ -1,0 +1,232 @@
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap');
+
+:root {
+  --primary-dark: #0f172a; /* สีน้ำเงินเข้ม (Header/Footer/Button) */
+  --text-gray: #64748b;
+  --bg-light: #f8fafc;
+  --border-color: #e2e8f0;
+}
+
+body {
+  font-family: 'Kanit', sans-serif;
+  background-color: var(--bg-light);
+  margin: 0;
+  padding: 0;
+}
+
+/* --- Layout --- */
+.page-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.navbar {
+  /* ใช้สีเดียวกับ Footer */
+  background: #081324 !important;
+  padding: 1rem 3rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* เพิ่มเงาบางๆ ให้ดูมีมิติ */
+}
+
+/* ส่วนโลโก้ Born2Code */
+.nav-logo {
+  display: flex;
+  align-items: center;
+}
+
+/* ปรับตัวหนังสือ Born2Code ให้ใหญ่และหนา */
+.main-logo {
+  height: 90px; /* ปรับขนาดความสูงที่ต้องการตรงนี้ */
+  width: auto;  /* รักษาอัตราส่วนให้สมดุล */
+  display: block; /* แนะนำให้ใส่ เพื่อลบช่องว่างส่วนเกินด้านล่างรูป */
+  transition: transform 0.2s; /* (แถม) เพิ่มลูกเล่นเวลาเอาเมาส์ไปชี้ */
+}
+
+.main-logo:hover {
+    transform: scale(1.05); /* (แถม) ขยายขึ้นนิดหน่อยตอนชี้ */
+}
+
+/* ส่วนคอนเทนเนอร์ของไอคอนด้านขวา */
+.nav-icons {
+  display: flex;
+  align-items: center;
+  gap: 2rem; /* เพิ่มระยะห่างระหว่างไอคอนแต่ละตัว */
+}
+
+/* ปรับแต่งตัวไอคอน */
+.nav-icon {
+  cursor: pointer;
+  transition: all 0.3s ease; /* เพิ่ม effect เวลาเอาเมาส์ไปโดน */
+  opacity: 0.9; /* ให้สีดรอปลงนิดหน่อยเพื่อให้ดูนวลตา */
+}
+
+/* Effect ตอนเอาเมาส์ไปชี้ที่ไอคอน */
+.nav-icon:hover {
+  opacity: 1;
+  transform: scale(1.1); /* ขยายใหญ่ขึ้นเล็กน้อย */
+  color: #38bdf8; /* เปลี่ยนเป็นสีฟ้าสว่าง (optional) */
+}
+
+/* --- Main Content (Login Card) --- */
+.main-content {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.login-card {
+  background: white;
+  padding: 3rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 450px;
+  text-align: center;
+}
+
+.login-title {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  color: #333;
+}
+
+/* --- Form Elements --- */
+.form-group {
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 1rem;
+  outline: none;
+  box-sizing: border-box;
+  background-color: #ffffff;  
+  color: #333333;
+}
+
+.form-input:focus {
+  border-color: var(--primary-dark);
+}
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  color: var(--text-gray);
+}
+
+.forgot-password {
+  color: #333;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* --- Buttons --- */
+.btn-primary {
+  width: 100%;
+  padding: 12px;
+  background-color: var(--primary-dark);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+  transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: #1e293b;
+}
+
+.btn-primary:disabled {
+  background-color: var(--text-gray);
+  cursor: not-allowed;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 1.5rem 0;
+  color: var(--text-gray);
+  font-size: 0.9rem;
+}
+
+.divider::before, .divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.divider span {
+  padding: 0 10px;
+}
+
+.btn-google {
+  width: 100%;
+  padding: 10px;
+  background-color: white;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  color: #333;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-google:hover {
+  background-color: #f1f5f9;
+}
+
+/* --- Footer --- */
+.footer {
+  background-color: var(--primary-dark); /* ใช้สีเดียวกับ Navbar */
+  color: white;
+  padding: 4rem 2rem; /* เพิ่ม padding ให้ดูโปร่งขึ้น */
+  font-size: 1rem;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between; /* จัดให้กระจายตัวสวยงาม */
+  align-items: flex-start; /* จัดให้ชิดขอบบน */
+  flex-wrap: wrap; /* ให้ขึ้นบรรทัดใหม่เมื่อหน้าจอเล็ก */
+  gap: 3rem; /* ระยะห่างระหว่างคอลัมน์ */
+  max-width: 100%; /* จำกัดความกว้างสูงสุดไม่ให้ยาวเกินไป */
+  margin: 0 auto; /* จัดกึ่งกลาง */
+}
+
+.footer-column {
+  flex: 1; /* ให้แต่ละคอลัมน์ขยายพื้นที่เท่าๆ กัน */
+  min-width: 250px; /* กำหนดความกว้างขั้นต่ำ */
+}
+
+.footer-column h4 {
+  margin-bottom: 1.2rem;
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: white;
+}
+
+.footer-column p {
+  color: #cbd5e1; /* สีเทาอ่อนๆ อ่านง่ายสบายตา */
+  line-height: 1.8; /* เพิ่มระยะห่างระหว่างบรรทัด */
+  margin: 0.5rem 0;
+}
