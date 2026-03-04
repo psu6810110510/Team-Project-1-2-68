@@ -132,29 +132,43 @@ return (
 
       {/* --- 3. Footer (ส่วนล่างสุด) --- */}
       <footer className="footer">
-        <div className="footer-content">
-          {/* คอลัมน์ที่ 1: Born2Code */}
-          <div className="footer-column" style={{ flex: 1.5 }}> {/* ให้คอลัมน์แรกกว้างกว่านิดหน่อย */}
-            <h4 style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '1rem' }}>
-              Born2Code
-            </h4>
-            <p>
-              "Born2Code ตัวช่วยที่จะทำให้คุณประสบความสำเร็จทางด้านคอมพิวเตอร์"
-            </p>
+        <div className="footer-content" style={{ flexDirection: 'column', gap: '2rem' }}>
+          
+          {/* ส่วนบน: โลโก้ + สโลแกน */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+            {/* โลโก้ Born2Code (ใช้รูปที่คุณมีอยู่แล้ว) */}
+              <img src={fullLogo} alt="Logo" style={{ height: '50px' }} />
+            
+            {/* สโลแกน */}
+            <span style={{ fontSize: '1rem', fontWeight: '500', color: '#fff' }}>
+              “ ตัวช่วยที่จะทำให้คุณประสบความสำเร็จทางด้านคอมพิวเตอร์”
+            </span>
           </div>
 
-          {/* คอลัมน์ที่ 2: ที่อยู่ */}
-          <div className="footer-column">
-            <h4>ที่อยู่</h4>
-            <p>มหาวิทยาลัยสงขลานครินทร์ 15 กาญจนวณิชย์</p>
-            <p>คอหงส์ หาดใหญ่ สงขลา 90110</p>
-          </div>
+          {/* เส้นขีดคั่นบางๆ (Optional) */}
+          <div style={{ width: '100%', height: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
 
-          {/* คอลัมน์ที่ 3: ช่องทางการติดต่อ */}
-          <div className="footer-column">
-            <h4>ช่องทางการติดต่อ</h4>
-            <p>เบอร์โทรศัพท์: 08-XXXX-XXXX</p>
-            <p>อีเมล: Born2Code@psu.ac.th</p>
+          {/* ส่วนล่าง: แบ่งเป็น 2 โซน (ซ้าย-ขวา) */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '3rem', width: '100%' }}>
+            
+            {/* ฝั่งซ้าย: ที่อยู่ + เวลาทำการ */}
+            <div>
+              <h4 style={{ marginBottom: '0.8rem', fontSize: '1.1rem', color: '#fff' }}>ที่อยู่</h4>
+              <p style={{ marginBottom: '0.3rem' }}>สถาบันบอร์นทูโค้ด เลขที่ 15 ถ.กาญจนวณิชย์</p>
+              <p style={{ marginBottom: '1.5rem' }}>อ.หาดใหญ่ จ.สงขลา 90110</p>
+              
+              <h4 style={{ marginBottom: '0.8rem', fontSize: '1.1rem', color: '#fff' }}>เวลาเปิดทำการ</h4>
+              <p style={{ marginBottom: '0.3rem' }}>จ.-ศ. 16.00 - 21.00</p>
+              <p>ส.-อา. 8.00 - 21.00</p>
+            </div>
+
+            {/* ฝั่งขวา: ช่องทางการติดต่อ */}
+            <div>
+                <h4 style={{ marginBottom: '0.8rem', fontSize: '1.1rem', color: '#fff' }}>ช่องทางการติดต่อ</h4>
+                <p style={{ marginBottom: '0.3rem' }}>เบอร์โทรศัพท์ 03 3333 3333</p>
+                <p>อีเมล Born2Code@coe.co.th</p>
+            </div>
+
           </div>
         </div>
       </footer>

@@ -172,9 +172,9 @@ export default function Login() {
 
             {/* ฝั่งขวา: ช่องทางการติดต่อ */}
             <div>
-               <h4 style={{ marginBottom: '0.8rem', fontSize: '1.1rem', color: '#fff' }}>ช่องทางการติดต่อ</h4>
-               <p style={{ marginBottom: '0.3rem' }}>เบอร์โทรศัพท์ 03 3333 3333</p>
-               <p>อีเมล Born2Code@coe.co.th</p>
+                <h4 style={{ marginBottom: '0.8rem', fontSize: '1.1rem', color: '#fff' }}>ช่องทางการติดต่อ</h4>
+                <p style={{ marginBottom: '0.3rem' }}>เบอร์โทรศัพท์ 03 3333 3333</p>
+                <p>อีเมล Born2Code@coe.co.th</p>
             </div>
 
           </div>

@@ -16,9 +16,16 @@ body {
 
 /* --- Layout --- */
 .page-container {
+  background-image: url('../assets/login-bg.png'); 
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  /* ถ้ามีสีพื้นหลังเดิม (background-color) ให้ลบหรือ Comment ออก */
+  /* background-color: ...; */
 }
 
 .navbar {

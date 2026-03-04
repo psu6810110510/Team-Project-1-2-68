@@ -1,0 +1,534 @@
+/* ไฟล์: src/styles/ProfileTheme.css */
+
+/* พื้นหลังสีเทาอ่อนๆ เหมือนในรูป */
+.profile-page {
+  background-color: #f1f5f9;
+  min-height: calc(100vh - 80px); /* ลบความสูง Navbar ออก */
+  padding: 2rem;
+  /*display: flex;
+  justify-content: center;*/
+}
+
+.profile-container {
+  display: flex;
+  gap: 2rem;
+  width: 100%;
+  max-width: 1200px;
+  align-items: flex-start;
+  margin: 0 auto;
+}
+
+/* --- Sidebar (ฝั่งซ้าย) --- */
+.profile-sidebar {
+  background: white;
+  width: 300px;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  text-align: center;
+  flex-shrink: 0; /* ห้ามหด */
+}
+
+.sidebar-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 1rem;
+  border: 4px solid #e2e8f0;
+}
+
+.sidebar-name {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.sidebar-role {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin-bottom: 2rem;
+}
+
+.sidebar-menu {
+  list-style: none;
+  padding: 0;
+  text-align: left;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #475569;
+  transition: all 0.2s;
+}
+
+.menu-item:hover {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+.menu-item.active {
+  background-color: #e0f2fe; /* สีฟ้าอ่อน */
+  color: #0284c7; /* สีฟ้าเข้ม */
+  font-weight: 500;
+}
+
+.menu-item.logout {
+  color: #ef4444; /* สีแดง */
+  margin-top: 1rem;
+}
+.menu-item.logout:hover {
+  background-color: #fef2f2;
+}
+
+/* --- Content (ฝั่งขวา) --- */
+.profile-content {
+  background: white;
+  flex: 1; /* ขยายเต็มพื้นที่ที่เหลือ */
+  padding: 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.content-header {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.content-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
+
+/* Form Rows */
+.info-row {
+  display: flex;
+  align-items: center;
+  padding: 1.2rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.info-label {
+  width: 150px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.info-value {
+  flex: 1;
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.edit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.edit-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+/* พื้นหลังสีดำโปร่งใส */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5); /* สีดำจางๆ */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; /* ให้ลอยอยู่เหนือทุกอย่าง */
+}
+
+/* กล่อง Pop-up สีขาว */
+.modal-container {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 500px; /* ความกว้างสูงสุด */
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+/* หัวข้อ Pop-up */
+.modal-header {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+/* กลุ่มฟอร์มแต่ละบรรทัด */
+.form-group {
+  margin-bottom: 1.2rem;
+}
+
+/* ป้ายกำกับ (Label) */
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #475569;
+}
+
+/* ช่องกรอกข้อมูล (Input) */
+.form-input-edit {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #1e293b;
+  transition: border-color 0.2s;
+}
+
+.form-input-edit:focus {
+  outline: none;
+  border-color: #0284c7; /* สีฟ้าเวลาพิมพ์ */
+}
+
+/* ช่องที่ห้ามแก้ไข (Disabled) */
+.form-input-edit:disabled {
+  background-color: #f1f5f9; /* สีเทาอ่อน */
+  color: #94a3b8; /* สีตัวหนังสือจางลง */
+  cursor: not-allowed;
+}
+
+/* แถวปุ่มกดด้านล่าง */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end; /* ชิดขวา */
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+/* ปุ่มทั่วไป */
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+/* ปุ่มยกเลิก (สีขาว ขอบเทา) */
+.btn-cancel {
+  background: white;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+}
+.btn-cancel:hover {
+  background: #f1f5f9;
+}
+
+/* ปุ่มบันทึก (สีฟ้า) */
+.btn-save {
+  background: #0284c7;
+  border: none;
+  color: white;
+}
+.btn-save:hover {
+  background: #0369a1;
+}
+
+@media (max-width: 900px) {
+  .profile-container {
+    flex-direction: column; /* เปลี่ยนเป็นเรียงลงแนวดิ่ง */
+    align-items: center; /* จัดกึ่งกลาง */
+  }
+
+  .profile-sidebar {
+    width: 100%; /* ขยายเมนูให้เต็มความกว้าง */
+    max-width: 400px; /* แต่ไม่ให้ใหญ่เกินไป */
+    margin-bottom: 2rem; /* เว้นระยะห่างด้านล่าง */
+  }
+
+  .profile-content {
+    width: 100%; /* เนื้อหาขยายเต็ม */
+  }
+}
+
+/* ไฟล์: src/styles/ProfileTheme.css */
+/* ... (ต่อจากของเดิม) ... */
+
+/* --- Section Title (หัวข้อที่มีขีดสีฟ้าด้านหน้า) --- */
+.section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  margin-top: 2rem;
+}
+.section-header::before {
+  content: "";
+  display: block;
+  width: 6px;
+  height: 30px;
+  background-color: #0284c7; /* สีฟ้า */
+  margin-right: 12px;
+  border-radius: 4px;
+}
+.section-title-text {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* --- Services Box (กล่องบริการผู้เรียน) --- */
+.services-grid {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+.service-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: 120px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.service-card:hover {
+  border-color: #0284c7;
+  background-color: #f0f9ff;
+}
+.service-icon-box {
+  margin-bottom: 0.5rem;
+  color: #334155;
+}
+.service-text {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #334155;
+}
+
+/* --- Course Card (การ์ดคอร์สเรียน) --- */
+.course-card {
+  display: flex;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  background: white;
+  gap: 1.5rem;
+  flex-wrap: wrap; /* ให้รองรับมือถือ */
+}
+
+.course-img {
+  width: 200px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.course-info {
+  flex: 1;
+}
+
+.course-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.course-meta {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin-bottom: 0.3rem;
+}
+
+.course-progress-section {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* หลอดพลัง (Progress Bar) */
+.progress-container {
+  flex: 1;
+  max-width: 60%;
+  height: 8px;
+  background-color: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-right: 1rem;
+}
+.progress-fill {
+  height: 100%;
+  background-color: #38bdf8; /* สีฟ้าสดใส */
+  border-radius: 4px;
+}
+
+.btn-continue {
+  background-color: #1e293b;
+  color: white;
+  padding: 8px 24px;
+  border-radius: 20px; /* ปุ่มมนๆ */
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-continue:hover {
+  background-color: #0f172a;
+}
+
+/* --- Stats Box (สถิติ) --- */
+.stats-grid {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.stat-box {
+  flex: 1;
+  min-width: 120px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+}
+.stat-number {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-top: 0.5rem;
+}
+.stat-label {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+/* ไฟล์: src/styles/ProfileTheme.css */
+/* ... (ต่อจากของเดิม) ... */
+
+/* --- Favorites Section (สิ่งที่ถูกใจ) --- */
+
+/* หัวข้อแบบแคปซูลตรงกลาง */
+.favorites-header-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2.5rem;
+  margin-top: 1rem;
+}
+
+.favorites-title-box {
+  border: 2px solid #1e293b; /* ขอบสีเข้ม */
+  border-radius: 50px;       /* ทำมุมมนเป็นแคปซูล */
+  padding: 10px 40px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1e293b;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background-color: white;
+}
+
+/* ตารางแสดงคอร์ส */
+.favorites-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: center; /* จัดให้อยู่กึ่งกลาง */
+}
+
+/* การ์ดคอร์ส (แนวตั้ง) */
+.fav-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  overflow: hidden;
+  width: 240px;          /* ความกว้างคงที่ */
+  position: relative;    /* เพื่อวางหัวใจ */
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid #e2e8f0;
+  text-align: center;
+  padding-bottom: 1rem;
+}
+
+.fav-card:hover {
+  transform: translateY(-5px); /* ลอยขึ้นเมื่อเอาเมาส์ชี้ */
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.fav-card-img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  margin-bottom: 1rem;
+}
+
+/* ปุ่มหัวใจ (สีแดง) */
+.fav-card-heart {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: white;
+  border-radius: 50%;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  cursor: pointer;
+}
+
+.fav-card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0.5rem 1rem;
+  line-height: 1.4;
+}
+
+.fav-card-desc {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0 1rem 1rem 1rem;
+}
+
+/* ปุ่มค้นหาคอร์ส (สีน้ำเงิน) */
+.btn-search-course {
+  background-color: #0c4a6e; /* สีน้ำเงินเข้มสวยๆ */
+  color: white;
+  padding: 12px 30px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 3rem auto 0; /* จัดกึ่งกลางและเว้นระยะบน */
+  transition: background 0.2s;
+}
+
+.btn-search-course:hover {
+  background-color: #075985;
+}
