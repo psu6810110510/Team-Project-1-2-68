@@ -29,7 +29,7 @@ export default function Login() {
       localStorage.setItem('user', JSON.stringify(user));
 
       console.log("Login Success!", user);
-      navigate('/dashboard');
+      navigate('/profile');
     } catch (err: any) {
       console.error("Login Error:", err);
       setError(err.response?.data?.message || 'อีเมลหรือรหัสผ่านไม่ถูกต้อง');

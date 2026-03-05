@@ -25,3 +25,4 @@ export class AuthController {
     return req.user;
   }
 }
+ //มาต่อที่ 2 แก้ที่ frontend ให้ตรงกัน

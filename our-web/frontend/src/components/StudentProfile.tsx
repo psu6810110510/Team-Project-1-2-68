@@ -1,9 +1,10 @@
 /* ไฟล์: src/components/StudentProfile.tsx */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; 
 import '../styles/LoginTheme.css'; 
 import '../styles/ProfileTheme.css'; 
-import { Search, ShoppingCart, Menu, User, BookOpen, Heart, LogOut, Edit3, Camera, ChevronLeft, FileText, MonitorPlay, CheckSquare } from 'lucide-react'; // เพิ่ม CheckSquare
+// ✅ 1. เพิ่ม Import ไอคอน Clock, Calendar, Award
+import { Search, ShoppingCart, Menu, User, BookOpen, Heart, LogOut, Edit3, Camera, ChevronLeft, FileText, MonitorPlay, CheckSquare, Clock, Calendar, Award } from 'lucide-react';
 import fullLogo from '../assets/name.png';
 
 export default function StudentProfile() {
@@ -11,11 +12,11 @@ export default function StudentProfile() {
 
   // --- Mock Data: ข้อมูลผู้ใช้ ---
   const [userData, setUserData] = useState({
-    firstName: 'น้องบอร์น',
-    lastName: 'ทูโค้ด',
-    nickname: 'บอร์น',
-    email: 'born2code@psu.ac.th',
-    phone: '081-234-5678',
+    firstName: 'กำลังโหลด...',
+    lastName: '',
+    nickname: '',
+    email: '',
+    phone: '',
     image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200',
     description: '“สู้ดิวะ!!!!!”'
   });
@@ -66,7 +67,7 @@ export default function StudentProfile() {
     }
   ];
 
-  // --- Mock Data: ประวัติการซื้อ (เพิ่มใหม่) ---
+  // --- Mock Data: ประวัติการซื้อ ---
   const purchasedHistory = [
     {
       id: 201,
@@ -92,10 +93,57 @@ export default function StudentProfile() {
   ];
 
   // --- States ---
-  // ตั้ง default เป็น 'purchases' เพื่อให้คุณเห็นผลลัพธ์ทันที
-  const [activeMenu, setActiveMenu] = useState('purchases'); 
+  const [activeMenu, setActiveMenu] = useState('courses'); // Default เป็น courses
   const [activeEditMode, setActiveEditMode] = useState<string>('none');
   const [editFormData, setEditFormData] = useState(userData);
+
+  // ✅ ดึงข้อมูลจริงจาก Backend
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+          alert("กรุณาเข้าสู่ระบบก่อน");
+          navigate('/login');
+          return;
+        }
+
+        const response = await fetch('http://localhost:3000/auth/profile', { // ✅ แก้เป็น /auth/profile
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(prev => ({
+            ...prev,
+            firstName: data.firstName || prev.firstName,
+            lastName: data.lastName || prev.lastName,
+            email: data.email || prev.email,
+            phone: data.phone || prev.phone,
+          }));
+          setEditFormData(prev => ({
+            ...prev,
+            firstName: data.firstName || prev.firstName,
+            lastName: data.lastName || prev.lastName,
+            email: data.email || prev.email,
+            phone: data.phone || prev.phone,
+          }));
+        } else {
+          if (response.status === 401) {
+             localStorage.removeItem('access_token');
+             navigate('/login');
+          }
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    };
+    fetchUserProfile();
+  }, [navigate]);
 
   // --- Helper Functions ---
   const handleEditClick = (mode: string) => { setEditFormData(userData); setActiveEditMode(mode); };
@@ -103,9 +151,11 @@ export default function StudentProfile() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => { const { name, value } = e.target; setEditFormData({ ...editFormData, [name]: value }); };
   const handleSave = () => { setUserData(editFormData); setActiveEditMode('none'); };
   const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user');
-    navigate('/login');
+    if(window.confirm("คุณต้องการออกจากระบบใช่หรือไม่?")) {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user');
+      navigate('/login');
+    }
   };
 
   return (
@@ -152,19 +202,10 @@ export default function StudentProfile() {
             <p style={{ fontSize: '1rem', color: '#334155', fontWeight: '600', marginBottom: '2rem' }}>{userData.description}</p>
 
             <ul className="sidebar-menu">
-              <li className={`menu-item ${activeMenu === 'profile' ? 'active' : ''}`} onClick={() => setActiveMenu('profile')}>
-                <User size={20} /> ข้อมูลส่วนตัว
-              </li>
-              <li className={`menu-item ${activeMenu === 'courses' ? 'active' : ''}`} onClick={() => setActiveMenu('courses')}>
-                <BookOpen size={20} /> คอร์สเรียนของฉัน
-              </li>
-              <li className={`menu-item ${activeMenu === 'favorites' ? 'active' : ''}`} onClick={() => setActiveMenu('favorites')}>
-                <Heart size={20} /> สิ่งที่ถูกใจ
-              </li>
-              {/* เปลี่ยนเมนูที่ 4 เป็น "ประวัติการซื้อ" */}
-              <li className={`menu-item ${activeMenu === 'purchases' ? 'active' : ''}`} onClick={() => setActiveMenu('purchases')}>
-                <CheckSquare size={20} /> ประวัติการซื้อ
-              </li>
+              <li className={`menu-item ${activeMenu === 'profile' ? 'active' : ''}`} onClick={() => setActiveMenu('profile')}><User size={20} /> ข้อมูลส่วนตัว</li>
+              <li className={`menu-item ${activeMenu === 'courses' ? 'active' : ''}`} onClick={() => setActiveMenu('courses')}><BookOpen size={20} /> คอร์สเรียนของฉัน</li>
+              <li className={`menu-item ${activeMenu === 'favorites' ? 'active' : ''}`} onClick={() => setActiveMenu('favorites')}><Heart size={20} /> สิ่งที่ถูกใจ</li>
+              <li className={`menu-item ${activeMenu === 'purchases' ? 'active' : ''}`} onClick={() => setActiveMenu('purchases')}><CheckSquare size={20} /> ประวัติการซื้อ</li>
               <li className="menu-item logout" onClick={handleLogout}><LogOut size={20} /> ออกจากระบบ</li>
             </ul>
           </aside>
@@ -173,7 +214,6 @@ export default function StudentProfile() {
           {/* --- Main Content Area --- */}
           <main className="profile-content">
             
-            {/* 1. ข้อมูลส่วนตัว */}
             {activeMenu === 'profile' && (
               <>
                 <div className="content-header"><span className="content-title">ข้อมูลส่วนตัว</span></div>
@@ -188,7 +228,7 @@ export default function StudentProfile() {
               </>
             )}
 
-            {/* 2. คอร์สเรียนของฉัน */}
+            {/* ✅ 2. หน้าคอร์สเรียนของฉัน (ใส่ส่วนสถิติกลับมาให้แล้ว) */}
             {activeMenu === 'courses' && (
               <>
                 <div className="section-header"><span className="section-title-text">บริการสำหรับผู้เรียน</span></div>
@@ -212,17 +252,35 @@ export default function StudentProfile() {
                     </div>
                   </div>
                 ))}
+
+                {/* ✅ Section 3: สถิติการเรียนรู้ (ที่เพิ่มกลับมา) */}
+                <div className="section-header" style={{ marginTop: '3rem' }}>
+                  <span className="section-title-text">สถิติการเรียนรู้</span>
+                </div>
+                <div className="stats-grid">
+                  <div className="stat-box">
+                    <Clock size={32} color="#64748b" style={{ margin: '0 auto' }} />
+                    <div className="stat-number">120 ชม.</div>
+                    <div className="stat-label">ชั่วโมงเรียน</div>
+                  </div>
+                  <div className="stat-box">
+                     <Calendar size={32} color="#64748b" style={{ margin: '0 auto' }} />
+                    <div className="stat-number">2</div>
+                    <div className="stat-label">คอร์สที่เรียน</div>
+                  </div>
+                  <div className="stat-box">
+                    <Award size={32} color="#64748b" style={{ margin: '0 auto' }} />
+                    <div className="stat-number">2</div>
+                    <div className="stat-label">ใบประกาศ</div>
+                  </div>
+                </div>
               </>
             )}
 
-            {/* 3. สิ่งที่ถูกใจ */}
             {activeMenu === 'favorites' && (
               <>
                 <div className="favorites-header-container">
-                  <div className="favorites-title-box">
-                    <Heart size={24} fill="#ef4444" color="#ef4444" />
-                    <span>สิ่งที่ถูกใจ</span>
-                  </div>
+                  <div className="favorites-title-box"><Heart size={24} fill="#ef4444" color="#ef4444" /><span>สิ่งที่ถูกใจ</span></div>
                 </div>
                 <div className="favorites-grid">
                   {favoriteCourses.map((course) => (
@@ -237,35 +295,19 @@ export default function StudentProfile() {
               </>
             )}
 
-            {/* 4. ประวัติการซื้อ (เพิ่มใหม่) */}
             {activeMenu === 'purchases' && (
               <>
-                {/* Header ตรงกลางแบบแคปซูล พร้อมไอคอนรถเข็น */}
                 <div className="favorites-header-container">
-                  <div className="favorites-title-box">
-                    <ShoppingCart size={24} color="#1e293b" />
-                    <span>ประวัติการซื้อ</span>
-                  </div>
+                  <div className="favorites-title-box"><ShoppingCart size={24} color="#1e293b" /><span>ประวัติการซื้อ</span></div>
                 </div>
-
-                {/* Grid แสดงประวัติการซื้อ (ใช้ดีไซน์เดิม) */}
                 <div className="favorites-grid">
                   {purchasedHistory.map((item) => (
                     <div key={item.id} className="fav-card">
-                      {/* อาจจะใส่ไอคอนมุมขวาบนก็ได้ เช่น เครื่องหมายถูก */}
-                      <div className="fav-card-heart" style={{cursor:'default'}}>
-                        <CheckSquare size={18} color="#0284c7" />
-                      </div>
-                      
+                      <div className="fav-card-heart" style={{cursor:'default'}}><CheckSquare size={18} color="#0284c7" /></div>
                       <img src={item.image} alt={item.title} className="fav-card-img" />
-                      
                       <h3 className="fav-card-title">{item.title}</h3>
-                      <p className="fav-card-desc" style={{marginBottom: '0.5rem'}}>
-                        วันที่ซื้อ: {item.date}
-                      </p>
-                      <p style={{color: '#0284c7', fontWeight: 'bold', marginBottom: '1rem'}}>
-                        {item.price}
-                      </p>
+                      <p className="fav-card-desc" style={{marginBottom: '0.5rem'}}>วันที่ซื้อ: {item.date}</p>
+                      <p style={{color: '#0284c7', fontWeight: 'bold', marginBottom: '1rem'}}>{item.price}</p>
                     </div>
                   ))}
                 </div>
