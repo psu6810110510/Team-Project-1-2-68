@@ -17,9 +17,8 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
-    const { email, password, full_name } = registerDto;
+    const { email, password, full_name, phone } = registerDto;
 
-    // Check if user already exists
     const existingUser = await this.usersRepository.findOne({
       where: { email },
     });
@@ -28,18 +27,17 @@ export class AuthService {
       throw new BadRequestException('Email already exists');
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user
     const user = this.usersRepository.create({
       email,
       password_hash: hashedPassword,
+      full_name, // ✅ บันทึกชื่อเต็มลงฐานข้อมูล
+      phone,
     });
 
     const savedUser = await this.usersRepository.save(user);
 
-    // Generate JWT
     const access_token = this.jwtService.sign({
       sub: savedUser.id,
       email: savedUser.email,
@@ -51,6 +49,7 @@ export class AuthService {
       user: {
         id: savedUser.id,
         email: savedUser.email,
+        full_name: savedUser.full_name, // ✅ ส่งกลับไปให้ Frontend
         role: savedUser.role,
       },
     };
@@ -59,7 +58,6 @@ export class AuthService {
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     const { email, password } = loginDto;
 
-    // Find user by email
     const user = await this.usersRepository.findOne({
       where: { email },
     });
@@ -68,14 +66,12 @@ export class AuthService {
       throw new BadRequestException('Invalid email or password');
     }
 
-    // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 
     if (!isPasswordValid) {
       throw new BadRequestException('Invalid email or password');
     }
 
-    // Generate JWT
     const access_token = this.jwtService.sign({
       sub: user.id,
       email: user.email,
@@ -87,9 +83,18 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
+        full_name: user.full_name, // ✅ ส่งกลับไปให้ Frontend
         role: user.role,
+        phone: user.phone,
       },
     };
+  }
+
+  // ✅ เพิ่มฟังก์ชันนี้เพื่อใช้ดึงข้อมูล Profile เต็มรูปแบบ
+  async findOne(id: any): Promise<User | null> {
+    return this.usersRepository.findOne({
+      where: { id },
+    });
   }
 
   async validateUser(userId: string) {
@@ -97,4 +102,10 @@ export class AuthService {
       where: { id: userId },
     });
   }
+
+  async updateProfile(userId: any, updateData: any) {
+    await this.usersRepository.update(userId, updateData);
+    return this.usersRepository.findOne({ where: { id: userId } });
+  }
 }
+
