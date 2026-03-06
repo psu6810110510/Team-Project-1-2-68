@@ -1,4 +1,9 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -44,7 +49,9 @@ export class UserService {
     });
 
     // Fetch the created user
-    const user = (await this.userRepo.findOne({ where: { id: userResult.identifiers[0].id } }))!;
+    const user = (await this.userRepo.findOne({
+      where: { id: userResult.identifiers[0].id },
+    }))!;
 
     // Create profile
     await this.profileRepo.insert({

@@ -52,7 +52,10 @@ export class CourseController {
   }
 
   @Put(':id')
-  async updateCourse(@Param('id') id: string, @Body() dto: Partial<CreateCourseDto>) {
+  async updateCourse(
+    @Param('id') id: string,
+    @Body() dto: Partial<CreateCourseDto>,
+  ) {
     const course = await this.courseService.updateCourse(id, dto);
     return {
       id: course.id,
@@ -75,8 +78,14 @@ export class CourseController {
 
   // Lessons endpoints
   @Post(':courseId/lessons')
-  async createLesson(@Param('courseId') courseId: string, @Body() dto: CreateLessonDto) {
-    const lesson = await this.courseService.createLesson({ ...dto, course_id: courseId });
+  async createLesson(
+    @Param('courseId') courseId: string,
+    @Body() dto: CreateLessonDto,
+  ) {
+    const lesson = await this.courseService.createLesson({
+      ...dto,
+      course_id: courseId,
+    });
     return {
       id: lesson.id,
       topic_name: lesson.topic_name,
@@ -121,7 +130,10 @@ export class CourseController {
   }
 
   @Put('lessons/:lessonId')
-  async updateLesson(@Param('lessonId') lessonId: string, @Body() dto: Partial<CreateLessonDto>) {
+  async updateLesson(
+    @Param('lessonId') lessonId: string,
+    @Body() dto: Partial<CreateLessonDto>,
+  ) {
     const lesson = await this.courseService.updateLesson(lessonId, dto);
     return {
       id: lesson.id,

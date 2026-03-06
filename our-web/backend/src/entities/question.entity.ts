@@ -33,7 +33,11 @@ export class Question {
   @Column({ type: 'text' })
   question_text: string;
 
-  @Column({ type: 'enum', enum: QuestionType, default: QuestionType.MULTIPLE_CHOICE })
+  @Column({
+    type: 'enum',
+    enum: QuestionType,
+    default: QuestionType.MULTIPLE_CHOICE,
+  })
   type: QuestionType;
 
   @Column({ type: 'integer', default: 1 })

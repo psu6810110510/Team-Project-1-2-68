@@ -31,7 +31,7 @@ export class User {
   @Column({ nullable: true }) // (nullable: true เพื่อบอกว่าช่องนี้ว่างได้)
   phone: string;
 
-  @Column({ nullable: true }) 
+  @Column({ nullable: true })
   full_name: string;
 
   @Column({ type: 'enum', enum: UserRole, default: UserRole.STUDENT })
@@ -40,10 +40,10 @@ export class User {
   @Column({ type: 'boolean', default: true })
   is_active: boolean;
 
-  @Column({ type: 'text', nullable: true }) 
+  @Column({ type: 'text', nullable: true })
   image: string;
 
-  @Column({ type: 'text', nullable: true }) 
+  @Column({ type: 'text', nullable: true })
   description: string;
 
   @CreateDateColumn()

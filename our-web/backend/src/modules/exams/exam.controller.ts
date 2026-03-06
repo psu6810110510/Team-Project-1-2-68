@@ -1,6 +1,10 @@
 import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { ExamService } from './exam.service';
-import type { CreateExamDto, CreateQuestionDto, CreateChoiceDto } from './exam.service';
+import type {
+  CreateExamDto,
+  CreateQuestionDto,
+  CreateChoiceDto,
+} from './exam.service';
 
 @Controller('exams')
 export class ExamController {
@@ -39,7 +43,10 @@ export class ExamController {
 
   // Questions endpoints
   @Post(':examId/questions')
-  async createQuestion(@Param('examId') examId: string, @Body() dto: CreateQuestionDto) {
+  async createQuestion(
+    @Param('examId') examId: string,
+    @Body() dto: CreateQuestionDto,
+  ) {
     const question = await this.examService.createQuestion({
       ...dto,
       exam_id: examId,
@@ -88,7 +95,10 @@ export class ExamController {
 
   // Choices endpoints
   @Post('question/:questionId/choices')
-  async createChoice(@Param('questionId') questionId: string, @Body() dto: CreateChoiceDto) {
+  async createChoice(
+    @Param('questionId') questionId: string,
+    @Body() dto: CreateChoiceDto,
+  ) {
     const choice = await this.examService.createChoice({
       ...dto,
       question_id: questionId,

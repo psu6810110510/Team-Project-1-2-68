@@ -1,7 +1,15 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Booking, BookingStatus, LearningMode } from '../../entities/booking.entity';
+import {
+  Booking,
+  BookingStatus,
+  LearningMode,
+} from '../../entities/booking.entity';
 import { Schedule } from '../../entities/schedule.entity';
 import { User } from '../../entities/user.entity';
 
@@ -34,7 +42,9 @@ export class BookingService {
     }
 
     // Verify schedule exists
-    const schedule = await this.scheduleRepo.findOne({ where: { id: dto.schedule_id } });
+    const schedule = await this.scheduleRepo.findOne({
+      where: { id: dto.schedule_id },
+    });
     if (!schedule) {
       throw new NotFoundException('Schedule not found');
     }
@@ -52,7 +62,10 @@ export class BookingService {
     }
 
     // Check seat availability for onsite
-    if (dto.learning_mode === LearningMode.ONSITE && schedule.max_onsite_seats) {
+    if (
+      dto.learning_mode === LearningMode.ONSITE &&
+      schedule.max_onsite_seats
+    ) {
       const onsiteBookings = await this.bookingRepo.count({
         where: {
           schedule_id: dto.schedule_id,
@@ -75,7 +88,9 @@ export class BookingService {
       notes: dto.notes || undefined,
     });
 
-    return (await this.bookingRepo.findOne({ where: { id: result.identifiers[0].id } }))!;
+    return (await this.bookingRepo.findOne({
+      where: { id: result.identifiers[0].id },
+    }))!;
   }
 
   async getBookingById(id: string): Promise<Booking> {
@@ -101,7 +116,9 @@ export class BookingService {
 
   async getBookingsBySchedule(scheduleId: string): Promise<Booking[]> {
     // Verify schedule exists
-    const schedule = await this.scheduleRepo.findOne({ where: { id: scheduleId } });
+    const schedule = await this.scheduleRepo.findOne({
+      where: { id: scheduleId },
+    });
     if (!schedule) {
       throw new NotFoundException('Schedule not found');
     }
@@ -112,7 +129,10 @@ export class BookingService {
     });
   }
 
-  async updateBookingStatus(id: string, status: BookingStatus): Promise<Booking> {
+  async updateBookingStatus(
+    id: string,
+    status: BookingStatus,
+  ): Promise<Booking> {
     const booking = await this.getBookingById(id);
     booking.status = status;
     return this.bookingRepo.save(booking);
@@ -129,12 +149,16 @@ export class BookingService {
   }
 
   async getBookingStats(scheduleId: string) {
-    const schedule = await this.scheduleRepo.findOne({ where: { id: scheduleId } });
+    const schedule = await this.scheduleRepo.findOne({
+      where: { id: scheduleId },
+    });
     if (!schedule) {
       throw new NotFoundException('Schedule not found');
     }
 
-    const total = await this.bookingRepo.count({ where: { schedule_id: scheduleId } });
+    const total = await this.bookingRepo.count({
+      where: { schedule_id: scheduleId },
+    });
     const confirmed = await this.bookingRepo.count({
       where: { schedule_id: scheduleId, status: BookingStatus.CONFIRMED },
     });
