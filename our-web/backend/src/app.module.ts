@@ -13,12 +13,14 @@ import {
   Choice,
   Booking,
   ExamResult,
+  SeatQuota,
 } from './entities';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './modules/users/user.module';
 import { CourseModule } from './modules/courses/course.module';
 import { ExamModule } from './modules/exams/exam.module';
 import { BookingModule } from './modules/bookings/booking.module';
+import { SeatQuotaModule } from './modules/seat-quotas/seat-quota.module';
 
 @Module({
   imports: [
@@ -40,6 +42,7 @@ import { BookingModule } from './modules/bookings/booking.module';
         Choice,
         Booking,
         ExamResult,
+        SeatQuota,
       ],
       synchronize: true,
       logging: true,
@@ -49,6 +52,7 @@ import { BookingModule } from './modules/bookings/booking.module';
     CourseModule,
     ExamModule,
     BookingModule,
+    SeatQuotaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

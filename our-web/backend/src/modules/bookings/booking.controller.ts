@@ -50,7 +50,8 @@ export class BookingController {
 
   @Get('schedule/:scheduleId')
   async getBookingsBySchedule(@Param('scheduleId') scheduleId: string) {
-    const bookings = await this.bookingService.getBookingsBySchedule(scheduleId);
+    const bookings =
+      await this.bookingService.getBookingsBySchedule(scheduleId);
     return {
       data: bookings.map((b) => ({
         id: b.id,

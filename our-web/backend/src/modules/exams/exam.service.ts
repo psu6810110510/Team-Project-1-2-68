@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Exam, ExamType } from '../../entities/exam.entity';
@@ -43,7 +47,9 @@ export class ExamService {
 
   async createExam(dto: CreateExamDto): Promise<Exam> {
     // Verify course exists
-    const course = await this.courseRepo.findOne({ where: { id: dto.course_id } });
+    const course = await this.courseRepo.findOne({
+      where: { id: dto.course_id },
+    });
     if (!course) {
       throw new NotFoundException('Course not found');
     }
@@ -58,7 +64,9 @@ export class ExamService {
       end_time: dto.end_time || undefined,
     });
 
-    return (await this.examRepo.findOne({ where: { id: result.identifiers[0].id } }))!;
+    return (await this.examRepo.findOne({
+      where: { id: result.identifiers[0].id },
+    }))!;
   }
 
   async getExamById(id: string): Promise<Exam> {
@@ -96,7 +104,9 @@ export class ExamService {
       sequence_order: dto.sequence_order || undefined,
     });
 
-    return (await this.questionRepo.findOne({ where: { id: result.identifiers[0].id } }))!;
+    return (await this.questionRepo.findOne({
+      where: { id: result.identifiers[0].id },
+    }))!;
   }
 
   async getQuestionById(id: string): Promise<Question> {

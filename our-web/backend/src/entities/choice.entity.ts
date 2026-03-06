@@ -33,7 +33,9 @@ export class Choice {
   updated_at: Date;
 
   // Relations
-  @ManyToOne(() => Question, (question) => question.choices, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Question, (question) => question.choices, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'question_id' })
   question: Question;
 }

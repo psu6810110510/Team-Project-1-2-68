@@ -8,3 +8,4 @@ export { Question } from './question.entity';
 export { Choice } from './choice.entity';
 export { Booking } from './booking.entity';
 export { ExamResult } from './exam-result.entity';
+export { SeatQuota } from './seat-quota.entity';
