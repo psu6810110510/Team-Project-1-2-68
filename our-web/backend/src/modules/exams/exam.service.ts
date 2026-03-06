@@ -36,6 +36,29 @@ export interface CreateChoiceDto {
   is_correct: boolean;
 }
 
+export interface UpdateExamDto {
+  title?: string;
+  description?: string;
+  type?: ExamType;
+  total_score?: number;
+  start_time?: Date;
+  end_time?: Date;
+}
+
+export interface UpdateQuestionDto {
+  question_text?: string;
+  type?: QuestionType;
+  score_points?: number;
+  sequence_order?: number;
+  lesson_id?: string;
+}
+
+export interface UpdateChoiceDto {
+  choice_label?: string;
+  choice_text?: string;
+  is_correct?: boolean;
+}
+
 @Injectable()
 export class ExamService {
   constructor(
@@ -90,6 +113,25 @@ export class ExamService {
     });
   }
 
+  async updateExam(id: string, dto: UpdateExamDto): Promise<Exam> {
+    const exam = await this.getExamById(id);
+    
+    // Update only provided fields
+    if (dto.title !== undefined) exam.title = dto.title;
+    if (dto.description !== undefined) exam.description = dto.description;
+    if (dto.type !== undefined) exam.type = dto.type;
+    if (dto.total_score !== undefined) exam.total_score = dto.total_score;
+    if (dto.start_time !== undefined) exam.start_time = dto.start_time;
+    if (dto.end_time !== undefined) exam.end_time = dto.end_time;
+
+    return this.examRepo.save(exam);
+  }
+
+  async deleteExam(id: string): Promise<void> {
+    const exam = await this.getExamById(id);
+    await this.examRepo.remove(exam);
+  }
+
   // Question methods
   async createQuestion(dto: CreateQuestionDto): Promise<Question> {
     // Verify exam exists
@@ -127,6 +169,24 @@ export class ExamService {
     });
   }
 
+  async updateQuestion(id: string, dto: UpdateQuestionDto): Promise<Question> {
+    const question = await this.getQuestionById(id);
+    
+    // Update only provided fields
+    if (dto.question_text !== undefined) question.question_text = dto.question_text;
+    if (dto.type !== undefined) question.type = dto.type;
+    if (dto.score_points !== undefined) question.score_points = dto.score_points;
+    if (dto.sequence_order !== undefined) question.sequence_order = dto.sequence_order;
+    if (dto.lesson_id !== undefined) question.lesson_id = dto.lesson_id;
+
+    return this.questionRepo.save(question);
+  }
+
+  async deleteQuestion(id: string): Promise<void> {
+    const question = await this.getQuestionById(id);
+    await this.questionRepo.remove(question);
+  }
+
   // Choice methods
   async createChoice(dto: CreateChoiceDto): Promise<Choice> {
     // Verify question exists
@@ -149,6 +209,28 @@ export class ExamService {
     return this.choiceRepo.find({
       where: { question_id: questionId },
     });
+  }
+
+  async updateChoice(id: string, dto: UpdateChoiceDto): Promise<Choice> {
+    const choice = await this.choiceRepo.findOne({ where: { id } });
+    if (!choice) {
+      throw new NotFoundException('Choice not found');
+    }
+
+    // Update only provided fields
+    if (dto.choice_label !== undefined) choice.choice_label = dto.choice_label;
+    if (dto.choice_text !== undefined) choice.choice_text = dto.choice_text;
+    if (dto.is_correct !== undefined) choice.is_correct = dto.is_correct;
+
+    return this.choiceRepo.save(choice);
+  }
+
+  async deleteChoice(id: string): Promise<void> {
+    const choice = await this.choiceRepo.findOne({ where: { id } });
+    if (!choice) {
+      throw new NotFoundException('Choice not found');
+    }
+    await this.choiceRepo.remove(choice);
   }
 
   async getFullExam(examId: string) {

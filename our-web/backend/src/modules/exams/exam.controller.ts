@@ -1,9 +1,12 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
 import { ExamService } from './exam.service';
 import type {
   CreateExamDto,
   CreateQuestionDto,
   CreateChoiceDto,
+  UpdateExamDto,
+  UpdateQuestionDto,
+  UpdateChoiceDto,
 } from './exam.service';
 
 @Controller('exams')
@@ -38,6 +41,25 @@ export class ExamController {
         created_at: e.created_at,
       })),
       total: exams.length,
+    };
+  }
+
+  @Put(':id')
+  async updateExam(@Param('id') id: string, @Body() dto: UpdateExamDto) {
+    const exam = await this.examService.updateExam(id, dto);
+    return {
+      id: exam.id,
+      title: exam.title,
+      type: exam.type,
+      message: 'Exam updated successfully',
+    };
+  }
+
+  @Delete(':id')
+  async deleteExam(@Param('id') id: string) {
+    await this.examService.deleteExam(id);
+    return {
+      message: 'Exam deleted successfully',
     };
   }
 
@@ -93,6 +115,24 @@ export class ExamController {
     };
   }
 
+  @Put('question/:id')
+  async updateQuestion(@Param('id') id: string, @Body() dto: UpdateQuestionDto) {
+    const question = await this.examService.updateQuestion(id, dto);
+    return {
+      id: question.id,
+      question_text: question.question_text,
+      message: 'Question updated successfully',
+    };
+  }
+
+  @Delete('question/:id')
+  async deleteQuestion(@Param('id') id: string) {
+    await this.examService.deleteQuestion(id);
+    return {
+      message: 'Question deleted successfully',
+    };
+  }
+
   // Choices endpoints
   @Post('question/:questionId/choices')
   async createChoice(
@@ -121,6 +161,25 @@ export class ExamController {
         is_correct: c.is_correct, // For admin only
       })),
       total: choices.length,
+    };
+  }
+
+  @Put('choice/:id')
+  async updateChoice(@Param('id') id: string, @Body() dto: UpdateChoiceDto) {
+    const choice = await this.examService.updateChoice(id, dto);
+    return {
+      id: choice.id,
+      choice_label: choice.choice_label,
+      choice_text: choice.choice_text,
+      message: 'Choice updated successfully',
+    };
+  }
+
+  @Delete('choice/:id')
+  async deleteChoice(@Param('id') id: string) {
+    await this.examService.deleteChoice(id);
+    return {
+      message: 'Choice deleted successfully',
     };
   }
 }
