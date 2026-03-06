@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import '../styles/LoginTheme.css'; 
 import '../styles/ProfileTheme.css'; 
 import { Search, ShoppingCart, Menu, User, BookOpen, Heart, LogOut, Edit3, Camera, ChevronLeft, FileText, MonitorPlay, CheckSquare, Clock, Calendar, Award, X } from 'lucide-react';
+import logoImage from '../assets/logo.png';
 import fullLogo from '../assets/name.png';
 
 export default function StudentProfile() {
@@ -20,14 +21,32 @@ export default function StudentProfile() {
     description: '' 
   });
 
-  const [activeMenu, setActiveMenu] = useState('profile');
+  const [activeMenu, setActiveMenu] = useState('courses'); // ตั้งค่าเริ่มต้นหน้าคอร์ส (ตามที่คุณต้องการ)
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
 
-  // --- 2. Mock Data ข้อมูลจำลอง (สำหรับเมนูอื่นๆ) ---
+  // --- 2. Mock Data ข้อมูลจำลอง (อยู่ครบ) ---
   const myCourses = [
-    { id: 1, title: 'Data Science with Python', instructor: 'นายอาร์ม ตัวจริง', startDate: '1 ก.พ. 67', expireDate: '31 ม.ค. 68', lastAccess: '1 วันที่แล้ว', progress: 30, image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=300&q=80' },
-    { id: 2, title: 'Data Visualization', instructor: 'นายอาร์ม ตัวจริง', startDate: '1 ก.พ. 67', expireDate: '31 ม.ค. 68', lastAccess: '5 วันที่แล้ว', progress: 15, image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=300&q=80' }
+    { 
+      id: 1, 
+      title: 'Data Science with Python', 
+      instructor: 'นายอาร์ม ตัวจริง', 
+      startDate: '1 ก.พ. 67', 
+      expireDate: '31 ม.ค. 68', 
+      lastAccess: '1 วันที่แล้ว', 
+      progress: 30, 
+      image: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?auto=format&fit=crop&w=400&q=80' 
+    },
+    { 
+      id: 2, 
+      title: 'Data Visualization', 
+      instructor: 'นายอาร์ม ตัวจริง', 
+      startDate: '1 ก.พ. 67', 
+      expireDate: '31 ม.ค. 68', 
+      lastAccess: '5 วันที่แล้ว', 
+      progress: 15, 
+      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=400&q=80' 
+    }
   ];
 
   const favoriteCourses = [
@@ -40,7 +59,7 @@ export default function StudentProfile() {
     { id: 202, title: 'C Programming', date: '10 ธ.ค. 66', price: '฿990', image: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=300&q=80' }
   ];
 
-  // --- 3. ดึงข้อมูลผู้ใช้จาก LocalStorage ---
+  // --- 3. ดึงข้อมูลผู้ใช้ ---
   useEffect(() => {
     const fetchUserProfile = async () => {
       const storedUser = localStorage.getItem('user');
@@ -71,7 +90,7 @@ export default function StudentProfile() {
       navigate('/login');
   };
 
-  // --- 4. ระบบแก้ไขข้อมูล (Popup Modal) ---
+  // --- 4. ฟังก์ชันจัดการการแก้ไข + บันทึก (เพิ่มฟังก์ชันจำข้อมูล) ---
   const openEditModal = (field: string, currentValue: string) => {
     setEditingField(field);
     setEditValue(currentValue);
@@ -85,24 +104,24 @@ export default function StudentProfile() {
   const handleSaveEdit = async () => {
     if (!editingField) return;
 
-    // เปลี่ยนแปลงบนหน้าจอทันที
+    // 1. อัปเดตหน้าจอทันที
     setUserData(prev => ({ ...prev, [editingField]: editValue }));
 
-    // จัดชื่อ Field ให้ตรงกับ Database
+    // 2. แปลงชื่อ Field ให้ตรงกับ Database
     let dbField = editingField;
     if (editingField === 'firstName') dbField = 'full_name';
 
-    // อัปเดตลง LocalStorage
+    // 3. 🔥 บันทึกลง LocalStorage (เพื่อให้รีเฟรชแล้วยังจำค่าได้)
     const storedUser = localStorage.getItem('user');
     const token = localStorage.getItem('access_token');
     
     if (storedUser) {
       const parsed = JSON.parse(storedUser);
       parsed[dbField] = editValue;
-      localStorage.setItem('user', JSON.stringify(parsed));
+      localStorage.setItem('user', JSON.stringify(parsed)); // บันทึกทับ
     }
 
-    // ยิง API ไปอัปเดตข้อมูลที่ Backend
+    // 4. (ถ้ามี Backend) ยิง API ไปอัปเดต
     if (token) {
       try {
         await fetch('http://localhost:3000/auth/profile', {
@@ -114,7 +133,7 @@ export default function StudentProfile() {
           body: JSON.stringify({ [dbField]: editValue })
         });
       } catch (err) {
-        console.error('Error saving data to backend:', err);
+        console.error('Error saving data:', err);
       }
     }
     closeModal(); 
@@ -130,7 +149,7 @@ export default function StudentProfile() {
     }
   };
 
-  // --- 5. ระบบเปลี่ยนรูปโปรไฟล์ ---
+  // --- 5. ฟังก์ชันเปลี่ยนรูป + บันทึก (เพิ่มฟังก์ชันจำรูป) ---
   const handleCameraClick = () => {
     fileInputRef.current?.click();
   };
@@ -145,7 +164,7 @@ export default function StudentProfile() {
         // อัปเดตหน้าจอ
         setUserData(prev => ({ ...prev, image: base64String }));
         
-        // อัปเดต LocalStorage
+        // 🔥 บันทึกลง LocalStorage
         const storedUser = localStorage.getItem('user');
         const token = localStorage.getItem('access_token');
         if (storedUser) {
@@ -154,20 +173,15 @@ export default function StudentProfile() {
           localStorage.setItem('user', JSON.stringify(parsed));
         }
 
-        // ยิง API ไปอัปเดตที่ Backend
+        // ยิง API
         if (token) {
           try {
             await fetch('http://localhost:3000/auth/profile', {
               method: 'PATCH',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
               body: JSON.stringify({ image: base64String })
             });
-          } catch (err) {
-            console.error('Error uploading image to backend:', err);
-          }
+          } catch (err) { console.error(err); }
         }
       };
       reader.readAsDataURL(file);
@@ -179,7 +193,9 @@ export default function StudentProfile() {
     <div className="page-container">
        <nav className="navbar" style={{ background: '#081324' }}>
         <div className="nav-logo">
-          <img src={fullLogo} alt="Born2Code Logo" style={{ height: '60px', width: 'auto' }} />
+          {/* โลโก้คู่ (อยู่ครบ) */}
+          <img src={logoImage} alt="Logo" style={{ height: '50px', marginRight: '15px' }} />
+          <img src={fullLogo} alt="Born2Code Logo" style={{ height: '50px', width: 'auto' }} />
         </div>
         <div className="nav-icons">
           <Search className="nav-icon" size={24} /><ShoppingCart className="nav-icon" size={24} /><Menu className="nav-icon" size={24} /><User className="nav-icon" size={24} />
@@ -198,15 +214,14 @@ export default function StudentProfile() {
           <aside className="profile-sidebar">
             <div style={{ position: 'relative', display: 'inline-block', marginBottom: '1rem' }}>
                <img src={userData.image} alt="Profile" className="sidebar-avatar" style={{ objectFit: 'cover' }} />
+               {/* ปุ่มเปลี่ยนรูป */}
                <div 
                   onClick={handleCameraClick}
                   style={{ 
                     position: 'absolute', bottom: '10px', right: '0', background: 'white', 
                     borderRadius: '50%', padding: '6px', cursor: 'pointer', 
-                    border: '1px solid #e2e8f0', display: 'flex',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    border: '1px solid #e2e8f0', display: 'flex', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                   }}
-                  title="เปลี่ยนรูปโปรไฟล์"
                >
                  <Camera size={16} color="#475569"/>
                </div>
@@ -272,20 +287,71 @@ export default function StudentProfile() {
                   <div className="service-card"><div className="service-icon-box"><FileText size={32} /></div><div className="service-text">คลังโจทย์</div></div>
                   <div className="service-card"><div className="service-icon-box"><MonitorPlay size={32} /></div><div className="service-text">ระบบสอบออนไลน์</div></div>
                 </div>
+                
                 <div className="section-header"><span className="section-title-text">คอร์สเรียนของฉัน</span></div>
-                {myCourses.map((course) => (
-                  <div key={course.id} className="course-card">
-                    <img src={course.image} alt={course.title} className="course-img" />
-                    <div className="course-info">
-                      <h3 className="course-title">{course.title}</h3>
-                      <div className="course-progress-section">
-                        <div className="progress-container"><div className="progress-fill" style={{ width: `${course.progress}%` }}></div></div>
-                        <span style={{ fontSize: '0.9rem', color: '#0284c7', fontWeight: 'bold' }}>{course.progress}% Completed</span>
-                        <button className="btn-continue">เรียนต่อ</button>
+                
+                {/* การ์ดแนวนอน (Horizontal Card) - อยู่ครบ! */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  {myCourses.map((course) => (
+                    <div key={course.id} style={{ 
+                        display: 'flex', 
+                        flexWrap: 'wrap',
+                        background: 'white', 
+                        border: '1px solid #e2e8f0', 
+                        borderRadius: '12px', 
+                        padding: '1.2rem',
+                        gap: '1.5rem',
+                        alignItems: 'flex-start',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                    }}>
+                      <img src={course.image} alt={course.title} style={{ 
+                          width: '180px', 
+                          height: '130px', 
+                          objectFit: 'cover', 
+                          borderRadius: '10px',
+                          flexShrink: 0
+                      }} />
+
+                      <div style={{ flex: 1, width: '100%', minWidth: '250px' }}>
+                        <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '0.8rem', color: '#0f172a' }}>{course.title}</h3>
+                        
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.5rem', fontSize: '0.9rem', color: '#64748b', marginBottom: '1rem' }}>
+                           <div>อาจารย์ : <span style={{color:'#334155', fontWeight:'500'}}>{course.instructor}</span></div>
+                           <div>เริ่มเรียน : {course.startDate}</div>
+                           <div>หมดเวลาเรียน : {course.expireDate}</div>
+                           <div>เรียนล่าสุด : {course.lastAccess}</div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginTop: 'auto', flexWrap: 'wrap' }}>
+                          <div style={{ flex: 1, minWidth: '150px' }}>
+                              <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                                  <div style={{ width: `${course.progress}%`, background: '#38bdf8', height: '100%', borderRadius: '4px' }}></div>
+                              </div>
+                              <div style={{ fontSize: '0.85rem', color: '#0284c7', fontWeight: '600', marginTop: '6px' }}>
+                                {course.progress}% Completed
+                              </div>
+                          </div>
+                          <button style={{ 
+                              padding: '8px 24px', 
+                              background: '#1e293b', 
+                              color: 'white', 
+                              borderRadius: '30px', 
+                              border: 'none', 
+                              cursor: 'pointer',
+                              fontWeight: '500',
+                              fontSize: '0.9rem',
+                          }} 
+                          onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                          onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                          >
+                            เรียนต่อ
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+
                 <div className="section-header" style={{ marginTop: '3rem' }}>
                   <span className="section-title-text">สถิติการเรียนรู้</span>
                 </div>
@@ -337,6 +403,8 @@ export default function StudentProfile() {
       <footer className="footer">
         <div className="footer-content" style={{ flexDirection: 'column', gap: '2rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+            {/* โลโก้คู่ (footer) */}
+            <img src={logoImage} alt="Logo" style={{ height: '50px', marginRight: '15px' }} />
             <img src={fullLogo} alt="Logo" style={{ height: '50px' }} />
             <span style={{ fontSize: '1rem', fontWeight: '500', color: '#fff' }}>
               “ ตัวช่วยที่จะทำให้คุณประสบความสำเร็จทางด้านคอมพิวเตอร์”
