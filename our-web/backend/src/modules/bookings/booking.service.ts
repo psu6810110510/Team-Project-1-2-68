@@ -12,6 +12,7 @@ import {
 } from '../../entities/booking.entity';
 import { Schedule } from '../../entities/schedule.entity';
 import { User } from '../../entities/user.entity';
+import { SeatQuota } from '../../entities/seat-quota.entity';
 
 export interface CreateBookingDto {
   user_id: string;
@@ -32,6 +33,7 @@ export class BookingService {
     @InjectRepository(Booking) private bookingRepo: Repository<Booking>,
     @InjectRepository(Schedule) private scheduleRepo: Repository<Schedule>,
     @InjectRepository(User) private userRepo: Repository<User>,
+    @InjectRepository(SeatQuota) private seatQuotaRepo: Repository<SeatQuota>,
   ) {}
 
   async createBooking(dto: CreateBookingDto): Promise<Booking> {
