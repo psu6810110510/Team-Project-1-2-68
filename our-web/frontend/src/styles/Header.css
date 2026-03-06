@@ -36,6 +36,17 @@
   transform: scale(1.05);
 }
 
+.logo-name {
+  height: 32px;
+  width: auto;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.logo-name:hover {
+  transform: scale(1.05);
+}
+
 .header-right {
   display: flex;
   align-items: center;

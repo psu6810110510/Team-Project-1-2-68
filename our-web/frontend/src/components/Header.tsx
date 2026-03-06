@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
+import logoname from '../assets/name.png';
 import '../styles/Header.css';
 
 interface HeaderProps {
@@ -45,7 +46,8 @@ export default function Header({ user }: HeaderProps) {
     <header className="header">
       <div className="header-container">
         <div className="header-left">
-          <img src={logo} alt="Logo" className="logo" onClick={() => navigate('/dashboard')} />
+          <img src={logo} alt="Logo" className="logo" />
+          <img src={logoname} alt="Logo Name" className="logo-name" onClick={() => navigate('/dashboard')} />
         </div>
         
         <div className="header-right">
