@@ -201,9 +201,33 @@ export default function TeacherDashboard() {
   const renderCourseActions = (course: Course) => {
     switch(course.status) {
       case 'REQUEST_CREATE': return <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>⏳ รอ Admin อนุมัติคำขอ...</span>;
-      case 'DRAFTING': return (<div style={{ display: 'flex', gap: '10px' }}><button style={{ padding: '8px 20px', background: 'white', border: '1px solid #cbd5e1', borderRadius: '30px', cursor: 'pointer', color: '#334155' }}>✏️ แก้ไขเนื้อหา</button><button onClick={() => handleUpdateStatus(course.id, 'PENDING_REVIEW')} style={{ padding: '8px 20px', background: '#3b82f6', border: 'none', borderRadius: '30px', cursor: 'pointer', color: 'white' }}>🚀 ส่งขออนุมัติขาย</button></div>);
+      case 'DRAFTING': return (
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <button 
+            onClick={() => navigate(`/exam-management/${course.id}`)}
+            style={{ padding: '8px 20px', background: '#3b82f6', border: 'none', borderRadius: '30px', cursor: 'pointer', color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            📝 จัดการข้อสอบ
+          </button>
+          <button style={{ padding: '8px 20px', background: 'white', border: '1px solid #cbd5e1', borderRadius: '30px', cursor: 'pointer', color: '#334155' }}>✏️ แก้ไขเนื้อหา</button>
+          <button onClick={() => handleUpdateStatus(course.id, 'PENDING_REVIEW')} style={{ padding: '8px 20px', background: '#22c55e', border: 'none', borderRadius: '30px', cursor: 'pointer', color: 'white' }}>🚀 ส่งขออนุมัติขาย</button>
+        </div>
+      );
       case 'PENDING_REVIEW': return <span style={{ color: '#f97316', fontSize: '0.9rem' }}>🕵️‍♀️ กำลังตรวจสอบความถูกต้อง...</span>;
-      case 'PUBLISHED': return (<div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{course.students}</span><span style={{ fontSize: '0.9rem', color: '#64748b' }}>นักเรียนที่ลงทะเบียน</span></div>);
+      case 'PUBLISHED': return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <button 
+            onClick={() => navigate(`/exam-management/${course.id}`)}
+            style={{ padding: '8px 20px', background: '#0f172a', border: 'none', borderRadius: '30px', cursor: 'pointer', color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            📝 จัดการข้อสอบ
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{course.students}</span>
+            <span style={{ fontSize: '0.9rem', color: '#64748b' }}>นักเรียนที่ลงทะเบียน</span>
+          </div>
+        </div>
+      );
       default: return null;
     }
   };
