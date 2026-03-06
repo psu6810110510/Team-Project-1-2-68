@@ -5,6 +5,7 @@ import Dashboard from './components/Home';
 import './App.css';
 import ForgotPassword from './components/ForgotPassword';
 import StudentProfile from './components/StudentProfile';
+import TeacherDashboard from './pages/TeacherDashboard';
 import Courses from './components/Courses';
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/profile" element={<StudentProfile />} />
+        <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
         <Route path="/courses" element={<Courses />} />
       </Routes>
     </Router>
