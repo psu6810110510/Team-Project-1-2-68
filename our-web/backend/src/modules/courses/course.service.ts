@@ -33,7 +33,9 @@ export class CourseService {
       is_active: true,
     });
 
-    return (await this.courseRepo.findOne({ where: { id: result.identifiers[0].id } }))!;
+    return (await this.courseRepo.findOne({
+      where: { id: result.identifiers[0].id },
+    }))!;
   }
 
   async getCourseById(id: string): Promise<Course> {
@@ -53,7 +55,10 @@ export class CourseService {
     });
   }
 
-  async updateCourse(id: string, dto: Partial<CreateCourseDto>): Promise<Course> {
+  async updateCourse(
+    id: string,
+    dto: Partial<CreateCourseDto>,
+  ): Promise<Course> {
     const course = await this.getCourseById(id);
     Object.assign(course, dto);
     return this.courseRepo.save(course);
@@ -84,7 +89,9 @@ export class CourseService {
       sequence_order: dto.sequence_order || undefined,
     });
 
-    return (await this.lessonRepo.findOne({ where: { id: result.identifiers[0].id } }))!;
+    return (await this.lessonRepo.findOne({
+      where: { id: result.identifiers[0].id },
+    }))!;
   }
 
   async getLessonById(id: string): Promise<Lesson> {
@@ -95,7 +102,11 @@ export class CourseService {
     return lesson;
   }
 
-  async getLessonsByCourse(courseId: string, limit = 50, offset = 0): Promise<[Lesson[], number]> {
+  async getLessonsByCourse(
+    courseId: string,
+    limit = 50,
+    offset = 0,
+  ): Promise<[Lesson[], number]> {
     // Verify course exists
     await this.getCourseById(courseId);
 
@@ -107,7 +118,10 @@ export class CourseService {
     });
   }
 
-  async updateLesson(id: string, dto: Partial<CreateLessonDto>): Promise<Lesson> {
+  async updateLesson(
+    id: string,
+    dto: Partial<CreateLessonDto>,
+  ): Promise<Lesson> {
     const lesson = await this.getLessonById(id);
     Object.assign(lesson, dto);
     return this.lessonRepo.save(lesson);

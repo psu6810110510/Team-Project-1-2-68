@@ -19,7 +19,10 @@ export class UserController {
 
   @Get()
   async getAllUsers(@Query('limit') limit = 10, @Query('offset') offset = 0) {
-    const [users, total] = await this.userService.getAllUsers(Number(limit), Number(offset));
+    const [users, total] = await this.userService.getAllUsers(
+      Number(limit),
+      Number(offset),
+    );
     return {
       data: users.map((u) => ({
         id: u.id,

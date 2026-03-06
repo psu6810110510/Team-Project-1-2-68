@@ -5,6 +5,7 @@
   background-color: #f1f5f9;
   min-height: calc(100vh - 80px); /* ลบความสูง Navbar ออก */
   padding: 2rem;
+  padding-top: calc(64px + 2rem); /* เผื่อพื้นที่สำหรับ Header (64px) + padding */
   /*display: flex;
   justify-content: center;*/
 }

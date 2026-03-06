@@ -6,7 +6,7 @@ export class AuthResponseDto {
     full_name: string;
     role: string;
     phone?: string;
-    image?: string;       
+    image?: string;
     description?: string;
   };
 }

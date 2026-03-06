@@ -1,11 +1,13 @@
 /* ไฟล์: src/components/StudentProfile.tsx */
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom'; 
+import Header from './Header';
 import '../styles/LoginTheme.css'; 
 import '../styles/ProfileTheme.css'; 
 import { Search, ShoppingCart, Menu, User, BookOpen, Heart, LogOut, Edit3, Camera, ChevronLeft, FileText, MonitorPlay, CheckSquare, Clock, Calendar, Award, X } from 'lucide-react';
 import logoImage from '../assets/logo.png';
 import fullLogo from '../assets/name.png';
+
 
 export default function StudentProfile() {
   const navigate = useNavigate();
@@ -191,16 +193,13 @@ export default function StudentProfile() {
   // --- 6. ส่วนการแสดงผล (UI) ---
   return (
     <div className="page-container">
-       <nav className="navbar" style={{ background: '#081324' }}>
-        <div className="nav-logo">
-          {/* โลโก้คู่ (อยู่ครบ) */}
-          <img src={logoImage} alt="Logo" style={{ height: '50px', marginRight: '15px' }} />
-          <img src={fullLogo} alt="Born2Code Logo" style={{ height: '50px', width: 'auto' }} />
-        </div>
-        <div className="nav-icons">
-          <Search className="nav-icon" size={24} /><ShoppingCart className="nav-icon" size={24} /><Menu className="nav-icon" size={24} /><User className="nav-icon" size={24} />
-        </div>
-      </nav>
+       {/* ใช้ Header component แทน navbar เดิม */}
+       <Header user={{
+         email: userData.email,
+         role: 'student',
+         id: 0, // หรือใช้ ID จริงถ้ามีใน localStorage
+         profileImage: userData.image
+       }} />
 
       <div className="profile-page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <div style={{ width: '100%', maxWidth: '1200px', marginBottom: '1.5rem', marginTop: '1rem' }}>
