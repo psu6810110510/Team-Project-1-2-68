@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import { courseAPI, type Course } from '../api/courseAPI';
+import courseLeftImage from '../assets/courseleftimage.png';
+import courseRightImage from '../assets/courserightimage.png';
 import '../styles/Courses.css';
 
 const Courses = () => {
@@ -68,9 +70,13 @@ const Courses = () => {
   return (
     <div className="courses-page">
       <Header />
+      <div className="color-banner">
+        <img src={courseLeftImage} alt="Course Left" className="banner-left-image" />
+        <h1 className="banner-title">คอร์สทั้งหมด</h1>
+        <img src={courseRightImage} alt="Course Right" className="banner-right-image" />
+      </div>
       <div className="courses-container">
         <div className="courses-header">
-          <h1>คอร์สทั้งหมด</h1>
           <p className="courses-count">มีทั้งหมด {courses.length} คอร์ส</p>
         </div>
 

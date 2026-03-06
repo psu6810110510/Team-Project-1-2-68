@@ -1,10 +1,11 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login';
 import Register from './components/Register';
-import Dashboard from './components/Dashboard';
+import Dashboard from './components/Home';
 import './App.css';
 import ForgotPassword from './components/ForgotPassword';
 import StudentProfile from './components/StudentProfile';
+import Courses from './components/Courses';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/profile" element={<StudentProfile />} />
+        <Route path="/courses" element={<Courses />} />
       </Routes>
     </Router>
   );
