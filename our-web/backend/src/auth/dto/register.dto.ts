@@ -16,4 +16,8 @@ export class RegisterDto {
   @IsString()
   @IsOptional() // ใส่ IsOptional ไว้ เผื่อบางคนสมัครโดยไม่กรอกเบอร์ ระบบจะได้ไม่พังครับ
   phone?: string;
+
+  @IsOptional()
+  @IsString()
+  role?: string;
 }

@@ -3,11 +3,10 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { User } from '../entities/user.entity';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
-
+import { User, UserRole } from '../entities/user.entity'; 
 @Injectable()
 export class AuthService {
   constructor(
@@ -17,7 +16,8 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
-    const { email, password, full_name, phone } = registerDto;
+    // ✅ 1. เพิ่ม role เข้ามารับค่าจาก DTO
+    const { email, password, full_name, phone, role } = registerDto;
 
     const existingUser = await this.usersRepository.findOne({
       where: { email },
@@ -32,8 +32,9 @@ export class AuthService {
     const user = this.usersRepository.create({
       email,
       password_hash: hashedPassword,
-      full_name, // ✅ บันทึกชื่อเต็มลงฐานข้อมูล
+      full_name, 
       phone,
+      role: (role as UserRole) || UserRole.STUDENT, // ✅ บังคับ Type เป็น UserRole เส้นแดงจะหายไปทันที!
     });
 
     const savedUser = await this.usersRepository.save(user);
@@ -49,7 +50,7 @@ export class AuthService {
       user: {
         id: savedUser.id,
         email: savedUser.email,
-        full_name: savedUser.full_name, // ✅ ส่งกลับไปให้ Frontend
+        full_name: savedUser.full_name, 
         role: savedUser.role,
       },
     };
@@ -83,14 +84,13 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
-        full_name: user.full_name, // ✅ ส่งกลับไปให้ Frontend
+        full_name: user.full_name, 
         role: user.role,
         phone: user.phone,
       },
     };
   }
 
-  // ✅ เพิ่มฟังก์ชันนี้เพื่อใช้ดึงข้อมูล Profile เต็มรูปแบบ
   async findOne(id: any): Promise<User | null> {
     return this.usersRepository.findOne({
       where: { id },
@@ -106,5 +106,22 @@ export class AuthService {
   async updateProfile(userId: any, updateData: any) {
     await this.usersRepository.update(userId, updateData);
     return this.usersRepository.findOne({ where: { id: userId } });
+  }
+
+  async changePassword(userId: string, oldPassword: string, newPassword: string): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const isPasswordValid = await bcrypt.compare(oldPassword, user.password_hash);
+    if (!isPasswordValid) {
+      throw new BadRequestException('รหัสผ่านเดิมไม่ถูกต้อง');
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    await this.usersRepository.update(userId, { password_hash: hashedNewPassword });
+
+    return this.usersRepository.findOne({ where: { id: userId } }) as Promise<User>;
   }
 }

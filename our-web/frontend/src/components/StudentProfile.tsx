@@ -26,6 +26,7 @@ export default function StudentProfile() {
   const [activeMenu, setActiveMenu] = useState('courses'); // ตั้งค่าเริ่มต้นหน้าคอร์ส (ตามที่คุณต้องการ)
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [oldPassword, setOldPassword] = useState('');
 
   // --- 2. Mock Data ข้อมูลจำลอง (อยู่ครบ) ---
   const myCourses = [
@@ -88,7 +89,8 @@ export default function StudentProfile() {
   }, [navigate]);
 
   const handleLogout = () => {
-      localStorage.clear();
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user');
       navigate('/login');
   };
 
@@ -101,10 +103,48 @@ export default function StudentProfile() {
   const closeModal = () => {
     setEditingField(null);
     setEditValue('');
+    setOldPassword('');
   };
 
   const handleSaveEdit = async () => {
     if (!editingField) return;
+
+    const token = localStorage.getItem('access_token');
+
+    // แยกกรณีถ้ากำลังแก้ไข "รหัสผ่าน"
+    if (editingField === 'password') {
+      if (!oldPassword || !editValue) {
+        alert('กรุณากรอกทั้งรหัสผ่านเดิม และรหัสผ่านใหม่');
+        return;
+      }
+      if (token) {
+        try {
+          const response = await fetch('http://localhost:3000/auth/change-password', {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ oldPassword: oldPassword, newPassword: editValue })
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            alert(data.message || 'เปลี่ยนรหัสผ่านไม่สำเร็จ ตรวจสอบรหัสผ่านเดิมอีกครั้ง');
+            return;
+          }
+          alert('เปลี่ยนรหัสผ่านสำเร็จ!');
+          closeModal();
+          return; // จบการทำงาน ไม่ต้องไปเซฟลง localStorage หรือ state อื่นๆ
+        } catch (err) {
+          console.error(err);
+          alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+          return;
+        }
+      }
+      return;
+    }
+
+    // --- สำหรับ Field อื่นๆ (ชื่อ, เบอร์โทร, bio) ---
 
     // 1. อัปเดตหน้าจอทันที
     setUserData(prev => ({ ...prev, [editingField]: editValue }));
@@ -115,7 +155,6 @@ export default function StudentProfile() {
 
     // 3. 🔥 บันทึกลง LocalStorage (เพื่อให้รีเฟรชแล้วยังจำค่าได้)
     const storedUser = localStorage.getItem('user');
-    const token = localStorage.getItem('access_token');
     
     if (storedUser) {
       const parsed = JSON.parse(storedUser);
@@ -449,11 +488,25 @@ export default function StudentProfile() {
             <h3 style={{ marginBottom: '1.2rem', textAlign: 'center', fontSize: '1.1rem', color: '#0f172a', fontWeight: 'bold' }}>
               {getModalTitle()}
             </h3>
+            {editingField === 'password' && (
+              <input 
+                type="password"
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+                placeholder="กรอกรหัสผ่านเดิม..."
+                style={{
+                  width: '100%', padding: '10px 15px', borderRadius: '6px',
+                  border: '1px solid #cbd5e1', marginBottom: '1rem',
+                  fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box',
+                  backgroundColor: '#ffffff', color: '#334155'
+                }}
+              />
+            )}
             <input 
               type={editingField === 'password' ? 'password' : 'text'}
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
-              placeholder={`กรอก${getModalTitle().replace('เปลี่ยน', '')}...`}
+              placeholder={editingField === 'password' ? "กรอกรหัสผ่านใหม่..." : `กรอก${getModalTitle().replace('เปลี่ยน', '')}...`}
               style={{
                 width: '100%', padding: '10px 15px', borderRadius: '6px',
                 border: '1px solid #cbd5e1', marginBottom: '1.5rem',

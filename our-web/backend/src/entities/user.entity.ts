@@ -13,7 +13,7 @@ import { ExamResult } from './exam-result.entity';
 
 export enum UserRole {
   STUDENT = 'STUDENT',
-  INSTRUCTOR = 'INSTRUCTOR',
+  TEACHER = 'TEACHER',
   ADMIN = 'ADMIN',
 }
 

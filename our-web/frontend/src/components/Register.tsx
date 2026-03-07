@@ -14,13 +14,14 @@ export default function Register() {
     email: '',
     phone: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    role: 'STUDENT' // ✅ 1. เพิ่ม role ลงใน State เริ่มต้นเป็นนักเรียน
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -48,7 +49,8 @@ export default function Register() {
           email: formData.email,
           password: formData.password,
           full_name: fullName, 
-          phone: formData.phone, // 🔥🔥🔥 เพิ่มบรรทัดนี้! ส่งเบอร์โทรไปให้ Backend แล้ว!
+          phone: formData.phone, 
+          role: formData.role, // ✅ 2. ส่งค่า role (TEACHER/STUDENT) ไปให้ Backend
         }),
       });
 
@@ -96,6 +98,26 @@ export default function Register() {
           {error && <div style={{color: 'red', marginBottom: '1rem'}}>{error}</div>}
 
           <form onSubmit={handleRegister}>
+            {/* ✅ 3. ช่องเลือกประเภทบัญชี (Role) */}
+            <div className="form-group" style={{ marginBottom: '15px' }}>
+              <select 
+                name="role" 
+                value={formData.role} 
+                onChange={handleChange}
+                className="form-input"
+                style={{ 
+                  appearance: 'auto', // ทำให้เห็นลูกศรชี้ลงของ Dropdown
+                  cursor: 'pointer', 
+                  color: '#0f172a',
+                  fontWeight: '500',
+                  backgroundColor: '#f8fafc'
+                }}
+              >
+                <option value="STUDENT">👨‍🎓 สมัครเป็นผู้เรียน (Student)</option>
+                <option value="TEACHER">👨‍🏫 สมัครเป็นผู้สอน (Teacher)</option>
+              </select>
+            </div>
+
             <div style={{ display: 'flex', gap: '10px' }}>
               <div className="form-group" style={{ flex: 1 }}>
                 <input name="firstName" value={formData.firstName} placeholder="ชื่อ" className="form-input" onChange={handleChange} required />

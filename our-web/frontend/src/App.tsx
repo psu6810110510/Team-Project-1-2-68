@@ -6,6 +6,7 @@ import './App.css';
 import ForgotPassword from './components/ForgotPassword';
 import StudentProfile from './components/StudentProfile';
 import TeacherDashboard from './pages/TeacherDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import Courses from './components/Courses';
 import ExamManagement from './pages/ExamManagement';
 
@@ -20,6 +21,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/profile" element={<StudentProfile />} />
         <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/courses" element={<Courses />} />
         <Route path="/exam-management/:courseId" element={<ExamManagement />} />
       </Routes>
