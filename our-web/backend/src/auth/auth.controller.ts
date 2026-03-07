@@ -43,15 +43,35 @@ export class AuthController {
     return this.authService.updateProfile(userId, updateData);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('profile')
   async getProfile(@Request() req) {
     // req.user.sub หรือ req.user.userId คือ ID ที่ได้จาก JWT
-    const userId = req.user.sub || req.user.id;
+    const userId = req.user?.sub || req.user?.id || req.user?.userId;
+    if (!userId) {
+      throw new BadRequestException('ไม่พบ User ID ในระบบ กรุณาล็อกอินใหม่');
+    }
     const user = await this.authService.findOne(userId);
 
     if (user) {
       delete (user as any).password_hash; // เติม (user as any)
     }
     return user;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('change-password')
+  async changePassword(@Request() req, @Body() body: any) {
+    const userId = req.user?.sub || req.user?.id || req.user?.userId;
+    if (!userId) {
+      throw new BadRequestException('ไม่พบ User ID ในระบบ กรุณาล็อกอินใหม่');
+    }
+
+    const { oldPassword, newPassword } = body;
+    if (!oldPassword || !newPassword) {
+      throw new BadRequestException('กรุณาระบุรหัสผ่านเดิมและรหัสผ่านใหม่');
+    }
+
+    return this.authService.changePassword(userId, oldPassword, newPassword);
   }
 }

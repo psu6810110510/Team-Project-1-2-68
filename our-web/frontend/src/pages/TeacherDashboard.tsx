@@ -42,6 +42,11 @@ export default function TeacherDashboard() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [videoFileName, setVideoFileName] = useState<string | null>(null);
 
+  // Password Modal
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+
   // ==========================================
   // 1. ระบบข้อมูลส่วนตัว (ดึงจาก localStorage)
   // ==========================================
@@ -57,7 +62,30 @@ export default function TeacherDashboard() {
 
   const [teacherData, setTeacherData] = useState(() => {
     const savedData = localStorage.getItem('teacherProfileData');
-    return savedData ? JSON.parse(savedData) : defaultTeacherData;
+    const mainUser = localStorage.getItem('user');
+    
+    let initialData = defaultTeacherData;
+    if (savedData) {
+      initialData = JSON.parse(savedData);
+    }
+    
+    // Override with main user data if it exists and is newer
+    if (mainUser) {
+      try {
+        const userObj = JSON.parse(mainUser);
+        if (userObj.full_name) {
+          const parts = userObj.full_name.split(' ');
+          initialData.firstName = parts[0] || initialData.firstName;
+          initialData.lastName = parts.slice(1).join(' ') || initialData.lastName;
+        }
+        if (userObj.email) initialData.email = userObj.email;
+        if (userObj.phone) initialData.phone = userObj.phone;
+        if (userObj.image) initialData.image = userObj.image;
+        if (userObj.description) initialData.description = userObj.description;
+      } catch(e) {}
+    }
+    
+    return initialData;
   });
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -67,9 +95,47 @@ export default function TeacherDashboard() {
     setEditProfileForm({ ...editProfileForm, [e.target.name]: e.target.value });
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     setTeacherData(editProfileForm); 
     localStorage.setItem('teacherProfileData', JSON.stringify(editProfileForm)); 
+    
+    // Sync to main user token
+    const mainUser = localStorage.getItem('user');
+    const token = localStorage.getItem('access_token');
+    
+    if (mainUser) {
+      try {
+        const userObj = JSON.parse(mainUser);
+        userObj.full_name = `${editProfileForm.firstName} ${editProfileForm.lastName}`.trim();
+        userObj.email = editProfileForm.email;
+        userObj.phone = editProfileForm.phone;
+        userObj.image = editProfileForm.image;
+        userObj.description = editProfileForm.description;
+        localStorage.setItem('user', JSON.stringify(userObj));
+      } catch(e) {}
+    }
+
+    if (token) {
+      try {
+        await fetch('http://localhost:3000/auth/profile', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            full_name: `${editProfileForm.firstName} ${editProfileForm.lastName}`.trim(),
+            email: editProfileForm.email,
+            phone: editProfileForm.phone,
+            image: editProfileForm.image,
+            description: editProfileForm.description
+          })
+        });
+      } catch (err) {
+        console.error('Error saving data:', err);
+      }
+    }
+
     setIsEditingProfile(false); 
     alert('บันทึกข้อมูลส่วนตัวเรียบร้อยแล้ว!');
   };
@@ -79,25 +145,97 @@ export default function TeacherDashboard() {
     setIsEditingProfile(false); 
   };
 
-  const handleProfileImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfileImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      const updatedData = { ...teacherData, image: imageUrl };
-      setTeacherData(updatedData);
-      localStorage.setItem('teacherProfileData', JSON.stringify(updatedData)); 
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64String = reader.result as string;
+        const updatedData = { ...teacherData, image: base64String };
+        setTeacherData(updatedData);
+        localStorage.setItem('teacherProfileData', JSON.stringify(updatedData)); 
+
+        const token = localStorage.getItem('access_token');
+
+        // Sync to main user token
+        const mainUser = localStorage.getItem('user');
+        if (mainUser) {
+          try {
+            const userObj = JSON.parse(mainUser);
+            userObj.image = base64String;
+            localStorage.setItem('user', JSON.stringify(userObj));
+          } catch(e) {}
+        }
+
+        if (token) {
+          try {
+            await fetch('http://localhost:3000/auth/profile', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+              body: JSON.stringify({ image: base64String })
+            });
+          } catch (err) { console.error(err); }
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    if (!oldPassword || !newPassword) {
+      alert('กรุณากรอกทั้งรหัสผ่านเดิม และรหัสผ่านใหม่');
+      return;
+    }
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      try {
+        const response = await fetch('http://localhost:3000/auth/change-password', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ oldPassword: oldPassword, newPassword: newPassword })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          alert(data.message || 'เปลี่ยนรหัสผ่านไม่สำเร็จ ตรวจสอบรหัสผ่านเดิมอีกครั้ง');
+          return;
+        }
+        alert('เปลี่ยนรหัสผ่านสำเร็จ!');
+        setIsPasswordModalOpen(false);
+        setOldPassword('');
+        setNewPassword('');
+      } catch (err) {
+        console.error(err);
+        alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+      }
     }
   };
 
   // ==========================================
   // 2. ระบบคอร์สเรียน 
   // ==========================================
-  const [myCourses, setMyCourses] = useState<Course[]>([
-    { id: 1, title: 'Advanced Python 2026', status: 'REQUEST_CREATE', students: 0, image: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?auto=format&fit=crop&w=400&q=80' },
-    { id: 2, title: 'React for Beginners', status: 'DRAFTING', students: 0, image: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?auto=format&fit=crop&w=400&q=80' },
-    { id: 3, title: 'Data Science 101', status: 'PENDING_REVIEW', students: 0, image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=400&q=80' },
-    { id: 4, title: 'Basic HTML/CSS', status: 'PUBLISHED', students: 120, image: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&w=400&q=80' }
-  ]);
+  const [myCourses, setMyCourses] = useState<Course[]>(() => {
+    const savedCourses = localStorage.getItem('teacherCourses');
+    if (savedCourses) {
+      try {
+        return JSON.parse(savedCourses);
+      } catch (e) {
+        console.error("Error parsing saved courses:", e);
+      }
+    }
+    return [
+      { id: 1, title: 'Advanced Python 2026', status: 'REQUEST_CREATE', students: 0, image: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?auto=format&fit=crop&w=400&q=80' },
+      { id: 2, title: 'React for Beginners', status: 'DRAFTING', students: 0, image: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?auto=format&fit=crop&w=400&q=80' },
+      { id: 3, title: 'Data Science 101', status: 'PENDING_REVIEW', students: 0, image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=400&q=80' },
+      { id: 4, title: 'Basic HTML/CSS', status: 'PUBLISHED', students: 120, image: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&w=400&q=80' }
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('teacherCourses', JSON.stringify(myCourses));
+  }, [myCourses]);
 
   const requestedCourses = myCourses.filter(c => c.status === 'REQUEST_CREATE');
   const draftingCourses = myCourses.filter(c => c.status === 'DRAFTING');
@@ -133,8 +271,11 @@ export default function TeacherDashboard() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const previewUrl = URL.createObjectURL(file);
-      setImagePreview(previewUrl);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -178,6 +319,7 @@ export default function TeacherDashboard() {
 
   const handleLogout = () => { 
     localStorage.removeItem('access_token'); 
+    localStorage.removeItem('user');
     navigate('/login'); 
   };
 
@@ -238,7 +380,12 @@ export default function TeacherDashboard() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         {courses.map((course) => (
           <div key={course.id} style={{ display: 'flex', flexWrap: 'wrap', background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.2rem', gap: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-            <img src={course.image} alt={course.title} style={{ width: '180px', height: '130px', objectFit: 'cover', borderRadius: '10px' }} />
+            <img 
+               src={course.image} 
+               alt={course.title} 
+               style={{ width: '180px', height: '130px', objectFit: 'cover', borderRadius: '10px' }} 
+               onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80'; }}
+            />
             <div style={{ flex: 1, minWidth: '250px' }}>
               <div style={{display:'flex', justifyContent:'space-between'}}><h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#0f172a' }}>{course.title}</h3>{getStatusBadge(course.status)}</div>
               <p style={{ fontSize: '0.9rem', color: '#64748b', margin: '0.5rem 0 1.5rem 0' }}>รหัสคอร์ส: COURSE-{course.id.toString().slice(-4)}</p>
@@ -337,12 +484,43 @@ export default function TeacherDashboard() {
                    </div>
 
                    {/* เบอร์โทร */}
-                   <div className="info-row" style={{ borderBottom: 'none' }}>
+                   <div className="info-row" style={{ borderBottom: '1px solid #e2e8f0' }}>
                      <span className="info-label">เบอร์โทร</span>
                      {isEditingProfile ? (
                        <input type="text" name="phone" value={editProfileForm.phone} onChange={handleProfileInputChange} style={{...editInputStyle, flex: 1}} />
                      ) : (
                        <span className="info-value" style={{color: '#94a3b8'}}>{teacherData.phone}</span>
+                     )}
+                   </div>
+
+                   {/* รหัสผ่าน */}
+                   <div className="info-row" style={{ borderBottom: '1px solid #e2e8f0' }}>
+                     <span className="info-label">รหัสผ่าน</span>
+                     <span className="info-value">••••••••</span>
+                     <button 
+                       className="edit-btn" 
+                       onClick={() => setIsPasswordModalOpen(true)}
+                       style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}
+                     >
+                       <Edit3 size={18} />
+                     </button>
+                   </div>
+
+                   {/* คำอธิบายตัวเอง */}
+                   <div className="info-row" style={{ borderBottom: 'none', alignItems: 'flex-start' }}>
+                     <span className="info-label" style={{ marginTop: '10px' }}>คำอธิบายตัวเอง</span>
+                     {isEditingProfile ? (
+                       <textarea
+                         name="description"
+                         value={editProfileForm.description || ''}
+                         onChange={handleProfileInputChange}
+                         placeholder="เพิ่มคำอธิบายเกี่ยวกับตัวคุณ..."
+                         style={{ ...editInputStyle, flex: 1, minHeight: '80px', resize: 'vertical' }}
+                       />
+                     ) : (
+                       <span className="info-value" style={{ color: '#334155', fontStyle: 'italic', marginTop: '10px', lineHeight: '1.6' }}>
+                         {teacherData.description || 'ยังไม่มีคำอธิบายตัวเองเพิ่มเข้ามา'}
+                       </span>
                      )}
                    </div>
                 </div>
@@ -507,6 +685,68 @@ export default function TeacherDashboard() {
               </div>
 
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= PASSWORD MODAL POPUP ================= */}
+      {isPasswordModalOpen && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 10000,
+          display: 'flex', justifyContent: 'center', alignItems: 'center'
+        }}>
+          <div style={{
+            background: '#ffffff', padding: '2rem', borderRadius: '12px',
+            width: '90%', maxWidth: '380px', position: 'relative',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+          }}>
+            <button onClick={() => { setIsPasswordModalOpen(false); setOldPassword(''); setNewPassword(''); }} style={{
+              position: 'absolute', top: '15px', right: '15px',
+              background: 'none', border: 'none', cursor: 'pointer', padding: '5px', display: 'flex'
+            }}>
+              <X size={20} color="#94a3b8" />
+            </button>
+            <h3 style={{ marginBottom: '1.2rem', textAlign: 'center', fontSize: '1.1rem', color: '#0f172a', fontWeight: 'bold' }}>
+              เปลี่ยนรหัสผ่านใหม่
+            </h3>
+            
+            <input 
+              type="password"
+              value={oldPassword}
+              onChange={(e) => setOldPassword(e.target.value)}
+              placeholder="กรอกรหัสผ่านเดิม..."
+              style={{
+                width: '100%', padding: '10px 15px', borderRadius: '6px',
+                border: '1px solid #cbd5e1', marginBottom: '1rem',
+                fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box',
+                backgroundColor: '#ffffff', color: '#334155'
+              }}
+            />
+
+            <input 
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="กรอกรหัสผ่านใหม่..."
+              style={{
+                width: '100%', padding: '10px 15px', borderRadius: '6px',
+                border: '1px solid #cbd5e1', marginBottom: '1.5rem',
+                fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box',
+                backgroundColor: '#ffffff', color: '#334155'
+              }}
+            />
+
+            <button 
+              onClick={handlePasswordChange} 
+              style={{ 
+                width: '100%', padding: '10px', fontSize: '1rem', 
+                backgroundColor: '#0f172a', color: '#ffffff',
+                border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '500'
+              }}
+            >
+              เปลี่ยนรหัสผ่าน
+            </button>
           </div>
         </div>
       )}

@@ -1,5 +1,5 @@
 /* ไฟล์: src/components/Login.tsx */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/LoginTheme.css'; 
 import { Search, ShoppingCart, Menu, User } from 'lucide-react';
@@ -11,7 +11,55 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
+
+  // Load remembered preference on mount
+  useEffect(() => {
+    const savedRememberMe = localStorage.getItem('rememberMe') === 'true';
+    if (savedRememberMe) {
+      setRememberMe(true);
+    }
+  }, []);
+
+  // Update password field automatically when email matches a saved account
+  useEffect(() => {
+    const accountsStr = localStorage.getItem('saved_accounts');
+    if (accountsStr && email.trim() !== '') {
+      try {
+        const accounts = JSON.parse(accountsStr);
+        if (accounts[email]) {
+          setPassword(accounts[email]);
+        }
+      } catch (e) {
+        console.error('Error reading saved accounts', e);
+      }
+    }
+  }, [email]);
+
+  // Auto-redirect if already logged in (token exists)
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    const userStr = localStorage.getItem('user');
+    
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        const userRole = user.role?.toUpperCase();
+        
+        if (userRole === 'ADMIN') {
+          navigate('/admin-dashboard');
+        } else if (userRole === 'TEACHER') {
+          navigate('/teacher-dashboard');
+        } else {
+          navigate('/profile');
+        }
+      } catch (err) {
+        // Suppress parse errors and just stay on login
+        console.error('Invalid user data in storage');
+      }
+    }
+  }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,30 +78,86 @@ export default function Login() {
       });
 
       const data = await response.json();
+      console.log("ดักดูข้อมูลจาก Backend:", data);
 
       if (!response.ok) {
         throw new Error(data.message || 'เข้าสู่ระบบไม่สำเร็จ');
       }
 
-      // 🔥🔥 จุดสำคัญ: บันทึก Token ลงเครื่อง (ทับของเก่าทันที) 🔥🔥
+      // 🔥 บันทึก Token ลงเครื่อง (ทับของเก่าทันที)
       if (data.access_token) {
-        // ลบของเก่าทิ้งก่อนเพื่อความชัวร์
         localStorage.removeItem('access_token');
         localStorage.removeItem('user');
 
-        // บันทึกของใหม่
         localStorage.setItem('access_token', data.access_token);
         
-        if (data.user) {
-           localStorage.setItem('user', JSON.stringify(data.user));
+        // 🔥 ดึงข้อมูล Profile ใหม่ล่าสุดจาก server มาผสมกับ data.user เดิมเผื่อมีอัพเดท
+        let updatedUser = data.user || {};
+        try {
+          const profileRes = await fetch('http://localhost:3000/auth/profile', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${data.access_token}`
+            }
+          });
+          if (profileRes.ok) {
+            const profileData = await profileRes.json();
+            updatedUser = { ...updatedUser, ...profileData };
+          }
+        } catch (e) {
+          console.error("Failed to fetch fresh profile data:", e);
         }
+
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+
       } else {
         throw new Error('ไม่ได้รับ Token จากระบบ');
       }
 
-      // 2. ไปหน้า Profile (แก้ลิงก์ให้ถูกต้องแล้ว)
-      alert('เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับ ' + (data.user?.full_name || ''));
-      navigate('/profile'); // ✅ ลิงก์ที่ถูกต้อง
+      // Handle Remember Me credentials saving
+      if (rememberMe) {
+        localStorage.setItem('rememberMe', 'true');
+        const accountsStr = localStorage.getItem('saved_accounts');
+        let accounts: Record<string, string> = {};
+        try {
+          if (accountsStr) accounts = JSON.parse(accountsStr);
+        } catch(e) {}
+        accounts[email] = password;
+        localStorage.setItem('saved_accounts', JSON.stringify(accounts));
+      } else {
+        localStorage.removeItem('rememberMe');
+        const accountsStr = localStorage.getItem('saved_accounts');
+        if (accountsStr) {
+          try {
+            const accounts = JSON.parse(accountsStr);
+            delete accounts[email];
+            localStorage.setItem('saved_accounts', JSON.stringify(accounts));
+          } catch(e) {}
+        }
+      }
+
+      const freshlySavedUserStr = localStorage.getItem('user');
+      let freshlySavedUser = data.user;
+      if (freshlySavedUserStr) {
+        try { freshlySavedUser = JSON.parse(freshlySavedUserStr); } catch(e) {}
+      }
+
+      alert('เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับ ' + (freshlySavedUser?.full_name || ''));
+
+      // =========================================================
+      // ✅ 2. จุดที่แก้ไข: เช็ค Role เพื่อแยกหน้าอาจารย์และนักเรียน
+      // =========================================================
+      // สมมติว่า Backend ส่ง role มาในรูปแบบ 'TEACHER' หรือ 'STUDENT'
+      const userRole = freshlySavedUser?.role?.toUpperCase(); 
+
+      if (userRole === 'ADMIN') {
+        navigate('/admin-dashboard'); // 👨‍💼 ถ้าเป็นแอดมิน ไปหน้าแดชบอร์ดแอดมิน
+      } else if (userRole === 'TEACHER') {
+        navigate('/teacher-dashboard'); // 👨‍🏫 ถ้าเป็นอาจารย์ ไปหน้าแดชบอร์ดอาจารย์
+      } else {
+        navigate('/profile'); // 👨‍🎓 ถ้าเป็นนักเรียน (หรือไม่มีระบุ) ไปหน้าโปรไฟล์ปกติ
+      }
 
     } catch (err: any) {
       console.error("Login Error:", err);
@@ -63,7 +167,7 @@ export default function Login() {
     }
   };
 
-  // --- ส่วน UI (คงเดิม) ---
+  // --- ส่วน UI ---
   return (
     <div className="page-container">
       <nav className="navbar">
@@ -89,19 +193,26 @@ export default function Login() {
             <div className="form-group">
               <input 
                 type="email" placeholder="อีเมล" className="form-input"
+                name="email"
                 value={email} onChange={(e) => setEmail(e.target.value)} required
               />
             </div>
             <div className="form-group">
               <input 
                 type="password" placeholder="รหัสผ่าน" className="form-input"
+                name="password"
                 value={password} onChange={(e) => setPassword(e.target.value)} required
               />
             </div>
 
             <div className="form-options">
               <label style={{display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer'}}>
-                <input type="checkbox" style={{ accentColor: '#0f172a' }} /> จดจำฉันไว้
+                <input 
+                  type="checkbox" 
+                  style={{ accentColor: '#0f172a' }} 
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                /> จดจำฉันไว้
               </label>
               <span className="forgot-password" onClick={() => navigate('/forgot-password')}>ลืมรหัสผ่าน?</span>
             </div>
@@ -119,7 +230,7 @@ export default function Login() {
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
             </svg>
-            เข้าสู่ระบบด้วย Google
+             เข้าสู่ระบบด้วย Google
           </button>
 
           <p style={{marginTop: '1.5rem', fontSize: '0.9rem', color: '#666'}}>
@@ -129,7 +240,7 @@ export default function Login() {
       </main>
 
       <footer className="footer">
-         {/* ... Footer Code เดิม ... */}
+         {/* ... Footer Code ... */}
       </footer>
     </div>
   );
