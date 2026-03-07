@@ -109,12 +109,14 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f1f5f9', fontFamily: 'Kanit, sans-serif' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#f1f5f9', fontFamily: 'Kanit, sans-serif' }}>
       
-      {/* ==========================================
-          SIDEBAR (Left) 
-          ========================================== */}
-      <aside style={{ width: '260px', backgroundColor: '#1e3a5f', color: '#fff', display: 'flex', flexDirection: 'column' }}>
+      {/* Top Section (Sidebar + Main Content) */}
+      <div style={{ display: 'flex', flex: 1 }}>
+        {/* ==========================================
+            SIDEBAR (Left) 
+            ========================================== */}
+        <aside style={{ width: '260px', backgroundColor: '#1e3a5f', color: '#fff', display: 'flex', flexDirection: 'column' }}>
         {/* Logo Area */}
         <div style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#0f172a' }}>
            <img src={logoImage} alt="Logo" style={{ height: '35px' }} />
@@ -167,11 +169,6 @@ export default function AdminDashboard() {
              <LogOut size={18} /> ออกจากระบบ
            </button>
          </div>
-
-        <div style={{ padding: '20px', fontSize: '0.8rem', color: '#94a3b8', textAlign: 'center', backgroundColor: '#0f172a' }}>
-           Born2Code<br/>
-           "ตัวช่วยที่จะทำให้คุณประสบความสำเร็จทางด้านคอมพิวเตอร์"
-        </div>
       </aside>
 
 
@@ -601,7 +598,32 @@ export default function AdminDashboard() {
           )}
 
         </div>
-      </main>
+        </main>
+      </div>
+
+      {/* Footer */}
+      <footer className="footer" style={{ marginTop: 'auto', background: '#0f172a', padding: '3rem 5%' }}>
+        <div className="footer-content" style={{ flexDirection: 'column', gap: '2rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+            <img src={logoImage} alt="Logo" style={{ height: '50px', marginRight: '15px' }} />
+            <img src={fullLogo} alt="Logo" style={{ height: '50px' }} />
+            <span style={{ fontSize: '1rem', fontWeight: '500', color: '#fff' }}>“ ตัวช่วยที่จะทำให้คุณประสบความสำเร็จทางด้านคอมพิวเตอร์”</span>
+          </div>
+          <div style={{ width: '100%', height: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '3rem', width: '100%' }}>
+            <div>
+              <h4 style={{ marginBottom: '0.8rem', fontSize: '1.1rem', color: '#fff' }}>ที่อยู่</h4>
+              <p style={{ marginBottom: '0.3rem', color: '#94a3b8' }}>สถาบันบอร์นทูโค้ด เลขที่ 15 ถ.กาญจนวณิชย์</p>
+              <p style={{ marginBottom: '1.5rem', color: '#94a3b8' }}>อ.หาดใหญ่ จ.สงขลา 90110</p>
+            </div>
+            <div>
+                <h4 style={{ marginBottom: '0.8rem', fontSize: '1.1rem', color: '#fff' }}>ช่องทางการติดต่อ</h4>
+                <p style={{color: '#94a3b8'}}>อีเมล Born2Code@coe.co.th</p>
+            </div>
+          </div>
+        </div>
+      </footer>
+
     </div>
   );
 }
