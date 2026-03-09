@@ -78,9 +78,24 @@ export default function Header({ user }: HeaderProps) {
                 >
                   <span className="menu-text">ประวัติผู้สอน</span>
                 </button>
-                <button 
+                 <button 
                   className="menu-item"
-                  onClick={() => handleMenuClick('/profile')}
+                  onClick={() => {
+                    let path = '/profile';
+                    if (user?.role === 'ADMIN' || user?.role === 'admin') path = '/admin-dashboard';
+                    else if (user?.role === 'TEACHER' || user?.role === 'teacher') path = '/teacher-dashboard';
+                    else {
+                      try {
+                        const stored = localStorage.getItem('user');
+                        if (stored) {
+                          const parsed = JSON.parse(stored);
+                          if (parsed.role === 'ADMIN') path = '/admin-dashboard';
+                          else if (parsed.role === 'TEACHER') path = '/teacher-dashboard';
+                        }
+                      } catch(e) {}
+                    }
+                    handleMenuClick(path);
+                  }}
                 >
                   <span className="menu-text">บริการผู้ใช้งาน</span>
                 </button>
