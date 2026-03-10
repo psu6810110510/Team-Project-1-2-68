@@ -167,26 +167,9 @@ export default function Login() {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    setError('');
-
-    setTimeout(() => {
-      const mockGoogleUser = {
-        id: 'g' + Date.now(),
-        full_name: 'ผู้ใช้ Google',
-        email: 'user.google@gmail.com',
-        role: 'STUDENT',
-        image: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=200&h=200'
-      };
-      const fakeToken = "mock_google_token_" + Date.now();
-      localStorage.setItem('access_token', fakeToken);
-      localStorage.setItem('user', JSON.stringify(mockGoogleUser));
-
-      alert('เข้าสู่ระบบด้วย Google สำเร็จ! ยินดีต้อนรับ ' + mockGoogleUser.full_name);
-      setLoading(false);
-      navigate('/profile');
-    }, 1500);
+  const handleGoogleLogin = () => {
+    // ✅ Redirect ไปหน้า Google Login จริงผ่าน Backend
+    window.location.href = `${API_URL}/auth/google`;
   };
 
   return (

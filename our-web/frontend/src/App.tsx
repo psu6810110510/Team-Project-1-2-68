@@ -9,6 +9,7 @@ import TeacherDashboard from './pages/TeacherDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Courses from './components/Courses';
 import ExamManagement from './pages/ExamManagement';
+import GoogleCallback from './components/GoogleCallback';
 
 // --- Import ของฝั่ง biw ---
 import CourseLearning from './pages/CourseLearning';
@@ -29,6 +30,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/auth/google/callback" element={<GoogleCallback />} />
           <Route path="/profile" element={<StudentProfile />} />
           <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
