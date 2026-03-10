@@ -34,11 +34,19 @@ import { AuthModule } from './auth/auth.module'; // ✅ Auth module หลัก
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',
-      port: 5435, // จากโค้ดคุณใช้พอร์ต 5435
-      username: 'admin',
-      password: 'password123',
-      database: 'Finalproy1_dev',
+      // ✅ รองรับทั้ง DATABASE_URL (Cloud) และแยกค่า (Local Docker)
+      ...(process.env.DATABASE_URL
+        ? {
+            url: process.env.DATABASE_URL,
+            ssl: { rejectUnauthorized: false },
+          }
+        : {
+            host: process.env.DB_HOST || 'localhost',
+            port: parseInt(process.env.DB_PORT || '5435'),
+            username: process.env.DB_USERNAME || 'admin',
+            password: process.env.DB_PASSWORD || 'password123',
+            database: process.env.DB_NAME || 'Finalproy1_dev',
+          }),
       entities: [
         User,
         Profile,
