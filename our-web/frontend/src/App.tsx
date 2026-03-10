@@ -9,6 +9,7 @@ import TeacherDashboard from './pages/TeacherDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Courses from './components/Courses';
 import ExamManagement from './pages/ExamManagement';
+import CourseLearning from './pages/CourseLearning';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/courses" element={<Courses />} />
+        <Route path="/learning/:courseId" element={<CourseLearning />} />
         <Route path="/exam-management/:courseId" element={<ExamManagement />} />
       </Routes>
     </Router>

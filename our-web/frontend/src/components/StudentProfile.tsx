@@ -1,9 +1,9 @@
 /* ไฟล์: src/components/StudentProfile.tsx */
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom'; 
+import { useNavigate } from 'react-router-dom';
 import Header from './Header';
-import '../styles/LoginTheme.css'; 
-import '../styles/ProfileTheme.css'; 
+import '../styles/LoginTheme.css';
+import '../styles/ProfileTheme.css';
 import { Search, ShoppingCart, Menu, User, BookOpen, Heart, LogOut, Edit3, Camera, ChevronLeft, FileText, MonitorPlay, CheckSquare, Clock, Calendar, Award, X } from 'lucide-react';
 import logoImage from '../assets/logo.png';
 import fullLogo from '../assets/name.png';
@@ -20,7 +20,7 @@ export default function StudentProfile() {
     email: '',
     phone: '',
     image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200',
-    description: '' 
+    description: ''
   });
 
   const [activeMenu, setActiveMenu] = useState('courses'); // ตั้งค่าเริ่มต้นหน้าคอร์ส (ตามที่คุณต้องการ)
@@ -30,25 +30,25 @@ export default function StudentProfile() {
 
   // --- 2. Mock Data ข้อมูลจำลอง (อยู่ครบ) ---
   const myCourses = [
-    { 
-      id: 1, 
-      title: 'Data Science with Python', 
-      instructor: 'นายอาร์ม ตัวจริง', 
-      startDate: '1 ก.พ. 67', 
-      expireDate: '31 ม.ค. 68', 
-      lastAccess: '1 วันที่แล้ว', 
-      progress: 30, 
-      image: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?auto=format&fit=crop&w=400&q=80' 
+    {
+      id: 1,
+      title: 'Data Science with Python',
+      instructor: 'นายอาร์ม ตัวจริง',
+      startDate: '1 ก.พ. 67',
+      expireDate: '31 ม.ค. 68',
+      lastAccess: '1 วันที่แล้ว',
+      progress: 30,
+      image: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?auto=format&fit=crop&w=400&q=80'
     },
-    { 
-      id: 2, 
-      title: 'Data Visualization', 
-      instructor: 'นายอาร์ม ตัวจริง', 
-      startDate: '1 ก.พ. 67', 
-      expireDate: '31 ม.ค. 68', 
-      lastAccess: '5 วันที่แล้ว', 
-      progress: 15, 
-      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=400&q=80' 
+    {
+      id: 2,
+      title: 'Data Visualization',
+      instructor: 'นายอาร์ม ตัวจริง',
+      startDate: '1 ก.พ. 67',
+      expireDate: '31 ม.ค. 68',
+      lastAccess: '5 วันที่แล้ว',
+      progress: 15,
+      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=400&q=80'
     }
   ];
 
@@ -86,31 +86,31 @@ export default function StudentProfile() {
     const fetchUserProfile = async () => {
       const storedUser = localStorage.getItem('user');
       const token = localStorage.getItem('access_token');
-      
+
       if (!token) {
         navigate('/login');
         return;
       }
 
       if (storedUser) {
-         const userObj = JSON.parse(storedUser);
-         setUserData(prev => ({
-           ...prev,
-           firstName: userObj.full_name || userObj.firstName || 'ไม่ได้ระบุชื่อ', 
-           email: userObj.email || '',
-           phone: userObj.phone || prev.phone,
-           description: userObj.description || prev.description,
-           image: userObj.image || prev.image 
-         }));
+        const userObj = JSON.parse(storedUser);
+        setUserData(prev => ({
+          ...prev,
+          firstName: userObj.full_name || userObj.firstName || 'ไม่ได้ระบุชื่อ',
+          email: userObj.email || '',
+          phone: userObj.phone || prev.phone,
+          description: userObj.description || prev.description,
+          image: userObj.image || prev.image
+        }));
       }
     };
     fetchUserProfile();
   }, [navigate]);
 
   const handleLogout = () => {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user');
-      navigate('/login');
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('user');
+    navigate('/login');
   };
 
   // --- ฟังก์ชันพิมพ์เฉพาะใบประกาศ ---
@@ -129,14 +129,29 @@ export default function StudentProfile() {
         <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
         <style>
           * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { font-family: 'Kanit', sans-serif; padding: 40px; background: white; }
+          body { 
+            font-family: 'Kanit', sans-serif; 
+            padding: 40px; 
+            background: white; 
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
           button { display: none !important; }
           @media print {
-            body { padding: 20px; }
+            body { 
+              padding: 0px; 
+            }
+            @page {
+              margin: 0;
+            }
           }
         </style>
       </head>
-      <body>${html}</body>
+      <body style="display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0;">
+        <div style="width: 100%; max-width: 800px; padding: 20px;">
+          ${html}
+        </div>
+      </body>
       </html>
     `);
     printWindow.document.close();
@@ -207,7 +222,7 @@ export default function StudentProfile() {
 
     // 3. 🔥 บันทึกลง LocalStorage (เพื่อให้รีเฟรชแล้วยังจำค่าได้)
     const storedUser = localStorage.getItem('user');
-    
+
     if (storedUser) {
       const parsed = JSON.parse(storedUser);
       parsed[dbField] = editValue;
@@ -229,7 +244,7 @@ export default function StudentProfile() {
         console.error('Error saving data:', err);
       }
     }
-    closeModal(); 
+    closeModal();
   };
 
   const getModalTitle = () => {
@@ -248,15 +263,15 @@ export default function StudentProfile() {
   };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; 
+    const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = async () => {
         const base64String = reader.result as string;
-        
+
         // อัปเดตหน้าจอ
         setUserData(prev => ({ ...prev, image: base64String }));
-        
+
         // 🔥 บันทึกลง LocalStorage
         const storedUser = localStorage.getItem('user');
         const token = localStorage.getItem('access_token');
@@ -284,13 +299,13 @@ export default function StudentProfile() {
   // --- 6. ส่วนการแสดงผล (UI) ---
   return (
     <div className="page-container">
-       {/* ใช้ Header component แทน navbar เดิม */}
-       <Header user={{
-         email: userData.email,
-         role: 'student',
-         id: 0, // หรือใช้ ID จริงถ้ามีใน localStorage
-         profileImage: userData.image
-       }} />
+      {/* ใช้ Header component แทน navbar เดิม */}
+      <Header user={{
+        email: userData.email,
+        role: 'student',
+        id: 0, // หรือใช้ ID จริงถ้ามีใน localStorage
+        profileImage: userData.image
+      }} />
 
       <div className="profile-page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <div style={{ width: '100%', maxWidth: '1200px', marginBottom: '1.5rem', marginTop: '1rem' }}>
@@ -303,21 +318,21 @@ export default function StudentProfile() {
           {/* --- Sidebar ด้านซ้าย --- */}
           <aside className="profile-sidebar">
             <div style={{ position: 'relative', display: 'inline-block', marginBottom: '1rem' }}>
-               <img src={userData.image} alt="Profile" className="sidebar-avatar" style={{ objectFit: 'cover' }} />
-               {/* ปุ่มเปลี่ยนรูป */}
-               <div 
-                  onClick={handleCameraClick}
-                  style={{ 
-                    position: 'absolute', bottom: '10px', right: '0', background: 'white', 
-                    borderRadius: '50%', padding: '6px', cursor: 'pointer', 
-                    border: '1px solid #e2e8f0', display: 'flex', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                  }}
-               >
-                 <Camera size={16} color="#475569"/>
-               </div>
-               <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageChange} style={{ display: 'none' }} />
+              <img src={userData.image} alt="Profile" className="sidebar-avatar" style={{ objectFit: 'cover' }} />
+              {/* ปุ่มเปลี่ยนรูป */}
+              <div
+                onClick={handleCameraClick}
+                style={{
+                  position: 'absolute', bottom: '10px', right: '0', background: 'white',
+                  borderRadius: '50%', padding: '6px', cursor: 'pointer',
+                  border: '1px solid #e2e8f0', display: 'flex', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}
+              >
+                <Camera size={16} color="#475569" />
+              </div>
+              <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageChange} style={{ display: 'none' }} />
             </div>
-            
+
             <h2 className="sidebar-name" style={{ marginBottom: '0.2rem' }}>{userData.firstName} {userData.lastName}</h2>
             <p style={{ fontSize: '0.9rem', color: '#94a3b8', marginBottom: '1rem' }}>{userData.email}</p>
             <p style={{ fontSize: '1rem', color: '#334155', fontWeight: '600', marginBottom: '2rem' }}>
@@ -337,7 +352,7 @@ export default function StudentProfile() {
 
           {/* --- Content ด้านขวา --- */}
           <main className="profile-content">
-            
+
             {/* 1. หน้าข้อมูลส่วนตัว */}
             {activeMenu === 'profile' && (
               <>
@@ -355,7 +370,7 @@ export default function StudentProfile() {
                   </div>
                   <div className="info-row">
                     <span className="info-label">อีเมล</span>
-                    <span className="info-value" style={{color: '#94a3b8'}}>{userData.email}</span>
+                    <span className="info-value" style={{ color: '#94a3b8' }}>{userData.email}</span>
                   </div>
                   <div className="info-row">
                     <span className="info-label">เบอร์โทรศัพท์</span>
@@ -379,62 +394,63 @@ export default function StudentProfile() {
                   <div className="service-card"><div className="service-icon-box"><FileText size={32} /></div><div className="service-text">คลังโจทย์</div></div>
                   <div className="service-card"><div className="service-icon-box"><MonitorPlay size={32} /></div><div className="service-text">ระบบสอบออนไลน์</div></div>
                 </div>
-                
+
                 <div className="section-header"><span className="section-title-text">คอร์สเรียนของฉัน</span></div>
-                
+
                 {/* การ์ดแนวนอน (Horizontal Card) - อยู่ครบ! */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                   {myCourses.map((course) => (
-                    <div key={course.id} style={{ 
-                        display: 'flex', 
-                        flexWrap: 'wrap',
-                        background: 'white', 
-                        border: '1px solid #e2e8f0', 
-                        borderRadius: '12px', 
-                        padding: '1.2rem',
-                        gap: '1.5rem',
-                        alignItems: 'flex-start',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                    <div key={course.id} style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      background: 'white',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '12px',
+                      padding: '1.2rem',
+                      gap: '1.5rem',
+                      alignItems: 'flex-start',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
                     }}>
-                      <img src={course.image} alt={course.title} style={{ 
-                          width: '180px', 
-                          height: '130px', 
-                          objectFit: 'cover', 
-                          borderRadius: '10px',
-                          flexShrink: 0
+                      <img src={course.image} alt={course.title} style={{
+                        width: '180px',
+                        height: '130px',
+                        objectFit: 'cover',
+                        borderRadius: '10px',
+                        flexShrink: 0
                       }} />
 
                       <div style={{ flex: 1, width: '100%', minWidth: '250px' }}>
                         <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '0.8rem', color: '#0f172a' }}>{course.title}</h3>
-                        
+
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.5rem', fontSize: '0.9rem', color: '#64748b', marginBottom: '1rem' }}>
-                           <div>อาจารย์ : <span style={{color:'#334155', fontWeight:'500'}}>{course.instructor}</span></div>
-                           <div>เริ่มเรียน : {course.startDate}</div>
-                           <div>หมดเวลาเรียน : {course.expireDate}</div>
-                           <div>เรียนล่าสุด : {course.lastAccess}</div>
+                          <div>อาจารย์ : <span style={{ color: '#334155', fontWeight: '500' }}>{course.instructor}</span></div>
+                          <div>เริ่มเรียน : {course.startDate}</div>
+                          <div>หมดเวลาเรียน : {course.expireDate}</div>
+                          <div>เรียนล่าสุด : {course.lastAccess}</div>
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginTop: 'auto', flexWrap: 'wrap' }}>
                           <div style={{ flex: 1, minWidth: '150px' }}>
-                              <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                                  <div style={{ width: `${course.progress}%`, background: '#38bdf8', height: '100%', borderRadius: '4px' }}></div>
-                              </div>
-                              <div style={{ fontSize: '0.85rem', color: '#0284c7', fontWeight: '600', marginTop: '6px' }}>
-                                {course.progress}% Completed
-                              </div>
+                            <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                              <div style={{ width: `${course.progress}%`, background: '#38bdf8', height: '100%', borderRadius: '4px' }}></div>
+                            </div>
+                            <div style={{ fontSize: '0.85rem', color: '#0284c7', fontWeight: '600', marginTop: '6px' }}>
+                              {course.progress}% Completed
+                            </div>
                           </div>
-                          <button style={{ 
-                              padding: '8px 24px', 
-                              background: '#1e293b', 
-                              color: 'white', 
-                              borderRadius: '30px', 
-                              border: 'none', 
-                              cursor: 'pointer',
-                              fontWeight: '500',
-                              fontSize: '0.9rem',
-                          }} 
-                          onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                          onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                          <button style={{
+                            padding: '8px 24px',
+                            background: '#1e293b',
+                            color: 'white',
+                            borderRadius: '30px',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontWeight: '500',
+                            fontSize: '0.9rem',
+                          }}
+                            onClick={() => navigate(`/learning/${course.id}`)}
+                            onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                            onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
                           >
                             เรียนต่อ
                           </button>
@@ -484,7 +500,7 @@ export default function StudentProfile() {
                         <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#0f172a', marginBottom: '0.4rem' }}>{course.title}</h3>
                         <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '0.3rem' }}>อาจารย์: <span style={{ color: '#334155', fontWeight: '500' }}>{course.instructor}</span></p>
                         <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '1.2rem' }}>สำเร็จเมื่อ: <span style={{ color: '#059669', fontWeight: '600' }}>{course.completedDate}</span></p>
-                        
+
                         {/* Progress Full */}
                         <div style={{ marginBottom: '1rem' }}>
                           <div style={{ height: '8px', background: '#dcfce7', borderRadius: '4px', overflow: 'hidden' }}>
@@ -534,10 +550,10 @@ export default function StudentProfile() {
                 <div className="favorites-grid">
                   {purchasedHistory.map((item) => (
                     <div key={item.id} className="fav-card">
-                      <div className="fav-card-heart" style={{cursor:'default'}}><CheckSquare size={18} color="#0284c7" /></div>
+                      <div className="fav-card-heart" style={{ cursor: 'default' }}><CheckSquare size={18} color="#0284c7" /></div>
                       <img src={item.image} alt={item.title} className="fav-card-img" />
                       <h3 className="fav-card-title">{item.title}</h3>
-                      <p style={{color: '#0284c7', fontWeight: 'bold', marginTop: '0.5rem'}}>{item.price}</p>
+                      <p style={{ color: '#0284c7', fontWeight: 'bold', marginTop: '0.5rem' }}>{item.price}</p>
                     </div>
                   ))}
                 </div>
@@ -548,10 +564,10 @@ export default function StudentProfile() {
             {activeMenu === 'certificates' && (
               <>
                 <div className="content-header"><span className="content-title">ใบประกาศนียบัตรของฉัน</span></div>
-                
+
                 {/* Certificate Grid */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginTop: '1rem' }}>
-                  
+
                   {/* Certificate 1 */}
                   <div id="cert-1" style={{
                     border: '8px double #c9a84c',
@@ -675,9 +691,9 @@ export default function StudentProfile() {
               <p>ส.-อา. 8.00 - 21.00</p>
             </div>
             <div>
-                <h4 style={{ marginBottom: '0.8rem', fontSize: '1.1rem', color: '#fff' }}>ช่องทางการติดต่อ</h4>
-                <p style={{ marginBottom: '0.3rem' }}>เบอร์โทรศัพท์ 03 3333 3333</p>
-                <p>อีเมล Born2Code@coe.co.th</p>
+              <h4 style={{ marginBottom: '0.8rem', fontSize: '1.1rem', color: '#fff' }}>ช่องทางการติดต่อ</h4>
+              <p style={{ marginBottom: '0.3rem' }}>เบอร์โทรศัพท์ 03 3333 3333</p>
+              <p>อีเมล Born2Code@coe.co.th</p>
             </div>
           </div>
         </div>
@@ -705,7 +721,7 @@ export default function StudentProfile() {
               {getModalTitle()}
             </h3>
             {editingField === 'password' && (
-              <input 
+              <input
                 type="password"
                 value={oldPassword}
                 onChange={(e) => setOldPassword(e.target.value)}
@@ -718,7 +734,7 @@ export default function StudentProfile() {
                 }}
               />
             )}
-            <input 
+            <input
               type={editingField === 'password' ? 'password' : 'text'}
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
@@ -730,10 +746,10 @@ export default function StudentProfile() {
                 backgroundColor: '#ffffff', color: '#334155'
               }}
             />
-            <button 
-              onClick={handleSaveEdit} 
-              style={{ 
-                width: '100%', padding: '10px', fontSize: '1rem', 
+            <button
+              onClick={handleSaveEdit}
+              style={{
+                width: '100%', padding: '10px', fontSize: '1rem',
                 backgroundColor: '#0284c7', color: '#ffffff',
                 border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '500'
               }}

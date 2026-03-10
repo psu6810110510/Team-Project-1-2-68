@@ -1,7 +1,7 @@
 /* ไฟล์: src/components/Login.tsx */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../styles/LoginTheme.css'; 
+import '../styles/LoginTheme.css';
 import { Search, ShoppingCart, Menu, User } from 'lucide-react';
 import logoImage from '../assets/logo.png';
 import fullLogo from '../assets/name.png';
@@ -14,13 +14,22 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
 
+  // Forgot Password modal states
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotStatus, setForgotStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [forgotError, setForgotError] = useState('');
+
   // Load remembered preference on mount
+  // ปิดโค้ดส่วนนี้ไว้ เพื่อไม่ให้ระบบกดติ๊ก "จดจำฉันไว้" อัตโนมัติ
+  /*
   useEffect(() => {
     const savedRememberMe = localStorage.getItem('rememberMe') === 'true';
     if (savedRememberMe) {
       setRememberMe(true);
     }
   }, []);
+  */
 
   // Update password field automatically when email matches a saved account
   useEffect(() => {
@@ -41,12 +50,12 @@ export default function Login() {
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     const userStr = localStorage.getItem('user');
-    
+
     if (token && userStr) {
       try {
         const user = JSON.parse(userStr);
         const userRole = user.role?.toUpperCase();
-        
+
         if (userRole === 'ADMIN') {
           navigate('/admin-dashboard');
         } else if (userRole === 'TEACHER') {
@@ -61,6 +70,18 @@ export default function Login() {
     }
   }, [navigate]);
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotStatus('loading');
+    setForgotError('');
+
+    // Simulate API call for forgot password
+    // In the future this should call a real backend /auth/forgot-password endpoint
+    setTimeout(() => {
+      setForgotStatus('success');
+    }, 1500);
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -72,8 +93,8 @@ export default function Login() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: email,       
-          password: password, 
+          email: email,
+          password: password,
         }),
       });
 
@@ -90,7 +111,7 @@ export default function Login() {
         localStorage.removeItem('user');
 
         localStorage.setItem('access_token', data.access_token);
-        
+
         // 🔥 ดึงข้อมูล Profile ใหม่ล่าสุดจาก server มาผสมกับ data.user เดิมเผื่อมีอัพเดท
         let updatedUser = data.user || {};
         try {
@@ -122,25 +143,20 @@ export default function Login() {
         let accounts: Record<string, string> = {};
         try {
           if (accountsStr) accounts = JSON.parse(accountsStr);
-        } catch(e) {}
+        } catch (e) { }
         accounts[email] = password;
         localStorage.setItem('saved_accounts', JSON.stringify(accounts));
       } else {
         localStorage.removeItem('rememberMe');
-        const accountsStr = localStorage.getItem('saved_accounts');
-        if (accountsStr) {
-          try {
-            const accounts = JSON.parse(accountsStr);
-            delete accounts[email];
-            localStorage.setItem('saved_accounts', JSON.stringify(accounts));
-          } catch(e) {}
-        }
+        // เราจะไม่ลบข้อมูลใน saved_accounts เพื่อให้รหัสเดิมยังอยู่
+        // เผื่อผู้ใช้ต้องการให้จำอีเมลโดยพิมพ์เมล์แล้วเด้งรหัสมาให้เลย 
+        // แต่แค่ไม่ได้บังคับติ๊กจดจำฉันไว้ทุกครั้ง
       }
 
       const freshlySavedUserStr = localStorage.getItem('user');
       let freshlySavedUser = data.user;
       if (freshlySavedUserStr) {
-        try { freshlySavedUser = JSON.parse(freshlySavedUserStr); } catch(e) {}
+        try { freshlySavedUser = JSON.parse(freshlySavedUserStr); } catch (e) { }
       }
 
       alert('เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับ ' + (freshlySavedUser?.full_name || ''));
@@ -149,7 +165,7 @@ export default function Login() {
       // ✅ 2. จุดที่แก้ไข: เช็ค Role เพื่อแยกหน้าอาจารย์และนักเรียน
       // =========================================================
       // สมมติว่า Backend ส่ง role มาในรูปแบบ 'TEACHER' หรือ 'STUDENT'
-      const userRole = freshlySavedUser?.role?.toUpperCase(); 
+      const userRole = freshlySavedUser?.role?.toUpperCase();
 
       if (userRole === 'ADMIN') {
         navigate('/admin-dashboard'); // 👨‍💼 ถ้าเป็นแอดมิน ไปหน้าแดชบอร์ดแอดมิน
@@ -165,6 +181,29 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError('');
+
+    // Simulate API call for Google login
+    setTimeout(() => {
+      const mockGoogleUser = {
+        id: 'g' + Date.now(),
+        full_name: 'ผู้ใช้ Google',
+        email: 'user.google@gmail.com',
+        role: 'STUDENT',
+        image: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=200&h=200'
+      };
+      const fakeToken = "mock_google_token_" + Date.now();
+      localStorage.setItem('access_token', fakeToken);
+      localStorage.setItem('user', JSON.stringify(mockGoogleUser));
+
+      alert('เข้าสู่ระบบด้วย Google สำเร็จ! ยินดีต้อนรับ ' + mockGoogleUser.full_name);
+      setLoading(false);
+      navigate('/profile');
+    }, 1500);
   };
 
   // --- ส่วน UI ---
@@ -186,19 +225,19 @@ export default function Login() {
       <main className="main-content">
         <div className="login-card">
           <h1 className="login-title">เข้าสู่ระบบ</h1>
-          
-          {error && <div style={{color: '#ef4444', marginBottom: '1rem', backgroundColor: '#fee2e2', padding: '10px', borderRadius: '6px'}}>{error}</div>}
+
+          {error && <div style={{ color: '#ef4444', marginBottom: '1rem', backgroundColor: '#fee2e2', padding: '10px', borderRadius: '6px' }}>{error}</div>}
 
           <form onSubmit={handleLogin}>
             <div className="form-group">
-              <input 
+              <input
                 type="email" placeholder="อีเมล" className="form-input"
                 name="email"
                 value={email} onChange={(e) => setEmail(e.target.value)} required
               />
             </div>
             <div className="form-group">
-              <input 
+              <input
                 type="password" placeholder="รหัสผ่าน" className="form-input"
                 name="password"
                 value={password} onChange={(e) => setPassword(e.target.value)} required
@@ -206,15 +245,25 @@ export default function Login() {
             </div>
 
             <div className="form-options">
-              <label style={{display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer'}}>
-                <input 
-                  type="checkbox" 
-                  style={{ accentColor: '#0f172a' }} 
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  style={{ accentColor: '#0f172a' }}
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                 /> จดจำฉันไว้
               </label>
-              <span className="forgot-password" onClick={() => navigate('/forgot-password')}>ลืมรหัสผ่าน?</span>
+              <span
+                className="forgot-password"
+                onClick={() => {
+                  setShowForgotModal(true);
+                  setForgotStatus('idle');
+                  setForgotEmail('');
+                  setForgotError('');
+                }}
+              >
+                ลืมรหัสผ่าน?
+              </span>
             </div>
 
             <button type="submit" className="btn-primary" disabled={loading}>
@@ -222,25 +271,74 @@ export default function Login() {
             </button>
           </form>
 
-           <div className="divider"><span>หรือ</span></div>
-           <button className="btn-google" type="button">
-            <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style={{marginRight:'8px'}}>
+          <div className="divider"><span>หรือ</span></div>
+          <button className="btn-google" type="button" onClick={handleGoogleLogin} disabled={loading}>
+            <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '8px' }}>
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
             </svg>
-             เข้าสู่ระบบด้วย Google
+            เข้าสู่ระบบด้วย Google
           </button>
 
-          <p style={{marginTop: '1.5rem', fontSize: '0.9rem', color: '#666'}}>
-            ยังไม่มีบัญชีใช่ไหม? <span style={{color: '#0f172a', fontWeight: '600', cursor: 'pointer', textDecoration: 'underline'}} onClick={() => navigate('/register')}>สมัครสมาชิก</span>
+          <p style={{ marginTop: '1.5rem', fontSize: '0.9rem', color: '#666' }}>
+            ยังไม่มีบัญชีใช่ไหม? <span style={{ color: '#0f172a', fontWeight: '600', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => navigate('/register')}>สมัครสมาชิก</span>
           </p>
         </div>
       </main>
 
+      {/* Forgot Password Modal Overlay */}
+      {showForgotModal && (
+        <div className="modal-overlay" onClick={() => setShowForgotModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close-btn" onClick={() => setShowForgotModal(false)}>
+              &times;
+            </button>
+            <h2 className="modal-title">ลืมรหัสผ่านใช่ไหม?</h2>
+
+            {forgotStatus === 'success' ? (
+              <>
+                <div className="modal-success-text">
+                  ถ้าอีเมลนี้มีอยู่ในระบบ เราได้ส่งลิงก์สำหรับรีเซ็ตรหัสผ่านไปให้แล้ว กรุณาตรวจสอบกล่องจดหมายของคุณ
+                </div>
+                <button className="btn-primary" onClick={() => setShowForgotModal(false)}>
+                  ตกลง
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="modal-text">
+                  กรุณากรอกอีเมลที่ใช้สมัครสมาชิก เราจะส่งลิงก์เพื่อรีเซ็ตรหัสผ่านใหม่ให้คุณ
+                </p>
+                {forgotError && (
+                  <div style={{ color: '#ef4444', marginBottom: '1rem', backgroundColor: '#fee2e2', padding: '10px', borderRadius: '6px', fontSize: '0.9rem', textAlign: 'left' }}>
+                    {forgotError}
+                  </div>
+                )}
+                <form onSubmit={handleForgotPassword} style={{ textAlign: 'left' }}>
+                  <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                    <input
+                      type="email"
+                      placeholder="กรอกอีเมลของคุณ"
+                      className="form-input"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <button type="submit" className="btn-primary" disabled={forgotStatus === 'loading'} style={{ marginBottom: 0 }}>
+                    {forgotStatus === 'loading' ? 'กำลังส่ง...' : 'ส่งลิงก์รีเซ็ตรหัสผ่าน'}
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       <footer className="footer">
-         {/* ... Footer Code ... */}
+        {/* ... Footer Code ... */}
       </footer>
     </div>
   );
