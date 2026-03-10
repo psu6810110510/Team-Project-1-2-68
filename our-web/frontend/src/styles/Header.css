@@ -116,6 +116,28 @@
   transition: all 0.3s ease;
 }
 
+/* Cart Button */
+.cart-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  margin-left: 8px;
+}
+
+.cart-btn:hover {
+  transform: scale(1.1);
+  opacity: 0.8;
+}
+
+.cart-btn svg {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
 /* Dropdown Menu */
 .dropdown-menu {
   position: absolute;

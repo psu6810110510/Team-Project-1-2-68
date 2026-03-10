@@ -10,6 +10,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import Courses from './components/Courses';
 import ExamManagement from './pages/ExamManagement';
 import TeacherProfile from './components/TeacherProfile';
+import Cart from './components/Cart';
 import './styles/TeacherProfile.css';
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
           <Route path="/exam-management/:courseId" element={<ExamManagement />} />
           <Route path="/teacher-profile" element={<TeacherProfile />} />
           <Route path="/instructors" element={<TeacherProfile />} />
+          <Route path="/cart" element={<Cart />} />
         </Routes>
       </Router>
     </div>
