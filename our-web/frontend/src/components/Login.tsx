@@ -5,6 +5,7 @@ import '../styles/LoginTheme.css';
 import { Search, ShoppingCart, Menu, User } from 'lucide-react';
 import logoImage from '../assets/logo.png';
 import fullLogo from '../assets/name.png';
+import Footer from './Footer';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -239,9 +240,7 @@ export default function Login() {
         </div>
       </main>
 
-      <footer className="footer">
-         {/* ... Footer Code ... */}
-      </footer>
+      <Footer />
     </div>
   );
 }

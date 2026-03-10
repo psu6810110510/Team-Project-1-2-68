@@ -9,23 +9,30 @@ import TeacherDashboard from './pages/TeacherDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Courses from './components/Courses';
 import ExamManagement from './pages/ExamManagement';
+import TeacherProfile from './components/TeacherProfile';
+import './styles/TeacherProfile.css';
+import Header from './components/Header';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/profile" element={<StudentProfile />} />
-        <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
-        <Route path="/admin-dashboard" element={<AdminDashboard />} />
-        <Route path="/courses" element={<Courses />} />
-        <Route path="/exam-management/:courseId" element={<ExamManagement />} />
-      </Routes>
-    </Router>
+    <div className="App">
+      <Router>
+        <Header />
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/profile" element={<StudentProfile />} />
+          <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/courses" element={<Courses />} />
+          <Route path="/exam-management/:courseId" element={<ExamManagement />} />
+          <Route path="/teacher-profile" element={<TeacherProfile />} />
+        </Routes>
+      </Router>
+    </div>
   );
 }
 

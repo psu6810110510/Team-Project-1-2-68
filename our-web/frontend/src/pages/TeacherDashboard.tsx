@@ -10,6 +10,8 @@ import '../styles/LoginTheme.css';
 import '../styles/ProfileTheme.css'; 
 import logoImage from '../assets/logo.png';
 import fullLogo from '../assets/name.png';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -399,14 +401,8 @@ export default function TeacherDashboard() {
 
   return (
     <div className="page-container">
-      {/* Navbar */}
-      <nav className="navbar" style={{ background: '#081324' }}>
-        <div className="nav-logo">
-          <img src={logoImage} alt="Logo" style={{ height: '50px', marginRight: '15px' }} />
-          <img src={fullLogo} alt="Logo" style={{ height: '50px', width: 'auto' }} />
-        </div>
-        <div className="nav-icons"><Search className="nav-icon" size={24} /><ShoppingCart className="nav-icon" size={24} /><Menu className="nav-icon" size={24} /><User className="nav-icon" size={24} /></div>
-      </nav>
+      {/* Replace Navbar with imported Header */}
+      <Header />
 
       <div className="profile-page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 'calc(100vh - 80px)' }}>
         <div style={{ width: '100%', maxWidth: '1200px', marginBottom: '1.5rem', marginTop: '1rem' }}>
@@ -553,29 +549,6 @@ export default function TeacherDashboard() {
           </main>
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="footer" style={{ marginTop: 'auto' }}>
-        <div className="footer-content" style={{ flexDirection: 'column', gap: '2rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
-            <img src={logoImage} alt="Logo" style={{ height: '50px', marginRight: '15px' }} />
-            <img src={fullLogo} alt="Logo" style={{ height: '50px' }} />
-            <span style={{ fontSize: '1rem', fontWeight: '500', color: '#fff' }}>“ ตัวช่วยที่จะทำให้คุณประสบความสำเร็จทางด้านคอมพิวเตอร์”</span>
-          </div>
-          <div style={{ width: '100%', height: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '3rem', width: '100%' }}>
-            <div>
-              <h4 style={{ marginBottom: '0.8rem', fontSize: '1.1rem', color: '#fff' }}>ที่อยู่</h4>
-              <p style={{ marginBottom: '0.3rem', color: '#94a3b8' }}>สถาบันบอร์นทูโค้ด เลขที่ 15 ถ.กาญจนวณิชย์</p>
-              <p style={{ marginBottom: '1.5rem', color: '#94a3b8' }}>อ.หาดใหญ่ จ.สงขลา 90110</p>
-            </div>
-            <div>
-                <h4 style={{ marginBottom: '0.8rem', fontSize: '1.1rem', color: '#fff' }}>ช่องทางการติดต่อ</h4>
-                <p style={{color: '#94a3b8'}}>อีเมล Born2Code@coe.co.th</p>
-            </div>
-          </div>
-        </div>
-      </footer>
 
       {/* ================= MODAL POPUP ================= */}
       {isModalOpen && (

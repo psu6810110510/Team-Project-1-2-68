@@ -1,4 +1,4 @@
-/* ไฟล์: src/components/StudentProfile.tsx */
+﻿/* ไฟล์: src/components/StudentProfile.tsx */
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom'; 
 import Header from './Header';
@@ -7,7 +7,7 @@ import '../styles/ProfileTheme.css';
 import { Search, ShoppingCart, Menu, User, BookOpen, Heart, LogOut, Edit3, Camera, ChevronLeft, FileText, MonitorPlay, CheckSquare, Clock, Calendar, Award, X } from 'lucide-react';
 import logoImage from '../assets/logo.png';
 import fullLogo from '../assets/name.png';
-
+import Footer from './Footer';
 
 export default function StudentProfile() {
   const navigate = useNavigate();
@@ -653,35 +653,7 @@ export default function StudentProfile() {
         </div>
       </div>
 
-      {/* --- Footer ด้านล่าง --- */}
-      <footer className="footer">
-        <div className="footer-content" style={{ flexDirection: 'column', gap: '2rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
-            {/* โลโก้คู่ (footer) */}
-            <img src={logoImage} alt="Logo" style={{ height: '50px', marginRight: '15px' }} />
-            <img src={fullLogo} alt="Logo" style={{ height: '50px' }} />
-            <span style={{ fontSize: '1rem', fontWeight: '500', color: '#fff' }}>
-              “ ตัวช่วยที่จะทำให้คุณประสบความสำเร็จทางด้านคอมพิวเตอร์”
-            </span>
-          </div>
-          <div style={{ width: '100%', height: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '3rem', width: '100%' }}>
-            <div>
-              <h4 style={{ marginBottom: '0.8rem', fontSize: '1.1rem', color: '#fff' }}>ที่อยู่</h4>
-              <p style={{ marginBottom: '0.3rem' }}>สถาบันบอร์นทูโค้ด เลขที่ 15 ถ.กาญจนวณิชย์</p>
-              <p style={{ marginBottom: '1.5rem' }}>อ.หาดใหญ่ จ.สงขลา 90110</p>
-              <h4 style={{ marginBottom: '0.8rem', fontSize: '1.1rem', color: '#fff' }}>เวลาเปิดทำการ</h4>
-              <p style={{ marginBottom: '0.3rem' }}>จ.-ศ. 16.00 - 21.00</p>
-              <p>ส.-อา. 8.00 - 21.00</p>
-            </div>
-            <div>
-                <h4 style={{ marginBottom: '0.8rem', fontSize: '1.1rem', color: '#fff' }}>ช่องทางการติดต่อ</h4>
-                <p style={{ marginBottom: '0.3rem' }}>เบอร์โทรศัพท์ 03 3333 3333</p>
-                <p>อีเมล Born2Code@coe.co.th</p>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       {/* --- Modal Popup สำหรับแก้ไขข้อมูล --- */}
       {editingField && (

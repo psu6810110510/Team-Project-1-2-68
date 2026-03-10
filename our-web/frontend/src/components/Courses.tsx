@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from './Header';
+import Footer from './Footer';
 import { courseAPI, type Course } from '../api/courseAPI';
 import courseLeftImage from '../assets/courseleftimage.png';
 import courseRightImage from '../assets/courserightimage.png';
@@ -120,6 +121,7 @@ const Courses = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };
