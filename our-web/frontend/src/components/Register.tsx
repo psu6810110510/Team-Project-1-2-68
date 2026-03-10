@@ -16,7 +16,7 @@ export default function Register() {
     phone: '',
     password: '',
     confirmPassword: '',
-    role: 'STUDENT' // ✅ 1. เพิ่ม role ลงใน State เริ่มต้นเป็นนักเรียน
+    role: 'STUDENT', // ค่าเริ่มต้นเป็น STUDENT
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -51,7 +51,7 @@ export default function Register() {
           password: formData.password,
           full_name: fullName, 
           phone: formData.phone, 
-          role: formData.role, // ✅ 2. ส่งค่า role (TEACHER/STUDENT) ไปให้ Backend
+          role: formData.role, // ✅ ส่งค่า role ที่ผู้ใช้เลือก (STUDENT หรือ TEACHER)
         }),
       });
 

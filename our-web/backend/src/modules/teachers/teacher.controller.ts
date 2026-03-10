@@ -17,7 +17,7 @@ export class TeacherController {
   }
 
   @Get(':id')
-  async getTeacherById(@Param('id') id: number): Promise<Teacher> {
+  async getTeacherById(@Param('id') id: number): Promise<Teacher | null> {
     return this.teacherService.getTeacherById(id);
   }
 
@@ -25,7 +25,7 @@ export class TeacherController {
   async updateTeacher(
     @Param('id') id: number,
     @Body() data: Partial<Teacher>,
-  ): Promise<Teacher> {
+  ): Promise<Teacher | null> {
     return this.teacherService.updateTeacher(id, data);
   }
 
