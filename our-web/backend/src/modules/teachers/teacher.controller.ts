@@ -1,10 +1,10 @@
 import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
 import { TeacherService } from './teacher.service';
-import { Teacher } from '../entities/teacher.entity';
+import { Teacher } from '../../entities/teacher.entity';
 
 @Controller('teachers')
 export class TeacherController {
-  constructor(private readonly teacherService: TeacherService) {}
+  constructor(private readonly teacherService: TeacherService) { }
 
   @Post()
   async createTeacher(@Body() data: Partial<Teacher>): Promise<Teacher> {
