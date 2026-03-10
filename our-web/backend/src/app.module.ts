@@ -21,6 +21,7 @@ import { CourseModule } from './modules/courses/course.module';
 import { ExamModule } from './modules/exams/exam.module';
 import { BookingModule } from './modules/bookings/booking.module';
 import { SeatQuotaModule } from './modules/seat-quotas/seat-quota.module';
+import { TeacherModule } from './modules/teachers/teacher.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { SeatQuotaModule } from './modules/seat-quotas/seat-quota.module';
     ExamModule,
     BookingModule,
     SeatQuotaModule,
+    TeacherModule,
   ],
   controllers: [AppController],
   providers: [AppService],

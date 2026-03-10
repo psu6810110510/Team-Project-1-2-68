@@ -5,6 +5,10 @@ import '../styles/LoginTheme.css';
 import { Search, ShoppingCart, Menu, User } from 'lucide-react';
 import logoImage from '../assets/logo.png';
 import fullLogo from '../assets/name.png';
+import Footer from './Footer';
+
+// ✅ ดึงค่า URL จากไฟล์ .env
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -19,17 +23,6 @@ export default function Login() {
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotStatus, setForgotStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [forgotError, setForgotError] = useState('');
-
-  // Load remembered preference on mount
-  // ปิดโค้ดส่วนนี้ไว้ เพื่อไม่ให้ระบบกดติ๊ก "จดจำฉันไว้" อัตโนมัติ
-  /*
-  useEffect(() => {
-    const savedRememberMe = localStorage.getItem('rememberMe') === 'true';
-    if (savedRememberMe) {
-      setRememberMe(true);
-    }
-  }, []);
-  */
 
   // Update password field automatically when email matches a saved account
   useEffect(() => {
@@ -64,7 +57,6 @@ export default function Login() {
           navigate('/profile');
         }
       } catch (err) {
-        // Suppress parse errors and just stay on login
         console.error('Invalid user data in storage');
       }
     }
@@ -76,7 +68,6 @@ export default function Login() {
     setForgotError('');
 
     // Simulate API call for forgot password
-    // In the future this should call a real backend /auth/forgot-password endpoint
     setTimeout(() => {
       setForgotStatus('success');
     }, 1500);
@@ -88,8 +79,8 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // 1. ส่งข้อมูล Login ไปที่ Backend
-      const response = await fetch('http://localhost:3000/auth/login', {
+      // ✅ ใช้ API_URL แทนการ Fix ค่า
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -105,17 +96,16 @@ export default function Login() {
         throw new Error(data.message || 'เข้าสู่ระบบไม่สำเร็จ');
       }
 
-      // 🔥 บันทึก Token ลงเครื่อง (ทับของเก่าทันที)
       if (data.access_token) {
         localStorage.removeItem('access_token');
         localStorage.removeItem('user');
 
         localStorage.setItem('access_token', data.access_token);
 
-        // 🔥 ดึงข้อมูล Profile ใหม่ล่าสุดจาก server มาผสมกับ data.user เดิมเผื่อมีอัพเดท
         let updatedUser = data.user || {};
         try {
-          const profileRes = await fetch('http://localhost:3000/auth/profile', {
+          // ✅ ใช้ API_URL แทนการ Fix ค่า
+          const profileRes = await fetch(`${API_URL}/auth/profile`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -148,9 +138,6 @@ export default function Login() {
         localStorage.setItem('saved_accounts', JSON.stringify(accounts));
       } else {
         localStorage.removeItem('rememberMe');
-        // เราจะไม่ลบข้อมูลใน saved_accounts เพื่อให้รหัสเดิมยังอยู่
-        // เผื่อผู้ใช้ต้องการให้จำอีเมลโดยพิมพ์เมล์แล้วเด้งรหัสมาให้เลย 
-        // แต่แค่ไม่ได้บังคับติ๊กจดจำฉันไว้ทุกครั้ง
       }
 
       const freshlySavedUserStr = localStorage.getItem('user');
@@ -161,18 +148,15 @@ export default function Login() {
 
       alert('เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับ ' + (freshlySavedUser?.full_name || ''));
 
-      // =========================================================
-      // ✅ 2. จุดที่แก้ไข: เช็ค Role เพื่อแยกหน้าอาจารย์และนักเรียน
-      // =========================================================
-      // สมมติว่า Backend ส่ง role มาในรูปแบบ 'TEACHER' หรือ 'STUDENT'
+      // เช็ค Role เพื่อแยกหน้าอาจารย์และนักเรียน
       const userRole = freshlySavedUser?.role?.toUpperCase();
 
       if (userRole === 'ADMIN') {
-        navigate('/admin-dashboard'); // 👨‍💼 ถ้าเป็นแอดมิน ไปหน้าแดชบอร์ดแอดมิน
+        navigate('/admin-dashboard');
       } else if (userRole === 'TEACHER') {
-        navigate('/teacher-dashboard'); // 👨‍🏫 ถ้าเป็นอาจารย์ ไปหน้าแดชบอร์ดอาจารย์
+        navigate('/teacher-dashboard');
       } else {
-        navigate('/profile'); // 👨‍🎓 ถ้าเป็นนักเรียน (หรือไม่มีระบุ) ไปหน้าโปรไฟล์ปกติ
+        navigate('/profile');
       }
 
     } catch (err: any) {
@@ -187,7 +171,6 @@ export default function Login() {
     setLoading(true);
     setError('');
 
-    // Simulate API call for Google login
     setTimeout(() => {
       const mockGoogleUser = {
         id: 'g' + Date.now(),
@@ -206,7 +189,6 @@ export default function Login() {
     }, 1500);
   };
 
-  // --- ส่วน UI ---
   return (
     <div className="page-container">
       <nav className="navbar">
@@ -337,9 +319,8 @@ export default function Login() {
         </div>
       )}
 
-      <footer className="footer">
-        {/* ... Footer Code ... */}
-      </footer>
+      {/* ✅ ลบ <footer className="footer"> ที่ซ้ำซ้อนออก เหลือแค่ Component <Footer /> */}
+      <Footer />
     </div>
   );
 }

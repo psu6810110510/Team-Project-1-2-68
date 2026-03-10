@@ -6,6 +6,7 @@ import '../styles/LoginTheme.css';
 import { Search, ShoppingCart, Menu, User} from 'lucide-react';
 import logoImage from '../assets/logo.png';
 import fullLogo from '../assets/name.png';
+import Footer from './Footer';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -162,45 +163,7 @@ export default function Register() {
         </div>
       </main>
 
-      {/* --- Footer (ส่วนล่างสุด) --- */}
-      <footer className="footer">
-        <div className="footer-content" style={{ flexDirection: 'column', gap: '2rem' }}>
-          
-          {/* ส่วนบน: โลโก้ + สโลแกน */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
-              <img src={fullLogo} alt="Logo" style={{ height: '50px' }} />
-            <span style={{ fontSize: '1rem', fontWeight: '500', color: '#fff' }}>
-              “ ตัวช่วยที่จะทำให้คุณประสบความสำเร็จทางด้านคอมพิวเตอร์”
-            </span>
-          </div>
-
-          {/* เส้นขีดคั่นบางๆ */}
-          <div style={{ width: '100%', height: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
-
-          {/* ส่วนล่าง: แบ่งเป็น 2 โซน (ซ้าย-ขวา) */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '3rem', width: '100%' }}>
-            
-            {/* ฝั่งซ้าย: ที่อยู่ + เวลาทำการ */}
-            <div>
-              <h4 style={{ marginBottom: '0.8rem', fontSize: '1.1rem', color: '#fff' }}>ที่อยู่</h4>
-              <p style={{ marginBottom: '0.3rem' }}>สถาบันบอร์นทูโค้ด เลขที่ 15 ถ.กาญจนวณิชย์</p>
-              <p style={{ marginBottom: '1.5rem' }}>อ.หาดใหญ่ จ.สงขลา 90110</p>
-              
-              <h4 style={{ marginBottom: '0.8rem', fontSize: '1.1rem', color: '#fff' }}>เวลาเปิดทำการ</h4>
-              <p style={{ marginBottom: '0.3rem' }}>จ.-ศ. 16.00 - 21.00</p>
-              <p>ส.-อา. 8.00 - 21.00</p>
-            </div>
-
-            {/* ฝั่งขวา: ช่องทางการติดต่อ */}
-            <div>
-                <h4 style={{ marginBottom: '0.8rem', fontSize: '1.1rem', color: '#fff' }}>ช่องทางการติดต่อ</h4>
-                <p style={{ marginBottom: '0.3rem' }}>เบอร์โทรศัพท์ 03 3333 3333</p>
-                <p>อีเมล Born2Code@coe.co.th</p>
-            </div>
-
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

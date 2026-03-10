@@ -10,6 +10,8 @@ import '../styles/LoginTheme.css';
 import '../styles/ProfileTheme.css';
 import logoImage from '../assets/logo.png';
 import fullLogo from '../assets/name.png';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -118,7 +120,8 @@ export default function TeacherDashboard() {
 
     if (token) {
       try {
-        await fetch('http://localhost:3000/auth/profile', {
+        // ✅ เปลี่ยนเป็นใช้ API_URL
+        await fetch(`${API_URL}/auth/profile`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -170,7 +173,8 @@ export default function TeacherDashboard() {
 
         if (token) {
           try {
-            await fetch('http://localhost:3000/auth/profile', {
+             // ✅ เปลี่ยนเป็นใช้ API_URL
+            await fetch(`${API_URL}/auth/profile`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
               body: JSON.stringify({ image: base64String })
@@ -190,7 +194,8 @@ export default function TeacherDashboard() {
     const token = localStorage.getItem('access_token');
     if (token) {
       try {
-        const response = await fetch('http://localhost:3000/auth/change-password', {
+         // ✅ เปลี่ยนเป็นใช้ API_URL
+        const response = await fetch(`${API_URL}/auth/change-password`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -327,6 +332,7 @@ export default function TeacherDashboard() {
 
   const closeModal = () => {
     setIsModalOpen(false);
+    // ✅ อัปเดตการเคลียร์ Form ให้ดึงชื่อล่าสุดมาใช้เสมอ
     setCourseForm({ ...initialFormState, instructor: `อ.${teacherData.firstName} ${teacherData.lastName}` });
     setImagePreview(null);
     setVideoFileName(null);
@@ -402,14 +408,8 @@ export default function TeacherDashboard() {
 
   return (
     <div className="page-container">
-      {/* Navbar */}
-      <nav className="navbar" style={{ background: '#081324' }}>
-        <div className="nav-logo">
-          <img src={logoImage} alt="Logo" style={{ height: '50px', marginRight: '15px' }} />
-          <img src={fullLogo} alt="Logo" style={{ height: '50px', width: 'auto' }} />
-        </div>
-        <div className="nav-icons"><Search className="nav-icon" size={24} /><ShoppingCart className="nav-icon" size={24} /><Menu className="nav-icon" size={24} /><User className="nav-icon" size={24} /></div>
-      </nav>
+      {/* Replace Navbar with imported Header */}
+      <Header />
 
       <div className="profile-page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 'calc(100vh - 80px)' }}>
         <div style={{ width: '100%', maxWidth: '1200px', marginBottom: '1.5rem', marginTop: '1rem' }}>
@@ -467,7 +467,6 @@ export default function TeacherDashboard() {
                     <span className="info-label">ชื่อ</span>
                     {isEditingProfile ? (
                       <div style={{ display: 'flex', gap: '10px', flex: 1 }}>
-                        {/* ✅ แก้ไข: เพิ่ม flex: 1 ให้ช่องชื่อและนามสกุลกางออกเต็มพื้นที่ */}
                         <input type="text" name="firstName" value={editProfileForm.firstName} onChange={handleProfileInputChange} placeholder="ชื่อ" style={{ ...editInputStyle, flex: 1 }} />
                         <input type="text" name="lastName" value={editProfileForm.lastName} onChange={handleProfileInputChange} placeholder="นามสกุล" style={{ ...editInputStyle, flex: 1 }} />
                       </div>

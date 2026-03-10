@@ -11,6 +11,7 @@ import {
 import logoImage from '../assets/logo.png';
 import fullLogo from '../assets/name.png';
 import '../styles/LoginTheme.css'; 
+import Footer from '../components/Footer';
 
 interface Course {
   id: number;
@@ -109,7 +110,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#f1f5f9', fontFamily: 'Kanit, sans-serif' }}>
+    <div className="page-container">
       
       {/* Top Section (Sidebar + Main Content) */}
       <div style={{ display: 'flex', flex: 1 }}>

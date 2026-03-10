@@ -12,6 +12,7 @@ import '../styles/LoginTheme.css';
 import '../styles/Dashboard.css';
 import logoImage from '../assets/logo.png';
 import fullLogo from '../assets/name.png';
+import Footer from '../components/Footer';
 
 export default function ExamManagement() {
   const navigate = useNavigate();
@@ -105,16 +106,31 @@ export default function ExamManagement() {
     }
 
     try {
-      await examAPI.createExam({
+      console.log('Creating exam with data:', {
+        course_id: courseId,
+        ...examForm
+      });
+      
+      const response = await examAPI.createExam({
         course_id: courseId!,
         ...examForm
       });
+      
+      console.log('Exam created successfully:', response.data);
       alert('✅ สร้างข้อสอบเรียบร้อยแล้ว!');
       closeExamModal();
       loadExams();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating exam:', error);
-      alert('เกิดข้อผิดพลาดในการสร้างข้อสอบ');
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          error.message || 
+                          'เกิดข้อผิดพลาดในการสร้างข้อสอบ';
+      
+      alert(`❌ ไม่สามารถสร้างข้อสอบได้\n\nรายละเอียด: ${errorMessage}\n\n💡 กรุณาตรวจสอบ:\n- Backend Server กำลังทำงานอยู่หรือไม่?\n- CourseId: ${courseId}`);
     }
   };
 
