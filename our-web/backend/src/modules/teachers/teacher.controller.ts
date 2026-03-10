@@ -4,7 +4,7 @@ import { Teacher } from '../../entities/teacher.entity';
 
 @Controller('teachers')
 export class TeacherController {
-  constructor(private readonly teacherService: TeacherService) {}
+  constructor(private readonly teacherService: TeacherService) { }
 
   @Post()
   async createTeacher(@Body() data: Partial<Teacher>): Promise<Teacher> {

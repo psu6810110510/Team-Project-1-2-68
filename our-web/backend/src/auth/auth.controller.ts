@@ -6,13 +6,17 @@ import {
   Get,
   Patch,
   Request,
+  Req,
+  Res,
   BadRequestException,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import type { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -28,14 +32,32 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
-  @UseGuards(JwtAuthGuard)
+  // ✅ Google OAuth: เด้งไปหน้า Login ของ Google
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  async googleAuth(@Req() req) {
+    // Guard จะ redirect ไป Google เอง
+  }
+
+  // ✅ Google OAuth Callback: Google ส่งข้อมูลกลับมาที่นี่
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthRedirect(@Req() req, @Res() res: Response) {
+    const result = await this.authService.googleLogin(req.user);
+
+    // Redirect กลับไป Frontend พร้อม token และข้อมูล user
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const userDataEncoded = encodeURIComponent(JSON.stringify(result.user));
+    const redirectUrl = `${frontendUrl}/auth/google/callback?token=${result.access_token}&user=${userDataEncoded}`;
+
+    return res.redirect(redirectUrl);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Patch('profile')
   async updateProfile(@Request() req, @Body() updateData: any) {
-    // 🔥 ดักจับ ID ทุกรูปแบบที่ระบบอาจจะส่งมาให้
     const userId = req.user?.sub || req.user?.id || req.user?.userId;
 
-    // 🔥 ป้องกันความผิดพลาด: ถ้าหา ID ไม่เจอจริงๆ ให้ฟ้อง Error สวยๆ กลับไป ดีกว่าปล่อยให้ฐานข้อมูลพัง
     if (!userId) {
       throw new BadRequestException('ไม่พบ User ID ในระบบ กรุณาล็อกอินใหม่');
     }
@@ -46,7 +68,6 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   async getProfile(@Request() req) {
-    // req.user.sub หรือ req.user.userId คือ ID ที่ได้จาก JWT
     const userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {
       throw new BadRequestException('ไม่พบ User ID ในระบบ กรุณาล็อกอินใหม่');
@@ -54,7 +75,7 @@ export class AuthController {
     const user = await this.authService.findOne(userId);
 
     if (user) {
-      delete (user as any).password_hash; // เติม (user as any)
+      delete (user as any).password_hash;
     }
     return user;
   }

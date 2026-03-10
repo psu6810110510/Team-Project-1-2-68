@@ -25,8 +25,11 @@ export class User {
   @Column({ type: 'varchar', unique: true })
   email: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', nullable: true })
   password_hash: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  google_id: string;
 
   @Column({ nullable: true }) // (nullable: true เพื่อบอกว่าช่องนี้ว่างได้)
   phone: string;

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Teacher } from '../../entities/teacher.entity';
@@ -8,7 +8,7 @@ export class TeacherService {
   constructor(
     @InjectRepository(Teacher)
     private readonly teacherRepository: Repository<Teacher>,
-  ) {}
+  ) { }
 
   async createTeacher(data: Partial<Teacher>): Promise<Teacher> {
     const teacher = this.teacherRepository.create(data);
@@ -19,11 +19,18 @@ export class TeacherService {
     return this.teacherRepository.find();
   }
 
-  async getTeacherById(id: number): Promise<Teacher | null> {
-    return this.teacherRepository.findOne({ where: { id } });
+  // ✅ แก้ไขตรงนี้: เพิ่มการดักจับกรณีหาข้อมูลไม่เจอ (null)
+  async getTeacherById(id: number): Promise<Teacher> {
+    const teacher = await this.teacherRepository.findOne({ where: { id } });
+
+    if (!teacher) {
+      throw new NotFoundException(`ไม่พบข้อมูลอาจารย์รหัส ${id}`);
+    }
+
+    return teacher;
   }
 
-  async updateTeacher(id: number, data: Partial<Teacher>): Promise<Teacher | null> {
+  async updateTeacher(id: number, data: Partial<Teacher>): Promise<Teacher> {
     await this.teacherRepository.update(id, data);
     return this.getTeacherById(id);
   }

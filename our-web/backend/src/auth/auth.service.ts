@@ -91,6 +91,64 @@ export class AuthService {
     };
   }
 
+  // ✅ Google Login: หา user จาก email หรือสร้างใหม่ แล้วออก JWT token
+  async googleLogin(googleUser: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    picture: string;
+    accessToken: string;
+  }): Promise<AuthResponseDto> {
+    if (!googleUser) {
+      throw new BadRequestException('No user data from Google');
+    }
+
+    let user = await this.usersRepository.findOne({
+      where: { email: googleUser.email },
+    });
+
+    if (!user) {
+      // สร้าง user ใหม่จาก Google (ไม่มี password)
+      user = this.usersRepository.create({
+        email: googleUser.email,
+        full_name: `${googleUser.firstName} ${googleUser.lastName}`.trim(),
+        google_id: googleUser.email, // ใช้ email เป็น google_id
+        image: googleUser.picture,
+        role: UserRole.STUDENT,
+        password_hash: null as any, // Google user ไม่มี password
+      });
+      user = await this.usersRepository.save(user);
+    } else {
+      // อัพเดทข้อมูลจาก Google ถ้ามี user อยู่แล้ว
+      if (!user.google_id) {
+        user.google_id = googleUser.email;
+      }
+      if (googleUser.picture && !user.image) {
+        user.image = googleUser.picture;
+      }
+      if (!user.full_name && googleUser.firstName) {
+        user.full_name = `${googleUser.firstName} ${googleUser.lastName}`.trim();
+      }
+      await this.usersRepository.save(user);
+    }
+
+    const access_token = this.jwtService.sign({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    return {
+      access_token,
+      user: {
+        id: user.id,
+        email: user.email,
+        full_name: user.full_name,
+        role: user.role,
+      },
+    };
+  }
+
   async findOne(id: any): Promise<User | null> {
     return this.usersRepository.findOne({
       where: { id },
