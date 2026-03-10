@@ -11,13 +11,11 @@ import Courses from './components/Courses';
 import ExamManagement from './pages/ExamManagement';
 import TeacherProfile from './components/TeacherProfile';
 import './styles/TeacherProfile.css';
-import Header from './components/Header';
 
 function App() {
   return (
     <div className="App">
       <Router>
-        <Header />
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -30,6 +28,7 @@ function App() {
           <Route path="/courses" element={<Courses />} />
           <Route path="/exam-management/:courseId" element={<ExamManagement />} />
           <Route path="/teacher-profile" element={<TeacherProfile />} />
+          <Route path="/instructors" element={<TeacherProfile />} />
         </Routes>
       </Router>
     </div>
