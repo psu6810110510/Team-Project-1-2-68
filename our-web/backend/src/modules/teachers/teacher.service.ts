@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Teacher } from '../entities/teacher.entity';
+import { Teacher } from '../../entities/teacher.entity';
 
 @Injectable()
 export class TeacherService {
@@ -19,11 +19,11 @@ export class TeacherService {
     return this.teacherRepository.find();
   }
 
-  async getTeacherById(id: number): Promise<Teacher> {
+  async getTeacherById(id: number): Promise<Teacher | null> {
     return this.teacherRepository.findOne({ where: { id } });
   }
 
-  async updateTeacher(id: number, data: Partial<Teacher>): Promise<Teacher> {
+  async updateTeacher(id: number, data: Partial<Teacher>): Promise<Teacher | null> {
     await this.teacherRepository.update(id, data);
     return this.getTeacherById(id);
   }
