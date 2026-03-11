@@ -171,6 +171,18 @@ export class BookingService {
     return this.updateBookingStatus(id, BookingStatus.CONFIRMED);
   }
 
+  async getOnsiteBookedCountByCourse(courseId: string): Promise<number> {
+    return this.bookingRepo
+      .createQueryBuilder('b')
+      .innerJoin('b.schedule', 's')
+      .where('s.course_id = :courseId', { courseId })
+      .andWhere('b.learning_mode = :mode', { mode: LearningMode.ONSITE })
+      .andWhere('b.status IN (:...statuses)', {
+        statuses: [BookingStatus.CONFIRMED, BookingStatus.PENDING],
+      })
+      .getCount();
+  }
+
   async getBookingStats(scheduleId: string) {
     const schedule = await this.scheduleRepo.findOne({
       where: { id: scheduleId },

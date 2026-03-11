@@ -3,22 +3,32 @@ import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import '../styles/Cart.css';
+import qrImage from '../assets/qr.png';
+import { paymentAPI } from '../api/paymentAPI';
 
 interface CartItem {
-  id: number;
-  courseId: number;
-  courseName: string;
-  teacherName: string;
+  id: string;
+  title: string;
+  instructor_name?: string;
   price: number;
-  imageUrl?: string;
-  duration: string;
+  thumbnail_url?: string;
+  is_online?: boolean;
+  is_onsite?: boolean;
 }
+
+type ModalStep = 'qr' | 'success';
 
 export default function Cart() {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [selectedItems, setSelectedItems] = useState<number[]>([]);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [modalStep, setModalStep] = useState<ModalStep>('qr');
+  const [paymentId, setPaymentId] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [slipFile, setSlipFile] = useState<File | null>(null);
+  const [slipPreview, setSlipPreview] = useState<string | null>(null);
 
   useEffect(() => {
     // โหลดข้อมูลผู้ใช้
@@ -27,35 +37,14 @@ export default function Cart() {
       setUser(JSON.parse(storedUser));
     }
 
-    // โหลดข้อมูลตะกร้า (ตอนนี้ใช้ข้อมูลตัวอย่าง)
+    // โหลดข้อมูลตะกร้า
     const storedCart = localStorage.getItem('cart');
     if (storedCart) {
       setCartItems(JSON.parse(storedCart));
-    } else {
-      // ข้อมูลตัวอย่างสำหรับทดสอบ
-      const sampleCart: CartItem[] = [
-        {
-          id: 1,
-          courseId: 101,
-          courseName: 'React และ TypeScript สำหรับมือใหม่',
-          teacherName: 'อาจารย์สมชาย',
-          price: 1500,
-          duration: '8 สัปดาห์',
-        },
-        {
-          id: 2,
-          courseId: 102,
-          courseName: 'NestJS Backend Development',
-          teacherName: 'อาจารย์สมหญิง',
-          price: 2000,
-          duration: '10 สัปดาห์',
-        },
-      ];
-      setCartItems(sampleCart);
     }
   }, []);
 
-  const handleSelectItem = (itemId: number) => {
+  const handleSelectItem = (itemId: string) => {
     if (selectedItems.includes(itemId)) {
       setSelectedItems(selectedItems.filter(id => id !== itemId));
     } else {
@@ -71,7 +60,7 @@ export default function Cart() {
     }
   };
 
-  const handleRemoveItem = (itemId: number) => {
+  const handleRemoveItem = (itemId: string) => {
     const updatedCart = cartItems.filter(item => item.id !== itemId);
     setCartItems(updatedCart);
     setSelectedItems(selectedItems.filter(id => id !== itemId));
@@ -84,16 +73,68 @@ export default function Cart() {
       .reduce((sum, item) => sum + item.price, 0);
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (selectedItems.length === 0) {
       alert('กรุณาเลือกคอร์สที่ต้องการชำระเงิน');
       return;
     }
-    
+    if (!user) {
+      alert('กรุณาเข้าสู่ระบบก่อนชำระเงิน');
+      navigate('/login');
+      return;
+    }
+
     const itemsToCheckout = cartItems.filter(item => selectedItems.includes(item.id));
-    // TODO: ส่งข้อมูลไปยังหน้าชำระเงิน
-    console.log('Checkout items:', itemsToCheckout);
-    alert(`กำลังดำเนินการชำระเงินจำนวน ${calculateTotal()} บาท`);
+
+    try {
+      setSubmitting(true);
+      const res = await paymentAPI.createPayment({
+        user_id: user.id,
+        user_name: user.full_name || user.email,
+        user_email: user.email,
+        course_ids: itemsToCheckout.map(i => i.id),
+        course_titles: itemsToCheckout.map(i => i.title),
+        course_prices: itemsToCheckout.map(i => i.price),
+        total_amount: calculateTotal(),
+      });
+      setPaymentId(res.data.id);
+      setModalStep('qr');
+      setShowPaymentModal(true);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleVerifyPayment = async () => {
+    if (!paymentId) return;
+    if (!slipFile) {
+      alert('กรุณาแนบสลิปการโอนเงินก่อนกดตรวจสอบ');
+      return;
+    }
+    try {
+      setSubmitting(true);
+      await paymentAPI.submitPayment(paymentId, slipFile);
+      setModalStep('success');
+      // Remove paid items from cart
+      const remaining = cartItems.filter(item => !selectedItems.includes(item.id));
+      setCartItems(remaining);
+      setSelectedItems([]);
+      localStorage.setItem('cart', JSON.stringify(remaining));
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const closeModal = () => {
+    setShowPaymentModal(false);
+    setPaymentId(null);
+    setModalStep('qr');
+    setSlipFile(null);
+    setSlipPreview(null);
   };
 
   return (
@@ -138,8 +179,8 @@ export default function Cart() {
                     />
                     
                     <div className="item-image">
-                      {item.imageUrl ? (
-                        <img src={item.imageUrl} alt={item.courseName} />
+                      {item.thumbnail_url ? (
+                        <img src={item.thumbnail_url} alt={item.title} />
                       ) : (
                         <div className="placeholder-image">
                           <svg viewBox="0 0 24 24" fill="currentColor">
@@ -150,9 +191,19 @@ export default function Cart() {
                     </div>
 
                     <div className="item-details">
-                      <h3 className="item-name">{item.courseName}</h3>
-                      <p className="item-teacher">ผู้สอน: {item.teacherName}</p>
-                      <p className="item-duration">ระยะเวลา: {item.duration}</p>
+                      <h3 className="item-name">{item.title}</h3>
+                      {item.instructor_name && (
+                        <p className="item-teacher">ผู้สอน: {item.instructor_name}</p>
+                      )}
+                      <p className="item-duration">
+                        {item.is_online && item.is_onsite
+                          ? 'ออนไลน์ / ออนไซต์'
+                          : item.is_online
+                          ? 'ออนไลน์'
+                          : item.is_onsite
+                          ? 'ออนไซต์'
+                          : ''}
+                      </p>
                     </div>
 
                     <div className="item-price">
@@ -185,15 +236,162 @@ export default function Cart() {
                 <button 
                   className="checkout-btn"
                   onClick={handleCheckout}
-                  disabled={selectedItems.length === 0}
+                  disabled={selectedItems.length === 0 || submitting}
                 >
-                  ชำระเงิน
+                  {submitting ? 'กำลังดำเนินการ...' : 'ชำระเงิน'}
                 </button>
               </div>
             </>
           )}
         </div>
       </main>
+
+      {/* QR Payment Modal */}
+      {showPaymentModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', zIndex: 9999, padding: '20px'
+        }}>
+          <div style={{
+            background: 'white', borderRadius: '16px', maxWidth: '480px', width: '100%',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)', overflow: 'hidden'
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              background: '#0A1C39', color: 'white', padding: '20px 24px',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+            }}>
+              <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 'bold' }}>
+                {modalStep === 'qr' ? '💳 ชำระเงินผ่าน QR Code' : '✅ ส่งหลักฐานเรียบร้อย'}
+              </h2>
+              <button onClick={closeModal} style={{
+                background: 'transparent', border: 'none', color: 'white',
+                fontSize: '1.5rem', cursor: 'pointer', lineHeight: 1
+              }}>✕</button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '28px 24px', textAlign: 'center' }}>
+              {modalStep === 'qr' ? (
+                <>
+                  <p style={{ margin: '0 0 16px', color: '#475569', fontSize: '0.95rem' }}>
+                    สแกน QR Code เพื่อชำระเงิน แล้วกดปุ่มด้านล่างเมื่อชำระเสร็จแล้ว
+                  </p>
+
+                  {/* QR Code Image */}
+                  <div style={{
+                    background: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '12px',
+                    padding: '16px', display: 'inline-block', marginBottom: '20px'
+                  }}>
+                    <img
+                      src={qrImage}
+                      alt="QR Code สำหรับชำระเงิน"
+                      style={{ width: '220px', height: '220px', objectFit: 'contain', display: 'block' }}
+                    />
+                  </div>
+
+                  {/* Total Amount */}
+                  <div style={{
+                    background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px',
+                    padding: '6px 12px', marginBottom: '12px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+                  }}>
+                    <span style={{ color: '#64748b', fontSize: '0.8rem' }}>
+                      ยอดชำระทั้งหมด ({cartItems.filter(i => selectedItems.includes(i.id)).length} คอร์ส)
+                    </span>
+                    <span style={{ fontSize: '1rem', fontWeight: 'bold', color: '#15803d' }}>
+                      {calculateTotal().toLocaleString()} บาท
+                    </span>
+                  </div>
+
+                  {/* Course list */}
+                  <div style={{ textAlign: 'left', marginBottom: '20px' }}>
+                    {cartItems.filter(i => selectedItems.includes(i.id)).map(item => (
+                      <div key={item.id} style={{
+                        display: 'flex', justifyContent: 'space-between',
+                        padding: '8px 0', borderBottom: '1px solid #f1f5f9',
+                        fontSize: '0.9rem', color: '#334155'
+                      }}>
+                        <span style={{ flex: 1, marginRight: '12px' }}>{item.title}</span>
+                        <span style={{ fontWeight: '600', color: '#0A1C39', whiteSpace: 'nowrap' }}>
+                          {item.price.toLocaleString()} บาท
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Slip Upload */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <label style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      height: '2cm', border: '1.5px dashed #cbd5e1', borderRadius: '8px',
+                      cursor: 'pointer', background: slipFile ? '#f0fdf4' : '#f8fafc',
+                      borderColor: slipFile ? '#86efac' : '#cbd5e1',
+                      transition: 'all 0.2s'
+                    }}>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setSlipFile(file);
+                            const reader = new FileReader();
+                            reader.onload = (ev) => setSlipPreview(ev.target?.result as string);
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                      <span style={{ fontSize: '0.88rem', color: slipFile ? '#16a34a' : '#64748b' }}>
+                        {slipFile ? `✅ ${slipFile.name}` : 'แนบสลิปการโอนเงิน'}
+                      </span>
+                    </label>
+                  </div>
+
+                  <button
+                    onClick={handleVerifyPayment}
+                    disabled={submitting || !slipFile}
+                    style={{
+                      width: '100%', padding: '14px',
+                      background: (!slipFile || submitting) ? '#94a3b8' : '#16a34a',
+                      color: 'white', border: 'none', borderRadius: '10px',
+                      fontSize: '1rem', fontWeight: 'bold',
+                      cursor: (!slipFile || submitting) ? 'not-allowed' : 'pointer',
+                      opacity: 1, transition: 'background 0.2s'
+                    }}
+                  >
+                    {submitting ? 'กำลังส่งข้อมูล...' : !slipFile ? '📎 กรุณาแนบสลิปก่อน' : '✅ ตรวจสอบการชำระเงิน'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontSize: '4rem', marginBottom: '16px' }}>🎉</div>
+                  <h3 style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#0A1C39', marginBottom: '12px' }}>
+                    ส่งข้อมูลการชำระเงินเรียบร้อยแล้ว!
+                  </h3>
+                  <p style={{ color: '#64748b', marginBottom: '24px', lineHeight: 1.6 }}>
+                    ระบบได้รับข้อมูลการชำระเงินของคุณแล้ว<br />
+                    รอแอดมินตรวจสอบและยืนยัน จากนั้นคุณจะสามารถ<br />
+                    เข้าถึงคอร์สได้ทันที
+                  </p>
+                  <button
+                    onClick={() => { closeModal(); navigate('/courses'); }}
+                    style={{
+                      width: '100%', padding: '14px', background: '#0A1C39',
+                      color: 'white', border: 'none', borderRadius: '10px',
+                      fontSize: '1rem', fontWeight: 'bold', cursor: 'pointer'
+                    }}
+                  >
+                    กลับหน้าคอร์สทั้งหมด
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

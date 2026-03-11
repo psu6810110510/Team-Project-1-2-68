@@ -7,6 +7,7 @@ import type {
   UpdateExamDto,
   UpdateQuestionDto,
   UpdateChoiceDto,
+  SubmitExamDto,
 } from './exam.service';
 
 @Controller('exams')
@@ -181,5 +182,32 @@ export class ExamController {
     return {
       message: 'Choice deleted successfully',
     };
+  }
+
+  // ---------- STUDENT endpoints ----------
+
+  @Get('student/:examId/take')
+  async getExamForStudent(@Param('examId') examId: string) {
+    return this.examService.getExamForStudent(examId);
+  }
+
+  @Post(':examId/submit')
+  async submitExam(@Param('examId') examId: string, @Body() dto: SubmitExamDto) {
+    const result = await this.examService.submitExam(examId, dto);
+    return {
+      id: result.id,
+      total_score: result.total_score,
+      percentage: result.percentage,
+      total_questions: result.total_questions,
+      correct_answers: result.correct_answers,
+      wrong_answers: result.wrong_answers,
+      message: 'Exam submitted successfully',
+    };
+  }
+
+  @Get('student/results/:userId')
+  async getStudentResults(@Param('userId') userId: string) {
+    const results = await this.examService.getStudentResults(userId);
+    return { data: results, total: results.length };
   }
 }

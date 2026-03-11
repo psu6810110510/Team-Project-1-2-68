@@ -9,6 +9,7 @@ import TeacherDashboard from './pages/TeacherDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Courses from './components/Courses';
 import ExamManagement from './pages/ExamManagement';
+import CourseDetail from './pages/CourseDetail';
 import GoogleCallback from './components/GoogleCallback';
 
 // --- Import ของฝั่ง biw ---
@@ -35,6 +36,7 @@ function App() {
           <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/courses" element={<Courses />} />
+          <Route path="/courses/:courseId" element={<CourseDetail />} />
           <Route path="/exam-management/:courseId" element={<ExamManagement />} />
           
           {/* เส้นทางที่เพิ่มมาจากฝั่ง biw */}

@@ -28,6 +28,9 @@ export class Lesson {
   @Column({ type: 'varchar', length: 500, nullable: true })
   video_url: string;
 
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  pdf_url: string;
+
   @Column({ type: 'integer', nullable: true })
   sequence_order: number;
 
