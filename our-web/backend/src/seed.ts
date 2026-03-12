@@ -1,6 +1,8 @@
+import 'dotenv/config';
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User, UserRole } from './entities/user.entity';
+
 import { Profile } from './entities/profile.entity';
 import { Course, CourseStatus, CourseLevel } from './entities/course.entity';
 import { Schedule } from './entities/schedule.entity';
@@ -15,11 +17,18 @@ import { Teacher } from './entities/teacher.entity';
 
 const AppDataSource = new DataSource({
   type: 'postgres',
-  host: 'localhost',
-  port: 5435,
-  username: 'admin',
-  password: 'password123',
-  database: 'Finalproy1_dev',
+  ...(process.env.DATABASE_URL
+    ? {
+        url: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false },
+      }
+    : {
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT || '5435'),
+        username: process.env.DB_USERNAME || 'admin',
+        password: process.env.DB_PASSWORD || 'password123',
+        database: process.env.DB_NAME || 'Finalproy1_dev',
+      }),
   entities: [User, Profile, Course, Schedule, Lesson, Exam, Question, Choice, Booking, ExamResult, SeatQuota, Teacher],
   synchronize: false,
 });
@@ -43,6 +52,7 @@ async function seed() {
     console.log('✅ Database connected');
 
     const userRepository = AppDataSource.getRepository(User);
+    const courseRepository = AppDataSource.getRepository(Course);
 
     // ============================================
     // 1. สร้าง ADMIN User
@@ -62,11 +72,15 @@ async function seed() {
       });
       await userRepository.save(adminUser);
       console.log('✅ สร้าง Admin User สำเร็จ');
-      console.log(`   📧 Email: ${adminEmail}`);
-      console.log(`   🔑 Password: password123`);
     } else {
-      console.log('ℹ️  Admin User มีอยู่แล้ว');
+      const hashedPassword = await bcrypt.hash('password123', 10);
+      adminUser.password_hash = hashedPassword;
+      adminUser.role = UserRole.ADMIN; // Ensure they are admin
+      await userRepository.save(adminUser);
+      console.log('ℹ️  อัปเดตรหัสผ่าน Admin เรียบร้อยแล้ว');
     }
+    console.log(`   📧 Email: ${adminEmail}`);
+    console.log(`   🔑 Password: password123`);
 
     // ============================================
     // 2. สร้าง TEACHER User
@@ -118,9 +132,9 @@ async function seed() {
     }
 
     // ============================================
+    // ============================================
     // 4. สร้างคอร์ส
     // ============================================
-    const courseRepository = AppDataSource.getRepository(Course);
     
     // Delete all existing courses first
     await courseRepository.query('DELETE FROM courses');
@@ -295,7 +309,7 @@ async function seed() {
         }
         console.log('✅ สร้าง Schedules สำหรับ Full Stack Course');
       }
-    }
+    
     console.log('📝 บัญชีที่สร้างขึ้น:');
     console.log('┌─────────────────────────────────────────────────────┐');
     console.log('│ Role      │ Email                    │ Password      │');
