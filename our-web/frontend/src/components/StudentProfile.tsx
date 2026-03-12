@@ -4,9 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import '../styles/LoginTheme.css';
 import '../styles/ProfileTheme.css';
-import { Search, ShoppingCart, Menu, User, BookOpen, Heart, LogOut, Edit3, Camera, ChevronLeft, FileText, MonitorPlay, CheckSquare, Clock, Calendar, Award, X } from 'lucide-react';
-import logoImage from '../assets/logo.png';
-import fullLogo from '../assets/name.png';
+import { User, BookOpen, Heart, LogOut, Edit3, Camera, ChevronLeft, FileText, MonitorPlay, CheckSquare, Clock, Calendar, Award, X } from 'lucide-react';
 import Footer from './Footer';
 import { paymentAPI, type PaymentRecord } from '../api/paymentAPI';
 import { courseAPI, type Course as APICourse } from '../api/courseAPI';
@@ -57,58 +55,8 @@ export default function StudentProfile() {
   const [examResult, setExamResult] = useState<null | { total_score: number; percentage: number; correct_answers: number; total_questions: number }>(null);
   const [examStartTime, setExamStartTime] = useState<Date | null>(null);
   const [submittingExam, setSubmittingExam] = useState(false);
-  // --- 2. Mock Data ข้อมูลจำลอง (fallback) ---
-  const myCourses = [
-    {
-      id: 1,
-      title: 'Data Science with Python',
-      instructor: 'นายอาร์ม ตัวจริง',
-      startDate: '1 ก.พ. 67',
-      expireDate: '31 ม.ค. 68',
-      lastAccess: '1 วันที่แล้ว',
-      progress: 30,
-      image: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?auto=format&fit=crop&w=400&q=80'
-    },
-    {
-      id: 2,
-      title: 'Data Visualization',
-      instructor: 'นายอาร์ม ตัวจริง',
-      startDate: '1 ก.พ. 67',
-      expireDate: '31 ม.ค. 68',
-      lastAccess: '5 วันที่แล้ว',
-      progress: 15,
-      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=400&q=80'
-    }
-  ];
 
-  const completedCourses = [
-    {
-      id: 301,
-      title: 'Data Science with Python',
-      instructor: 'นายอาร์ม ตัวจริง',
-      completedDate: '31 มกราคม พ.ศ. 2568',
-      certId: 'cert-1',
-      image: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?auto=format&fit=crop&w=400&q=80'
-    },
-    {
-      id: 302,
-      title: 'Data Visualization',
-      instructor: 'นายอาร์ม ตัวจริง',
-      completedDate: '31 มกราคม พ.ศ. 2568',
-      certId: 'cert-2',
-      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=400&q=80'
-    }
-  ];
-
-  const favoriteCourses = [
-    { id: 101, title: 'Data Structures & Algorithms', category: 'Computer Science', image: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&w=300&q=80' },
-    { id: 102, title: 'C Programming', category: 'Programming Language', image: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=300&q=80' }
-  ];
-
-  const purchasedHistory = [
-    { id: 201, title: 'Data Structures & Algorithms', date: '12 ม.ค. 67', price: '฿1,290', image: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&w=300&q=80' },
-    { id: 202, title: 'C Programming', date: '10 ธ.ค. 66', price: '฿990', image: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=300&q=80' }
-  ];
+  const [favoriteCourses] = useState<any[]>([]);
 
   // --- 3. ดึงข้อมูลผู้ใช้ + คอร์สที่ซื้อแล้ว ---
   useEffect(() => {
@@ -149,22 +97,64 @@ export default function StudentProfile() {
           const courseMap: Record<string, APICourse> = {};
           courseDetails.forEach(c => { if (c) courseMap[c.id] = c; });
 
-          const coursesForDisplay = courseIds
-            .filter(id => courseMap[id])
-            .map(id => {
-              const c = courseMap[id];
-              const payment = confirmedPayments.find(p => p.course_ids.includes(id));
-              return {
-                id,
-                title: c.title,
-                instructor: c.instructor_name || c.instructor?.full_name || 'ผู้สอน',
-                startDate: payment ? new Date(payment.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' }) : '-',
-                expireDate: c.online_expiry ? `${c.online_expiry} เดือน` : 'ไม่จำกัด',
-                lastAccess: '-',
-                progress: 0,
-                image: c.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80',
-              };
-            });
+          // Fetch lessons and calculate progress for each course
+          const coursesForDisplay = await Promise.all(
+            courseIds
+              .filter(id => courseMap[id])
+              .map(async id => {
+                const c = courseMap[id];
+                const payment = confirmedPayments.find(p => p.course_ids.includes(id));
+                
+                // Fetch lessons to count total unique lessons
+                let progressPercent = 0;
+                try {
+                  const lessonsRes = await courseAPI.getLessonsByCourse(id);
+                  const rawLessons = lessonsRes.data.data;
+                  if (rawLessons && rawLessons.length > 0) {
+                    // Deduplicate logic same as CourseLearning.tsx
+                    const uniqueLessonTitles = new Set();
+                    rawLessons.forEach((l: any) => {
+                      const parts = l.topic_name.split(' - ');
+                      const subTitle = parts.length > 1 ? parts.slice(1).join(' - ') : l.topic_name;
+                      uniqueLessonTitles.add(subTitle);
+                    });
+                    
+                    const totalUnique = uniqueLessonTitles.size;
+                    
+                    // Load progress from localStorage
+                    const savedProgress = localStorage.getItem(`progress_${userObj.id}_${id}`);
+                    if (savedProgress) {
+                      const completedIds = JSON.parse(savedProgress);
+                      // Since completedIds are from raw lesson IDs, we should count how many UNIQUE titles they represent
+                      const completedUniqueTitles = new Set();
+                      completedIds.forEach((compId: string) => {
+                        const l = rawLessons.find((rl: any) => rl.id === compId);
+                        if (l) {
+                          const parts = l.topic_name.split(' - ');
+                          const subTitle = parts.length > 1 ? parts.slice(1).join(' - ') : l.topic_name;
+                          completedUniqueTitles.add(subTitle);
+                        }
+                      });
+                      
+                      progressPercent = totalUnique > 0 ? Math.floor((completedUniqueTitles.size / totalUnique) * 100) : 0;
+                    }
+                  }
+                } catch (err) {
+                  console.error(`Error fetching lessons for course ${id}:`, err);
+                }
+
+                return {
+                  id,
+                  title: c.title,
+                  instructor: c.instructor_name || c.instructor?.full_name || 'ผู้สอน',
+                  startDate: payment ? new Date(payment.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' }) : '-',
+                  expireDate: c.online_expiry ? `${c.online_expiry} เดือน` : 'ไม่จำกัด',
+                  lastAccess: '-',
+                  progress: progressPercent,
+                  image: c.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80',
+                };
+              })
+          );
 
           setRealMyCourses(coursesForDisplay);
 
@@ -620,38 +610,45 @@ export default function StudentProfile() {
               <>
                 <div className="content-header"><span className="content-title">คอร์สที่เรียนจบแล้ว</span></div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1rem' }}>
-                  {completedCourses.map((course) => (
-                    <div key={course.id} style={{
-                      display: 'flex', flexWrap: 'wrap', background: 'white', border: '2px solid #bbf7d0',
-                      borderRadius: '12px', padding: '1.2rem', gap: '1.5rem', alignItems: 'center', boxShadow: '0 2px 8px rgba(16,185,129,0.08)'
-                    }}>
-                      <div style={{ position: 'relative', flexShrink: 0 }}>
-                        <img src={course.image} alt={course.title} style={{ width: '180px', height: '130px', objectFit: 'cover', borderRadius: '10px' }} />
-                        <div style={{
-                          position: 'absolute', bottom: '8px', left: '8px', background: '#16a34a', color: 'white',
-                          fontSize: '0.7rem', fontWeight: 'bold', padding: '3px 10px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '4px'
-                        }}>✓ เรียนจบแล้ว</div>
-                      </div>
-
-                      <div style={{ flex: 1, minWidth: '220px' }}>
-                        <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#0f172a', marginBottom: '0.4rem' }}>{course.title}</h3>
-                        <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '0.3rem' }}>อาจารย์: <span style={{ color: '#334155', fontWeight: '500' }}>{course.instructor}</span></p>
-                        <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '1.2rem' }}>สำเร็จเมื่อ: <span style={{ color: '#059669', fontWeight: '600' }}>{course.completedDate}</span></p>
-
-                        <div style={{ marginBottom: '1rem' }}>
-                          <div style={{ height: '8px', background: '#dcfce7', borderRadius: '4px', overflow: 'hidden' }}>
-                            <div style={{ width: '100%', background: 'linear-gradient(90deg, #16a34a, #22c55e)', height: '100%', borderRadius: '4px' }}></div>
-                          </div>
-                          <div style={{ fontSize: '0.85rem', color: '#16a34a', fontWeight: '600', marginTop: '4px' }}>100% Completed 🎉</div>
+                  {realMyCourses.filter(c => c.progress === 100).length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
+                      <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎓</div>
+                      <p>ยังไม่มีคอร์สที่เรียนจบ</p>
+                    </div>
+                  ) : (
+                    realMyCourses.filter(c => c.progress === 100).map((course) => (
+                      <div key={course.id} style={{
+                        display: 'flex', flexWrap: 'wrap', background: 'white', border: '2px solid #bbf7d0',
+                        borderRadius: '12px', padding: '1.2rem', gap: '1.5rem', alignItems: 'center', boxShadow: '0 2px 8px rgba(16,185,129,0.08)'
+                      }}>
+                        <div style={{ position: 'relative', flexShrink: 0 }}>
+                          <img src={course.image} alt={course.title} style={{ width: '180px', height: '130px', objectFit: 'cover', borderRadius: '10px' }} />
+                          <div style={{
+                            position: 'absolute', bottom: '8px', left: '8px', background: '#16a34a', color: 'white',
+                            fontSize: '0.7rem', fontWeight: 'bold', padding: '3px 10px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '4px'
+                          }}>✓ เรียนจบแล้ว</div>
                         </div>
 
-                        <button onClick={() => setActiveMenu('certificates')} style={{
-                          padding: '8px 20px', background: '#f0fdf4', color: '#15803d', border: '1px solid #86efac',
-                          borderRadius: '30px', cursor: 'pointer', fontWeight: '500', fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: '6px'
-                        }}>🏆 ดูใบประกาศนียบัตร</button>
+                        <div style={{ flex: 1, minWidth: '220px' }}>
+                          <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#0f172a', marginBottom: '0.4rem' }}>{course.title}</h3>
+                          <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '0.3rem' }}>อาจารย์: <span style={{ color: '#334155', fontWeight: '500' }}>{course.instructor}</span></p>
+                          <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '1.2rem' }}>สำเร็จเมื่อ: <span style={{ color: '#059669', fontWeight: '600' }}>100% เรียบร้อย</span></p>
+
+                          <div style={{ marginBottom: '1rem' }}>
+                            <div style={{ height: '8px', background: '#dcfce7', borderRadius: '4px', overflow: 'hidden' }}>
+                              <div style={{ width: '100%', background: 'linear-gradient(90deg, #16a34a, #22c55e)', height: '100%', borderRadius: '4px' }}></div>
+                            </div>
+                            <div style={{ fontSize: '0.85rem', color: '#16a34a', fontWeight: '600', marginTop: '4px' }}>100% Completed 🎉</div>
+                          </div>
+
+                          <button onClick={() => setActiveMenu('certificates')} style={{
+                            padding: '8px 20px', background: '#f0fdf4', color: '#15803d', border: '1px solid #86efac',
+                            borderRadius: '30px', cursor: 'pointer', fontWeight: '500', fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: '6px'
+                          }}>🏆 ดูใบประกาศนียบัตร</button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </>
             )}
