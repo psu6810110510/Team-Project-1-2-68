@@ -2152,32 +2152,6 @@ export default function TeacherDashboard() {
                           </div>
                         </div>
 
-                        {/* Lesson Content Textarea */}
-                        <div style={{ marginBottom: '5px' }}>
-                          <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: 'bold', color: '#475569' }}>
-                            📝 รายละเอียดเนื้อหา (Lesson Content)
-                          </label>
-                          <textarea
-                            id={`lesson-content-${lessonIndex}-${subIndex}`}
-                            placeholder="กรอกรายละเอียดเนื้อหาสำหรับบทเรียนนี้..."
-                            value={subLesson.content || ''}
-                            onChange={(e) => handleSubLessonChange(lessonIndex, subIndex, 'content', e.target.value)}
-                            rows={4}
-                            style={{
-                              width: '100%',
-                              padding: '12px',
-                              fontSize: '0.95rem',
-                              border: subLesson.content ? '2px solid #3b82f6' : '1px solid #cbd5e1',
-                              borderRadius: '8px',
-                              outline: 'none',
-                              background: '#ffffff',
-                              color: '#0f172a',
-                              boxSizing: 'border-box',
-                              resize: 'vertical',
-                              lineHeight: '1.6'
-                            }}
-                          />
-                        </div>
                       </div>
                     ))}
 
