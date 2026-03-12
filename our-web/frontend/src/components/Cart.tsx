@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import '../styles/Cart.css';
-import qrImage from '../assets/qr.png';
+import qrImage from "../assets/QR.png";
 import { paymentAPI } from '../api/paymentAPI';
 
 interface CartItem {
