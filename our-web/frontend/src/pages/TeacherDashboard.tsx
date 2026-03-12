@@ -23,7 +23,6 @@ export default function TeacherDashboard() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [videoFileName, setVideoFileName] = useState<string | null>(null);
   const [videoObjUrl, setVideoObjUrl] = useState<string | null>(null);
-  const [videoUploading, setVideoUploading] = useState(false);
   
   // Content Management State
   const [isContentModalOpen, setIsContentModalOpen] = useState(false);
@@ -376,15 +375,12 @@ export default function TeacherDashboard() {
     if (!file) return;
     setVideoFileName(file.name);
     setVideoObjUrl(null);
-    setVideoUploading(true);
     try {
       const result = await courseAPI.uploadVideo(file);
       setVideoObjUrl(result.url);
     } catch (error: any) {
       alert(error.response?.data?.message || 'เกิดข้อผิดพลาดในการอัปโหลดวิดีโอ');
       setVideoFileName(null);
-    } finally {
-      setVideoUploading(false);
     }
   };
 
@@ -676,7 +672,7 @@ export default function TeacherDashboard() {
   };
 
   const handleAddLesson = () => {
-    setLessons([...lessons, {
+    setLessons(prev => [...prev, {
       topic_name: '',
       subLessons: [{
         title: '',
@@ -688,38 +684,50 @@ export default function TeacherDashboard() {
   };
 
   const handleRemoveLesson = (lessonIndex: number) => {
-    setLessons(lessons.filter((_, i) => i !== lessonIndex));
+    setLessons(prev => prev.filter((_, i) => i !== lessonIndex));
   };
 
   const handleAddSubLesson = (lessonIndex: number) => {
-    const newLessons = [...lessons];
-    newLessons[lessonIndex].subLessons.push({
-      title: '',
-      content: '',
-      video_url: '',
-      pdf_url: ''
-    });
-    setLessons(newLessons);
+    setLessons(prev => prev.map((lesson, idx) => {
+      if (idx !== lessonIndex) return lesson;
+      return {
+        ...lesson,
+        subLessons: [...lesson.subLessons, {
+          title: '',
+          content: '',
+          video_url: '',
+          pdf_url: ''
+        }]
+      };
+    }));
   };
 
   const handleRemoveSubLesson = (lessonIndex: number, subLessonIndex: number) => {
-    const newLessons = [...lessons];
-    newLessons[lessonIndex].subLessons = newLessons[lessonIndex].subLessons.filter((_, i) => i !== subLessonIndex);
-    setLessons(newLessons);
+    setLessons(prev => prev.map((lesson, idx) => {
+      if (idx !== lessonIndex) return lesson;
+      return {
+        ...lesson,
+        subLessons: lesson.subLessons.filter((_, i) => i !== subLessonIndex)
+      };
+    }));
   };
 
   const handleLessonChange = (lessonIndex: number, field: string, value: string) => {
-    const newLessons = [...lessons];
-    (newLessons[lessonIndex] as any)[field] = value;
-    setLessons(newLessons);
+    setLessons(prev => prev.map((lesson, idx) => {
+      if (idx !== lessonIndex) return lesson;
+      return { ...lesson, [field]: value };
+    }));
   };
 
   const handleSubLessonChange = (lessonIndex: number, subLessonIndex: number, field: string, value: string) => {
-    console.log(`🔄 Changing ${field} to:`, value);
-    const newLessons = [...lessons];
-    (newLessons[lessonIndex].subLessons[subLessonIndex] as any)[field] = value;
-    console.log('Updated subLesson:', newLessons[lessonIndex].subLessons[subLessonIndex]);
-    setLessons(newLessons);
+    setLessons(prev => prev.map((lesson, idx) => {
+      if (idx !== lessonIndex) return lesson;
+      const updatedSubLessons = lesson.subLessons.map((sub, sIdx) => {
+        if (sIdx !== subLessonIndex) return sub;
+        return { ...sub, [field]: value };
+      });
+      return { ...lesson, subLessons: updatedSubLessons };
+    }));
   };
 
   const handleSubLessonVideoUpload = async (lessonIndex: number, subLessonIndex: number, file: File) => {
@@ -741,17 +749,28 @@ export default function TeacherDashboard() {
       const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
       console.log(`📤 กำลังอัปโหลดวีดีโอ: ${file.name} (${fileSizeMB} MB)`);
 
-      const newLessons = [...lessons];
       // Show uploading status
-      newLessons[lessonIndex].subLessons[subLessonIndex].video_url = 'uploading...';
-      setLessons([...newLessons]);
+      setLessons(prev => prev.map((lesson, idx) => {
+        if (idx !== lessonIndex) return lesson;
+        const updatedSubs = lesson.subLessons.map((sub, sIdx) => {
+          if (sIdx !== subLessonIndex) return sub;
+          return { ...sub, video_url: 'uploading...' };
+        });
+        return { ...lesson, subLessons: updatedSubs };
+      }));
       
       // Upload to backend
       const result = await courseAPI.uploadVideo(file);
       
       // Update with actual URL
-      newLessons[lessonIndex].subLessons[subLessonIndex].video_url = result.url;
-      setLessons([...newLessons]);
+      setLessons(prev => prev.map((lesson, idx) => {
+        if (idx !== lessonIndex) return lesson;
+        const updatedSubs = lesson.subLessons.map((sub, sIdx) => {
+          if (sIdx !== subLessonIndex) return sub;
+          return { ...sub, video_url: result.url };
+        });
+        return { ...lesson, subLessons: updatedSubs };
+      }));
       
       console.log('✅ อัปโหลดวีดีโอสำเร็จ:', result.url);
       alert(`✅ อัปโหลดวีดีโอสำเร็จ!\nชื่อไฟล์: ${result.filename}\nขนาด: ${fileSizeMB} MB`);
@@ -760,11 +779,17 @@ export default function TeacherDashboard() {
       alert(error.response?.data?.message || 'เกิดข้อผิดพลาดในการอัปโหลดวีดีโอ');
       
       // Clear uploading status on error
-      const newLessons = [...lessons];
-      newLessons[lessonIndex].subLessons[subLessonIndex].video_url = '';
-      setLessons([...newLessons]);
+      setLessons(prev => prev.map((lesson, idx) => {
+        if (idx !== lessonIndex) return lesson;
+        const updatedSubs = lesson.subLessons.map((sub, sIdx) => {
+          if (sIdx !== subLessonIndex) return sub;
+          return { ...sub, video_url: '' };
+        });
+        return { ...lesson, subLessons: updatedSubs };
+      }));
     }
   };
+
 
   const handleSaveContent = async () => {
     if (!contentCourse) return;
@@ -1757,22 +1782,34 @@ export default function TeacherDashboard() {
                     }}>
                       {lessonIndex + 1}
                     </div>
-                    <input
-                      type="text"
-                      placeholder="ชื่อบทเรียน (เช่น บทที่ 1: พื้นฐานการเขียนโปรแกรม)"
-                      value={lesson.topic_name}
-                      onChange={(e) => handleLessonChange(lessonIndex, 'topic_name', e.target.value)}
-                      style={{
-                        flex: 1,
-                        padding: '12px 15px',
-                        fontSize: '1.1rem',
-                        fontWeight: 'bold',
-                        border: '2px solid #cbd5e1',
-                        borderRadius: '8px',
-                        outline: 'none',
-                        background: 'white'
-                      }}
-                    />
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label 
+                        htmlFor={`topic-${lessonIndex}`}
+                        style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#1e40af', cursor: 'pointer' }}
+                      >
+                        📖 ชื่อหัวข้อใหญ่ (Chapter Title)
+                      </label>
+                      <input
+                        id={`topic-${lessonIndex}`}
+                        type="text"
+                        placeholder="เช่น บทที่ 1: พื้นฐานการเขียนโปรแกรม"
+                        value={lesson.topic_name || ''}
+                        onChange={(e) => handleLessonChange(lessonIndex, 'topic_name', e.target.value)}
+                        autoComplete="off"
+                        style={{
+                          width: '100%',
+                          padding: '12px 15px',
+                          fontSize: '1.1rem',
+                          fontWeight: 'bold',
+                          border: '2px solid #3b82f6',
+                          borderRadius: '8px',
+                          outline: 'none',
+                          background: '#ffffff',
+                          color: '#0f172a',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                    </div>
                     {lessons.length > 1 && (
                       <button
                         onClick={() => handleRemoveLesson(lessonIndex)}
@@ -1812,20 +1849,28 @@ export default function TeacherDashboard() {
                           }}>
                             {lessonIndex + 1}.{subIndex + 1}
                           </span>
-                          <input
-                            type="text"
-                            placeholder="ชื่อบทเรียนย่อย (เช่น ตัวแปรและชนิดข้อมูล)"
-                            value={subLesson.title}
-                            onChange={(e) => handleSubLessonChange(lessonIndex, subIndex, 'title', e.target.value)}
-                            style={{
-                              flex: 1,
-                              padding: '10px 12px',
-                              fontSize: '1rem',
-                              border: '1px solid #cbd5e1',
-                              borderRadius: '6px',
-                              outline: 'none'
-                            }}
-                          />
+                          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#475569' }}>📄 ชื่อบทเรียนย่อย (Lesson Title)</label>
+                            <input
+                              id={`sub-title-${lessonIndex}-${subIndex}`}
+                              type="text"
+                              placeholder="เช่น ตัวแปรและชนิดข้อมูล"
+                              value={subLesson.title || ''}
+                              onChange={(e) => handleSubLessonChange(lessonIndex, subIndex, 'title', e.target.value)}
+                              autoComplete="off"
+                              style={{
+                                width: '100%',
+                                padding: '10px 12px',
+                                fontSize: '1rem',
+                                border: '1px solid #cbd5e1',
+                                borderRadius: '6px',
+                                outline: 'none',
+                                background: '#ffffff',
+                                color: '#0f172a',
+                                boxSizing: 'border-box'
+                              }}
+                            />
+                          </div>
                           {lesson.subLessons.length > 1 && (
                             <button
                               onClick={() => handleRemoveSubLesson(lessonIndex, subIndex)}
@@ -1909,10 +1954,12 @@ export default function TeacherDashboard() {
                               📑 URL ไฟล์ PDF (เนื้อหาบทเรียน)
                             </label>
                             <input
+                              id={`pdf-url-${lessonIndex}-${subIndex}`}
                               type="text"
                               placeholder="วาง URL ไฟล์ PDF (Google Drive, Dropbox, etc.)"
-                              value={subLesson.pdf_url}
+                              value={subLesson.pdf_url || ''}
                               onChange={(e) => handleSubLessonChange(lessonIndex, subIndex, 'pdf_url', e.target.value)}
+                              autoComplete="off"
                               style={{
                                 width: '100%',
                                 padding: '12px',
@@ -1920,7 +1967,8 @@ export default function TeacherDashboard() {
                                 border: subLesson.pdf_url ? '2px solid #3b82f6' : '2px solid #cbd5e1',
                                 borderRadius: '8px',
                                 outline: 'none',
-                                background: subLesson.pdf_url ? '#eff6ff' : 'white',
+                                background: subLesson.pdf_url ? '#eff6ff' : '#ffffff',
+                                color: '#0f172a',
                                 boxSizing: 'border-box'
                               }}
                             />
