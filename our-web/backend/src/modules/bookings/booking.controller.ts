@@ -18,6 +18,26 @@ export class BookingController {
     };
   }
 
+  @Get()
+  async getAllBookings() {
+    const bookings = await this.bookingService.getAllBookings();
+    return {
+      data: bookings.map((b) => ({
+        id: b.id,
+        user_name: b.user?.full_name || 'ไม่ระบุ',
+        user_email: b.user?.email || 'ไม่ระบุ',
+        course_name: b.schedule?.course?.title || 'ไม่ระบุ',
+        schedule_id: b.schedule_id,
+        learning_mode: b.learning_mode,
+        status: b.status,
+        booking_date: b.booking_date,
+        created_at: b.created_at,
+        notes: b.notes,
+      })),
+      total: bookings.length,
+    };
+  }
+
   @Get(':id')
   async getBooking(@Param('id') id: string) {
     const booking = await this.bookingService.getBookingById(id);
