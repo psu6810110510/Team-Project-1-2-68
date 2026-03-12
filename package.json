@@ -9,6 +9,7 @@
     "recharts": "^3.8.0"
   },
   "devDependencies": {
+    "@types/multer": "^2.1.0",
     "@types/passport-google-oauth20": "^2.0.17",
     "vite": "^7.3.1"
   }
