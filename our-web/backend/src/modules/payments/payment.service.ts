@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Payment, PaymentStatus } from '../../entities/payment.entity';
+import { Course } from '../../entities/course.entity';
 
 export interface CreatePaymentDto {
   user_id: string;
@@ -17,6 +18,7 @@ export interface CreatePaymentDto {
 export class PaymentService {
   constructor(
     @InjectRepository(Payment) private paymentRepo: Repository<Payment>,
+    @InjectRepository(Course) private courseRepo: Repository<Course>,
   ) {}
 
   async createPayment(dto: CreatePaymentDto): Promise<Payment> {
@@ -58,8 +60,29 @@ export class PaymentService {
   async confirmPayment(id: string): Promise<Payment> {
     const payment = await this.paymentRepo.findOne({ where: { id } });
     if (!payment) throw new NotFoundException('Payment not found');
+    
+    // If already confirmed, don't increment again
+    if (payment.status === PaymentStatus.CONFIRMED) {
+      return payment;
+    }
+
     payment.status = PaymentStatus.CONFIRMED;
-    return this.paymentRepo.save(payment);
+    const savedPayment = await this.paymentRepo.save(payment);
+
+    // Increment student count for each course
+    try {
+      if (payment.course_ids && payment.course_ids.length > 0) {
+        for (const courseId of payment.course_ids) {
+          await this.courseRepo.increment({ id: courseId }, 'students_enrolled', 1);
+          console.log(`📈 Incremented enrollment for course ${courseId}`);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to increment course enrollment:', error);
+      // We don't throw here to avoid failing the payment confirmation if just the counter fails
+    }
+
+    return savedPayment;
   }
 
   async rejectPayment(id: string, reason?: string): Promise<Payment> {
