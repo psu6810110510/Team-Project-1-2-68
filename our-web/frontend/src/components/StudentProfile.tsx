@@ -39,6 +39,10 @@ export default function StudentProfile() {
     id: string; title: string; instructor: string; startDate: string;
     expireDate: string; lastAccess: string; progress: number; image: string;
   }>>([]);
+  const [pendingCourses, setPendingCourses] = useState<Array<{
+    id: string; title: string; instructor: string; date: string;
+    amount: number; image: string;
+  }>>([]);
   const [realPurchases, setRealPurchases] = useState<PaymentRecord[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [favoriteCourses, setFavoriteCourses] = useState<APICourse[]>([]);
@@ -160,6 +164,32 @@ export default function StudentProfile() {
             });
 
           setRealMyCourses(coursesForDisplay);
+
+          // กรองพวกรอตรวจสอบ (PAYMENT_SUBMITTED)
+          const pendingPayments = allPayments.filter(p => p.status === 'PAYMENT_SUBMITTED');
+          const pendingCourseIds = Array.from(new Set(pendingPayments.flatMap(p => p.course_ids)));
+          
+          const pendingCourseDetails = await Promise.all(
+            pendingCourseIds.map(id => courseAPI.getCourseById(id).then(r => r.data).catch(() => null))
+          );
+          const pendingCourseMap: Record<string, APICourse> = {};
+          pendingCourseDetails.forEach(c => { if (c) pendingCourseMap[c.id] = c; });
+
+          const pendingForDisplay = pendingCourseIds
+            .filter(id => pendingCourseMap[id])
+            .map(id => {
+              const c = pendingCourseMap[id];
+              const payment = pendingPayments.find(p => p.course_ids.includes(id));
+              return {
+                id,
+                title: c.title,
+                instructor: c.instructor_name || c.instructor?.full_name || 'ผู้สอน',
+                date: payment ? new Date(payment.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }) : '-',
+                amount: payment ? payment.total_amount : 0,
+                image: c.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80',
+              };
+            });
+          setPendingCourses(pendingForDisplay);
 
           // โหลดข้อสอบของคอร์สที่ซื้อแล้ว
           try {
@@ -477,21 +507,65 @@ export default function StudentProfile() {
                     <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>⏳</div>
                     <div>กำลังโหลดคอร์สเรียน...</div>
                   </div>
-                ) : realMyCourses.length === 0 ? (
-                  <div style={{
-                    textAlign: 'center', padding: '3rem', background: '#f8fafc',
-                    borderRadius: '12px', border: '1px dashed #cbd5e1', color: '#94a3b8'
-                  }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📚</div>
-                    <p style={{ marginBottom: '1rem', fontSize: '1rem' }}>ยังไม่มีคอร์สเรียน</p>
-                    <button
-                      onClick={() => navigate('/courses')}
-                      style={{ padding: '10px 24px', background: '#0A1C39', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '500' }}
-                    >
-                      เรียกดูคอร์สทั้งหมด
-                    </button>
-                  </div>
                 ) : (
+                  <>
+                    {/* คอร์สที่รอตรวจสอบการชำระเงิน */}
+                    {pendingCourses.length > 0 && (
+                      <div style={{ marginBottom: '3rem' }}>
+                        <div className="section-header" style={{ borderLeftColor: '#f59e0b', marginBottom: '1.2rem' }}>
+                          <span className="section-title-text" style={{ color: '#d97706' }}>⏳ คอร์สที่รอการตรวจสอบการชำระเงิน</span>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                          {pendingCourses.map((course) => (
+                            <div key={course.id} style={{
+                              display: 'flex', background: '#fffbeb', border: '1px solid #fef3c7',
+                              borderRadius: '12px', padding: '1rem', gap: '1.2rem', alignItems: 'center',
+                              boxShadow: '0 2px 4px rgba(245,158,11,0.05)'
+                            }}>
+                              <img src={course.image} alt={course.title}
+                                style={{ width: '100px', height: '70px', objectFit: 'cover', borderRadius: '8px', opacity: 0.8 }}
+                                onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80'; }}
+                              />
+                              <div style={{ flex: 1 }}>
+                                <h4 style={{ fontSize: '1.05rem', fontWeight: 'bold', color: '#92400e', marginBottom: '4px' }}>{course.title}</h4>
+                                <div style={{ fontSize: '0.85rem', color: '#b45309', display: 'flex', gap: '20px' }}>
+                                  <span>ชำระเมื่อ: {course.date}</span>
+                                  <span>ยอดเงิน: ฿{course.amount.toLocaleString()}</span>
+                                </div>
+                              </div>
+                              <div style={{ 
+                                background: '#fef3c7', color: '#d97706', padding: '6px 14px', 
+                                borderRadius: '20px', fontSize: '0.82rem', fontWeight: 'bold',
+                                display: 'flex', alignItems: 'center', gap: '6px'
+                              }}>
+                                <Clock size={16} /> รอแอดมินยืนยัน
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <p style={{ fontSize: '0.85rem', color: '#d97706', marginTop: '12px', marginLeft: '5px' }}>
+                          * คุณจะเข้าเรียนได้ทันทีหลังจากที่แอดมินยืนยันหลักฐานการโอนเงินเรียบร้อยแล้ว
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="section-header"><span className="section-title-text">คอร์สเรียนของฉัน</span></div>
+
+                    {realMyCourses.length === 0 ? (
+                      <div style={{
+                        textAlign: 'center', padding: '3rem', background: '#f8fafc',
+                        borderRadius: '12px', border: '1px dashed #cbd5e1', color: '#94a3b8'
+                      }}>
+                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📚</div>
+                        <p style={{ marginBottom: '1rem', fontSize: '1rem' }}>ยังไม่มีคอร์สเข้าเรียน</p>
+                        <button
+                          onClick={() => navigate('/courses')}
+                          style={{ padding: '10px 24px', background: '#0A1C39', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '500' }}
+                        >
+                          เรียกดูคอร์สทั้งหมด
+                        </button>
+                      </div>
+                    ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                   {realMyCourses.map((course) => (
                     <div key={course.id} style={{
@@ -534,6 +608,8 @@ export default function StudentProfile() {
                   ))}
                 </div>
                 )}
+              </>
+            )}
 
                 <div className="section-header" style={{ marginTop: '3rem' }}>
                   <span className="section-title-text">สถิติการเรียนรู้</span>
