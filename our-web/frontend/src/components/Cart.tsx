@@ -22,7 +22,7 @@ export default function Cart() {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]); // ใช้ string[] ตาม id ของ item
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [modalStep, setModalStep] = useState<ModalStep>('qr');
   const [paymentId, setPaymentId] = useState<string | null>(null);
@@ -73,11 +73,13 @@ export default function Cart() {
       .reduce((sum, item) => sum + item.price, 0);
   };
 
+  // ฟังก์ชัน Checkout หลัก (เชื่อมต่อ API)
   const handleCheckout = async () => {
     if (selectedItems.length === 0) {
       alert('กรุณาเลือกคอร์สที่ต้องการชำระเงิน');
       return;
     }
+    
     if (!user) {
       alert('กรุณาเข้าสู่ระบบก่อนชำระเงิน');
       navigate('/login');
@@ -117,11 +119,13 @@ export default function Cart() {
       setSubmitting(true);
       await paymentAPI.submitPayment(paymentId, slipFile);
       setModalStep('success');
-      // Remove paid items from cart
+      
+      // ลบคอร์สที่ชำระเงินสำเร็จออกจากตะกร้า
       const remaining = cartItems.filter(item => !selectedItems.includes(item.id));
       setCartItems(remaining);
       setSelectedItems([]);
       localStorage.setItem('cart', JSON.stringify(remaining));
+      
     } catch (err: any) {
       alert(err.response?.data?.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่');
     } finally {
@@ -246,7 +250,7 @@ export default function Cart() {
         </div>
       </main>
 
-      {/* QR Payment Modal */}
+      {/* QR Payment Modal (เชื่อมต่อ API เรียบร้อย) */}
       {showPaymentModal && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -272,7 +276,7 @@ export default function Cart() {
             </div>
 
             {/* Modal Body */}
-            <div style={{ padding: '28px 24px', textAlign: 'center' }}>
+            <div style={{ padding: '28px 24px', textAlign: 'center', maxHeight: '80vh', overflowY: 'auto' }}>
               {modalStep === 'qr' ? (
                 <>
                   <p style={{ margin: '0 0 16px', color: '#475569', fontSize: '0.95rem' }}>
@@ -324,8 +328,8 @@ export default function Cart() {
                   {/* Slip Upload */}
                   <div style={{ marginBottom: '16px' }}>
                     <label style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      height: '2cm', border: '1.5px dashed #cbd5e1', borderRadius: '8px',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                      minHeight: '2cm', padding: '10px', border: '1.5px dashed #cbd5e1', borderRadius: '8px',
                       cursor: 'pointer', background: slipFile ? '#f0fdf4' : '#f8fafc',
                       borderColor: slipFile ? '#86efac' : '#cbd5e1',
                       transition: 'all 0.2s'
@@ -344,8 +348,11 @@ export default function Cart() {
                           }
                         }}
                       />
+                      {slipPreview ? (
+                        <img src={slipPreview} alt="Slip Preview" style={{ maxHeight: '100px', objectFit: 'contain', marginBottom: '8px' }} />
+                      ) : null}
                       <span style={{ fontSize: '0.88rem', color: slipFile ? '#16a34a' : '#64748b' }}>
-                        {slipFile ? `✅ ${slipFile.name}` : 'แนบสลิปการโอนเงิน'}
+                        {slipFile ? `✅ ${slipFile.name} (คลิกเพื่อเปลี่ยน)` : 'แนบสลิปการโอนเงิน'}
                       </span>
                     </label>
                   </div>
