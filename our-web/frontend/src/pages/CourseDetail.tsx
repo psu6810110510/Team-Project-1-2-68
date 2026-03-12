@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import BookingForm from '../components/BookingForm';
 import { courseAPI, type Course } from '../api/courseAPI';
 import '../styles/CourseDetail.css';
 
@@ -30,6 +31,8 @@ const CourseDetail = () => {
   const [showCartModal, setShowCartModal] = useState(false);
   const [selectedType, setSelectedType] = useState<'online' | 'onsite' | null>(null);
   const [onsiteBooked, setOnsiteBooked] = useState<number | null>(null);
+  const [showBookingForm, setShowBookingForm] = useState(false);
+  const [bookingMsg, setBookingMsg] = useState('');
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -359,6 +362,13 @@ const CourseDetail = () => {
                 </button>
 
                 <button
+                  className="cd-booking-btn"
+                  onClick={() => setShowBookingForm(true)}
+                >
+                  📅 จองการเรียน
+                </button>
+
+                <button
                   className={`cd-wishlist-btn ${isWishlisted ? 'wishlisted' : ''}`}
                   onClick={handleWishlist}
                   title={isWishlisted ? 'นำออกจากสิ่งที่ถูกใจ' : 'บันทึกสิ่งที่ถูกใจ'}
@@ -369,6 +379,8 @@ const CourseDetail = () => {
             )}
 
             {cartMsg && <p className="cd-cart-msg">{cartMsg}</p>}
+
+            {bookingMsg && <p className="cd-booking-msg">{bookingMsg}</p>}
 
             {inCart && isLoggedIn && (
               <button className="cd-go-cart-btn" onClick={() => navigate('/cart')}>
@@ -466,6 +478,25 @@ const CourseDetail = () => {
                 เพิ่มเข้าตะกร้า
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Booking form modal */}
+      {showBookingForm && course && (
+        <div className="cd-modal-overlay" onClick={() => setShowBookingForm(false)}>
+          <div className="cd-modal cd-booking-modal" onClick={(e) => e.stopPropagation()}>
+            <BookingForm
+              courseId={courseId || ''}
+              isOnline={course.is_online}
+              isOnsite={course.is_onsite}
+              onBookingComplete={(bookingId) => {
+                setShowBookingForm(false);
+                setBookingMsg('✓ จองการเรียนสำเร็จแล้ว!');
+                setTimeout(() => setBookingMsg(''), 3000);
+              }}
+              onClose={() => setShowBookingForm(false)}
+            />
           </div>
         </div>
       )}

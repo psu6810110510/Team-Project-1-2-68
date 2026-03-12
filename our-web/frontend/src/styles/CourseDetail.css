@@ -296,11 +296,13 @@
 /* Action buttons (logged in) */
 .cd-action-buttons {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
 .cd-cart-btn {
   flex: 1;
+  min-width: 120px;
   padding: 13px 12px;
   background: #1B395C;
   color: white;
@@ -319,6 +321,29 @@
 .cd-cart-btn.in-cart {
   background: #15803d;
   cursor: default;
+}
+
+.cd-booking-btn {
+  flex: 1;
+  min-width: 120px;
+  padding: 13px 12px;
+  background: #059669;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cd-booking-btn:hover {
+  background: #047857;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.2);
+}
+
+.cd-booking-btn:active {
+  transform: translateY(1px);
 }
 
 .cd-wishlist-btn {
@@ -352,6 +377,14 @@
   font-size: 13px;
   font-weight: 600;
   color: #15803d;
+  text-align: center;
+}
+
+.cd-booking-msg {
+  margin: 10px 0 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #059669;
   text-align: center;
 }
 
@@ -602,6 +635,49 @@
 
 .cd-modal-btn-confirm:hover {
   background: #14294a;
+}
+
+/* Booking Modal Specific Styles */
+.cd-booking-modal {
+  padding: 0;
+}
+
+.cd-booking-modal .booking-form {
+  border: none;
+  padding: 24px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.cd-booking-modal .booking-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: none;
+}
+
+.cd-booking-modal .booking-form-header h2 {
+  font-size: 20px;
+  color: #1e293b;
+}
+
+.cd-booking-modal .close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  background: #f1f5f9;
+  border-radius: 50%;
+  color: #64748b;
+  font-size: 24px;
+}
+
+.cd-booking-modal .close-btn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
 }
 
 /* =========================================
