@@ -85,6 +85,8 @@ export default function AdminDashboard() {
   // Booking state
   const [bookings, setBookings] = useState<any[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(false);
+  const [selectedBookingDetails, setSelectedBookingDetails] = useState<any>(null);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
 
   // Fetch all courses on mount
   useEffect(() => {
@@ -1042,6 +1044,16 @@ export default function AdminDashboard() {
                               {b.status === BStatus.COMPLETED && <span style={{ background: '#dbeafe', color: '#2563eb', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>เสร็จสิ้น</span>}
                             </td>
                             <td style={{ padding: '12px 0', textAlign: 'right', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                              <button
+                                onClick={() => {
+                                  setSelectedBookingDetails(b);
+                                  setIsBookingModalOpen(true);
+                                }}
+                                style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 2px 4px rgba(59, 130, 246, 0.2)' }}
+                                title="ดูรายละเอียดการจอง"
+                              >
+                                🔎
+                              </button>
                               {b.status === BStatus.PENDING && (
                                 <button
                                   onClick={async () => {
@@ -1449,6 +1461,104 @@ export default function AdminDashboard() {
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Booking Details Modal */}
+      {isBookingModalOpen && selectedBookingDetails && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
+          <div style={{ background: '#ffffff', borderRadius: '16px', width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+            <div style={{ padding: '24px 30px', borderBottom: '2px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', borderRadius: '16px 16px 0 0' }}>
+              <h2 style={{ fontSize: '1.3rem', color: 'white', margin: 0, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FileText size={24} color="#38bdf8" />
+                รายละเอียดการจอง
+              </h2>
+              <button 
+                onClick={() => { setIsBookingModalOpen(false); setSelectedBookingDetails(null); }} 
+                style={{ background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', color: 'white', padding: '8px', borderRadius: '8px', display: 'flex', transition: 'background 0.2s' }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '4px' }}>รหัสการจอง (ID)</label>
+                  <div style={{ fontSize: '1rem', color: '#0f172a', fontWeight: '500', background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', wordBreak: 'break-all' }}>
+                    {selectedBookingDetails.id}
+                  </div>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '4px' }}>สถานะ</label>
+                  <div style={{ fontSize: '1rem', fontWeight: '500', padding: '10px 14px', borderRadius: '8px', display: 'flex', alignItems: 'center' }}>
+                    {selectedBookingDetails.status === BStatus.CONFIRMED && <span style={{ color: '#16a34a' }}>✅ ยืนยันแล้ว</span>}
+                    {selectedBookingDetails.status === BStatus.PENDING && <span style={{ color: '#ca8a04' }}>⏳ รอยืนยัน</span>}
+                    {selectedBookingDetails.status === BStatus.CANCELLED && <span style={{ color: '#ef4444' }}>❌ ยกเลิกแล้ว</span>}
+                    {selectedBookingDetails.status === BStatus.COMPLETED && <span style={{ color: '#2563eb' }}>🎓 เสร็จสิ้น</span>}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '4px' }}>รูปแบบการเรียน</label>
+                 <div style={{ fontSize: '1rem', color: '#0f172a', fontWeight: '500', background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  {selectedBookingDetails.learning_mode}
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '4px' }}>คอร์สเรียน</label>
+                <div style={{ fontSize: '1rem', color: '#0f172a', fontWeight: '500', background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  {selectedBookingDetails.course_name}
+                </div>
+              </div>
+
+               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <div>
+                   <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '4px' }}>ชื่อผู้จอง</label>
+                   <div style={{ fontSize: '1rem', color: '#0f172a', fontWeight: '500', background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    {selectedBookingDetails.user_name}
+                  </div>
+                 </div>
+                 <div>
+                   <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '4px' }}>อีเมล</label>
+                   <div style={{ fontSize: '1rem', color: '#0f172a', fontWeight: '500', background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', wordBreak: 'break-word' }}>
+                    {selectedBookingDetails.user_email}
+                  </div>
+                 </div>
+              </div>
+
+              {selectedBookingDetails.notes && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '4px' }}>หมายเหตุ (จากผู้เรียน)</label>
+                  <div style={{ fontSize: '0.95rem', color: '#334155', background: '#fffbeb', padding: '14px', borderRadius: '8px', border: '1px solid #fde68a', lineHeight: '1.5' }}>
+                    {selectedBookingDetails.notes}
+                  </div>
+                </div>
+              )}
+
+              {selectedBookingDetails.created_at && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '4px' }}>วันที่สร้างรายการ</label>
+                  <div style={{ fontSize: '0.95rem', color: '#475569', background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    {new Date(selectedBookingDetails.created_at).toLocaleString('th-TH')}
+                  </div>
+                </div>
+              )}
+            </div>
+
+             <div style={{ padding: '20px 30px', borderTop: '2px solid #f1f5f9', display: 'flex', justifyContent: 'flex-end', background: '#f8fafc', borderRadius: '0 0 16px 16px' }}>
+              <button
+                onClick={() => { setIsBookingModalOpen(false); setSelectedBookingDetails(null); }}
+                style={{ background: '#e2e8f0', color: '#475569', border: 'none', padding: '10px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem' }}
+              >
+                ปิดหน้าต่าง
+              </button>
+            </div>
           </div>
         </div>
       )}
