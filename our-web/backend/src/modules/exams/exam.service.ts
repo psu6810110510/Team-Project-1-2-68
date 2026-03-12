@@ -352,4 +352,43 @@ export class ExamService {
       questions: questionsWithChoices,
     };
   }
+
+  // ---------- ANALYTICS ----------
+  async getExamAnalytics(examId: string) {
+    const results = await this.examResultRepo.find({
+      where: { exam_id: examId },
+    });
+
+    const lessonWrongCounts: Record<string, number> = {};
+    let totalAttempts = results.length;
+    let totalScoreAll = 0;
+
+    for (const result of results) {
+      totalScoreAll += result.total_score;
+      if (result.weak_points_log) {
+        try {
+          const weakLessons: string[] = JSON.parse(result.weak_points_log);
+          for (const lessonId of weakLessons) {
+            if (!lessonWrongCounts[lessonId]) {
+              lessonWrongCounts[lessonId] = 0;
+            }
+            lessonWrongCounts[lessonId]++;
+          }
+        } catch (e) {
+          // ignore parse error simply
+        }
+      }
+    }
+
+    const weakLessonsRanking = Object.entries(lessonWrongCounts)
+      .map(([lesson_id, wrong_count]) => ({ lesson_id, wrong_count }))
+      .sort((a, b) => b.wrong_count - a.wrong_count);
+
+    return {
+      exam_id: examId,
+      total_attempts: totalAttempts,
+      average_score: totalAttempts > 0 ? totalScoreAll / totalAttempts : 0,
+      weak_lessons_ranking: weakLessonsRanking,
+    };
+  }
 }

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Search, ShoppingCart, Menu, User, ChevronLeft, PlusCircle, Edit3, Trash2,
-  BookOpen, AlertCircle, X, Save, FileText, CheckCircle, Clock
+  BookOpen, AlertCircle, X, Save, FileText, CheckCircle, Clock, BarChart
 } from 'lucide-react';
 import examAPI from '../api/examAPI';
 import type { Exam, Question, Choice } from '../api/examAPI';
@@ -25,6 +25,8 @@ export default function ExamManagement() {
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
   const [isExamModalOpen, setIsExamModalOpen] = useState(false);
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
+  const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [editMode, setEditMode] = useState(false);
   
   // Exam Form States
@@ -284,6 +286,37 @@ export default function ExamManagement() {
     }
   };
 
+  // ==================== ANALYTICS MANAGEMENT ====================
+  const openAnalyticsModal = async (exam: Exam) => {
+    setSelectedExam(exam);
+    setIsAnalyticsModalOpen(true);
+    setAnalyticsData(null);
+    try {
+      const res = await examAPI.getExamAnalytics(exam.id);
+      const data = res.data;
+
+      // Map lesson names
+      if (data.weak_lessons_ranking && data.weak_lessons_ranking.length > 0) {
+        const enriched = await Promise.all(
+          data.weak_lessons_ranking.map(async (item: any) => {
+            try {
+              const lessonRes = await courseAPI.getLessonById(item.lesson_id);
+              return { ...item, lesson_name: lessonRes.data.topic_name };
+            } catch (err) {
+              return { ...item, lesson_name: 'Unknown Lesson' };
+            }
+          })
+        );
+        data.weak_lessons_ranking = enriched;
+      }
+
+      setAnalyticsData(data);
+    } catch (error) {
+      console.error('Error loading analytics:', error);
+      alert('เกิดข้อผิดพลาดในการโหลดสถิติ');
+    }
+  };
+
   const getExamTypeLabel = (type: string) => {
     const types: Record<string, string> = {
       PRETEST: 'Pre-Test',
@@ -473,6 +506,23 @@ export default function ExamManagement() {
                         }}
                       >
                         <Edit3 size={16} /> แก้ไข
+                      </button>
+                      <button
+                        onClick={() => openAnalyticsModal(exam)}
+                        style={{
+                          background: '#fffbeb',
+                          color: '#b45309',
+                          border: '1px solid #fcd34d',
+                          padding: '8px 16px',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          fontSize: '0.9rem'
+                        }}
+                      >
+                        <BarChart size={16} /> สถิติ
                       </button>
                       <button
                         onClick={() => handleDeleteExam(exam.id, exam.title)}
@@ -832,6 +882,89 @@ export default function ExamManagement() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============= ANALYTICS MODAL ============= */}
+      {isAnalyticsModalOpen && selectedExam && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          background: 'rgba(0, 0, 0, 0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999
+        }}>
+          <div style={{
+            background: 'white', padding: '30px', borderRadius: '16px', width: '800px', maxHeight: '90vh',
+            overflowY: 'auto', boxShadow: '0 10px 30px rgba(0,0,0,0.2)', position: 'relative'
+          }}>
+            <button onClick={() => setIsAnalyticsModalOpen(false)} style={{ position: 'absolute', top: '20px', right: '20px', border: 'none', background: 'none', cursor: 'pointer' }}>
+              <X size={24} color="#94a3b8" />
+            </button>
+
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <BarChart size={24} color="#b45309" /> 
+              สถิติและผลการเรียนรู้
+            </h2>
+            <p style={{ color: '#64748b', marginBottom: '2rem' }}>{selectedExam.title}</p>
+
+            {!analyticsData ? (
+              <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
+                <Clock size={40} style={{ marginBottom: '1rem', animation: 'spin 2s linear infinite' }} />
+                <p>กำลังโหลดข้อมูลสถิติ...</p>
+              </div>
+            ) : (
+              <div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.5rem', marginBottom: '2.5rem' }}>
+                  <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
+                    <p style={{ color: '#64748b', fontSize: '0.95rem', marginBottom: '0.5rem' }}>จำนวนการส่งข้อสอบสะสม (ครั้ง)</p>
+                    <p style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#0f172a' }}>{analyticsData.total_attempts}</p>
+                  </div>
+                  <div style={{ background: '#f0fdf4', padding: '1.5rem', borderRadius: '12px', border: '1px solid #bbf7d0', textAlign: 'center' }}>
+                    <p style={{ color: '#166534', fontSize: '0.95rem', marginBottom: '0.5rem' }}>คะแนนเฉลี่ย</p>
+                    <p style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#15803d' }}>
+                      {analyticsData.average_score.toFixed(1)} <span style={{ fontSize: '1.2rem', color: '#16a34a' }}>/ {selectedExam.total_score}</span>
+                    </p>
+                  </div>
+                </div>
+
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#0f172a', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  ⚠️ จุดที่นักเรียนมักทำผิดพลาด (Weak Points)
+                </h3>
+                
+                {analyticsData.weak_lessons_ranking && analyticsData.weak_lessons_ranking.length > 0 ? (
+                  <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+                        <tr>
+                          <th style={{ padding: '15px 20px', textAlign: 'left', color: '#475569', fontSize: '0.9rem', width: '70%' }}>เนื้อหา/บทเรียน</th>
+                          <th style={{ padding: '15px 20px', textAlign: 'center', color: '#475569', fontSize: '0.9rem', width: '30%' }}>จำนวนครั้งที่ตอบผิด</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {analyticsData.weak_lessons_ranking.map((item: any, idx: number) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9', background: idx === 0 ? '#fffbeb' : 'white' }}>
+                            <td style={{ padding: '15px 20px', color: '#334155', fontWeight: idx === 0 ? '600' : '400' }}>
+                              {idx === 0 && <span style={{ marginRight: '8px' }}>🥇</span>}
+                              {idx === 1 && <span style={{ marginRight: '8px' }}>🥈</span>}
+                              {idx === 2 && <span style={{ marginRight: '8px' }}>🥉</span>}
+                              {item.lesson_name}
+                            </td>
+                            <td style={{ padding: '15px 20px', textAlign: 'center', color: '#dc2626', fontWeight: 'bold' }}>
+                              {item.wrong_count}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div style={{ padding: '3rem', textAlign: 'center', background: '#f8fafc', borderRadius: '12px', color: '#94a3b8' }}>
+                    <CheckCircle size={48} color="#22c55e" style={{ marginBottom: '1rem', display: 'inline-block' }} />
+                    <p style={{ fontSize: '1.1rem', color: '#334155', fontWeight: '500' }}>สุดยอด! นักเรียนตอบข้อสอบได้ยอดเยี่ยม</p>
+                    <p style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>ยังไม่พบข้อมูลผู้เรียนที่ตอบผิดจนเกิดเป็นสถิติจุดอ่อน</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

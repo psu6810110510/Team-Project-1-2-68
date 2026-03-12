@@ -186,6 +186,13 @@ export const examAPI = {
    */
   getStudentResults: (userId: string) =>
     apiClient.get(`/exams/student/results/${userId}`),
+
+  // ---------- ANALYTICS endpoints ----------
+  /**
+   * ดูสถิติการสอบและจุดอ่อนของหัวข้อ (สำหรับแอดมิน/ผู้สอน)
+   */
+  getExamAnalytics: (examId: string) =>
+    apiClient.get(`/exams/${examId}/analytics`),
 };
 
 export default examAPI;

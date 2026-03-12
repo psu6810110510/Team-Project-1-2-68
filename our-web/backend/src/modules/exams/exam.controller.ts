@@ -211,4 +211,11 @@ export class ExamController {
     const results = await this.examService.getStudentResults(userId);
     return { data: results, total: results.length };
   }
+
+  // ---------- ANALYTICS endpoints ----------
+
+  @Get(':examId/analytics')
+  async getExamAnalytics(@Param('examId') examId: string) {
+    return this.examService.getExamAnalytics(examId);
+  }
 }
