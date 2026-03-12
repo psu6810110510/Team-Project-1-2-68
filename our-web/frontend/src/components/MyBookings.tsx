@@ -51,7 +51,10 @@ const MyBookings = () => {
 
     try {
       await bookingAPI.cancelBooking(bookingId);
-      setBookings(bookings.filter((b) => b.id !== bookingId));
+      // Update the status of the cancelled booking instead of removing it from the list
+      setBookings(bookings.map((b) => 
+        b.id === bookingId ? { ...b, status: BookingStatus.CANCELLED } : b
+      ));
     } catch (err: any) {
       alert('ไม่สามารถยกเลิกการจองได้');
     }
