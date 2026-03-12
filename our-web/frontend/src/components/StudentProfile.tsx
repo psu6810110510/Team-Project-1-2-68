@@ -56,7 +56,11 @@ export default function StudentProfile() {
       choices: Array<{ id: string; choice_label: string; choice_text: string }> }>;
   }>(null);
   const [examAnswers, setExamAnswers] = useState<Record<string, string>>({});
-  const [examResult, setExamResult] = useState<null | { total_score: number; percentage: number; correct_answers: number; total_questions: number }>(null);
+  const [examResult, setExamResult] = useState<null | { 
+    total_score: number; percentage: number; correct_answers: number; total_questions: number;
+    weak_points_log?: string[];
+    weak_lessons?: Array<{ id: string; name: string }>;
+  }>(null);
   const [examStartTime, setExamStartTime] = useState<Date | null>(null);
   const [submittingExam, setSubmittingExam] = useState(false);
 
@@ -721,6 +725,38 @@ export default function StudentProfile() {
                           <h3 style={{ fontSize: '1.8rem', fontWeight: 'bold', color: examResult.percentage >= 60 ? '#16a34a' : '#dc2626', marginBottom: '0.5rem' }}>{examResult.percentage.toFixed(1)}%</h3>
                           <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>คะแนน {examResult.total_score} / {activeExam.total_score} &nbsp;|&nbsp; ถูก {examResult.correct_answers} / {examResult.total_questions} ข้อ</p>
                           <p style={{ fontSize: '1.1rem', color: examResult.percentage >= 60 ? '#15803d' : '#b91c1c', fontWeight: '600', marginBottom: '2rem' }}>{examResult.percentage >= 60 ? 'ผ่านเกณฑ์ ✅' : 'ไม่ผ่านเกณฑ์ ❌ (ต้องได้ 60% ขึ้นไป)'}</p>
+                          
+                          {/* 💡 แสดงการวิเคราะห์จุดอ่อน (Weak Points) */}
+                          {examResult.weak_lessons && examResult.weak_lessons.length > 0 && (
+                            <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', textAlign: 'left' }}>
+                              <h4 style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#92400e', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                ⚠️ จุดอ่อนที่ควรทบทวน (วิเคราะห์จากข้อที่ผิด)
+                              </h4>
+                              <p style={{ fontSize: '0.9rem', color: '#b45309', marginBottom: '1rem' }}>มีบางหัวข้อที่คุณอาจยังไม่ค่อยเข้าใจ ลองกลับไปทบทวนบทเรียนเหล่านี้ดูนะ:</p>
+                              <ul style={{ listStyleType: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {examResult.weak_lessons.map((lesson, idx) => (
+                                  <li key={idx} style={{ 
+                                    background: 'white', padding: '10px 14px', borderRadius: '8px', border: '1px solid #fde68a', 
+                                    fontSize: '0.95rem', color: '#78350f', fontWeight: '500', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px'
+                                  }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                      <span style={{ color: '#f59e0b', fontSize: '1.2rem' }}>•</span>
+                                      {lesson.name}
+                                    </div>
+                                    <button 
+                                      onClick={() => navigate(`/courses/${activeExam.course_id}`)}
+                                      style={{ padding: '6px 12px', background: '#fef3c7', color: '#b45309', border: '1px solid #fcd34d', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer', transition: 'background 0.2s' }}
+                                      onMouseEnter={(e) => e.currentTarget.style.background = '#fde68a'}
+                                      onMouseLeave={(e) => e.currentTarget.style.background = '#fef3c7'}
+                                    >
+                                      ไปทบทวน ➔
+                                    </button>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
                           <button onClick={() => { setActiveExam(null); setExamAnswers({}); setExamResult(null); }} style={{ padding: '10px 28px', background: '#0A1C39', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '500' }}>ปิด</button>
                         </div>
                       ) : (
@@ -754,7 +790,25 @@ export default function StudentProfile() {
                                 try {
                                   const answers = Object.entries(examAnswers).map(([question_id, choice_id]) => ({ question_id, choice_id }));
                                   const res = await examAPI.submitExam(activeExam.id, { user_id: userObj.id, answers, time_spent_seconds: spent });
-                                  setExamResult(res.data);
+                                  
+                                  const resultData = res.data;
+                                  
+                                  // ดึงชื่อบทเรียน (Topic Name) ถ้ามี lesson_id ที่ผิด
+                                  if (resultData.weak_points_log && resultData.weak_points_log.length > 0) {
+                                    try {
+                                      const mappedLessons = await Promise.all(
+                                        resultData.weak_points_log.map(async (lessonId: string) => {
+                                          const lessonRes = await courseAPI.getLessonById(lessonId);
+                                          return { id: lessonId, name: lessonRes.data.topic_name };
+                                        })
+                                      );
+                                      resultData.weak_lessons = mappedLessons;
+                                    } catch (geoErr) {
+                                      console.error('Failed to fetch weak lesson details', geoErr);
+                                    }
+                                  }
+
+                                  setExamResult(resultData);
                                 } catch (err) {
                                   console.error('Submit error', err);
                                   alert('เกิดข้อผิดพลาดในการส่งข้อสอบ');
