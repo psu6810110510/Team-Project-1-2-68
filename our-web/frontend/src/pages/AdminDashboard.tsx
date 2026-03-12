@@ -1517,6 +1517,28 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              {/* แสดงรอบเวลาเรียน ถ้ามีข้อมูล */}
+              {selectedBookingDetails.schedule_start_time && selectedBookingDetails.schedule_end_time && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '4px' }}>รอบเวลาเรียน</label>
+                  <div style={{ fontSize: '1rem', color: '#0f172a', fontWeight: '500', background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    📅 {new Date(selectedBookingDetails.schedule_start_time).toLocaleDateString('th-TH', { 
+                          weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' 
+                       })}
+                    <span style={{ margin: '0 8px', color: '#cbd5e1' }}>|</span>
+                    🕐 {new Date(selectedBookingDetails.schedule_start_time).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
+                    {' - '}
+                    {new Date(selectedBookingDetails.schedule_end_time).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
+                    
+                    {selectedBookingDetails.room_location && (
+                      <span style={{ marginLeft: '8px', fontSize: '0.9rem', color: '#64748b' }}>
+                        (📍 ห้อง: {selectedBookingDetails.room_location})
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 <div>
                    <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '4px' }}>ชื่อผู้จอง</label>
