@@ -201,6 +201,7 @@ export class ExamController {
       total_questions: result.total_questions,
       correct_answers: result.correct_answers,
       wrong_answers: result.wrong_answers,
+      weak_points_log: result.weak_points_log ? JSON.parse(result.weak_points_log) : [],
       message: 'Exam submitted successfully',
     };
   }

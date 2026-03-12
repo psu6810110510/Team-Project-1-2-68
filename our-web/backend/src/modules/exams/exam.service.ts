@@ -273,16 +273,29 @@ export class ExamService {
     let correct = 0;
     let wrong = 0;
     let earnedScore = 0;
+    const weakLessonIds = new Set<string>();
 
     for (const q of questions) {
       const answer = dto.answers.find((a) => a.question_id === q.id);
-      if (!answer) continue;
+      if (!answer) {
+        // If not answered, consider it wrong and track weak lesson
+        wrong++;
+        if (q.lesson_id) {
+          weakLessonIds.add(q.lesson_id);
+        }
+        continue;
+      }
+
       const choice = await this.choiceRepo.findOne({ where: { id: answer.choice_id, question_id: q.id } });
       if (choice?.is_correct) {
         correct++;
         earnedScore += q.score_points || 1;
       } else {
         wrong++;
+        // Track the lesson_id if answered wrong
+        if (q.lesson_id) {
+          weakLessonIds.add(q.lesson_id);
+        }
       }
     }
 
@@ -297,6 +310,7 @@ export class ExamService {
       correct_answers: correct,
       wrong_answers: wrong,
       time_spent_seconds: dto.time_spent_seconds,
+      weak_points_log: JSON.stringify(Array.from(weakLessonIds)),
       started_at: new Date(),
       completed_at: new Date(),
     });
