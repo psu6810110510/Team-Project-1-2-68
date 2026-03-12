@@ -14,6 +14,7 @@ import '../styles/LoginTheme.css';
 import Footer from '../components/Footer';
 import { courseAPI, CourseStatus, type Course as APICourse } from '../api/courseAPI';
 import { paymentAPI, type PaymentRecord } from '../api/paymentAPI';
+import bookingAPI, { BookingStatus as BStatus } from '../api/bookingAPI';
 
 // ==========================================
 // Mock Data 
@@ -81,6 +82,10 @@ export default function AdminDashboard() {
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [loadingPayments, setLoadingPayments] = useState(false);
 
+  // Booking state
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [loadingBookings, setLoadingBookings] = useState(false);
+
   // Fetch all courses on mount
   useEffect(() => {
     const fetchAllCourses = async () => {
@@ -142,6 +147,18 @@ export default function AdminDashboard() {
       console.error('Error loading payments:', error);
     } finally {
       setLoadingPayments(false);
+    }
+  };
+
+  const loadBookings = async () => {
+    setLoadingBookings(true);
+    try {
+      const res = await bookingAPI.getAllBookings();
+      setBookings(res.data.data);
+    } catch (error) {
+      console.error('Error loading bookings:', error);
+    } finally {
+      setLoadingBookings(false);
     }
   };
 
@@ -335,8 +352,12 @@ export default function AdminDashboard() {
                 )}
               </li>
 
-              <li onClick={() => setActiveMenu('exams')} style={{ ...sidebarItemStyle, background: activeMenu === 'exams' ? '#2c5282' : 'transparent', borderLeft: activeMenu === 'exams' ? '4px solid #60a5fa' : '4px solid transparent' }}>
+              <li onClick={() => { setActiveMenu('exams'); }} style={{ ...sidebarItemStyle, background: activeMenu === 'exams' ? '#2c5282' : 'transparent', borderLeft: activeMenu === 'exams' ? '4px solid #60a5fa' : '4px solid transparent' }}>
                 <FileText size={20} /> คลังข้อสอบ
+              </li>
+
+              <li onClick={() => { setActiveMenu('bookings'); loadBookings(); }} style={{ ...sidebarItemStyle, background: activeMenu === 'bookings' ? '#2c5282' : 'transparent', borderLeft: activeMenu === 'bookings' ? '4px solid #60a5fa' : '4px solid transparent' }}>
+                <BookOpen size={20} /> รายการจองออฟไลน์
               </li>
 
               <li onClick={() => { setActiveMenu('finance'); loadPayments(); }} style={{ ...sidebarItemStyle, background: activeMenu === 'finance' ? '#2c5282' : 'transparent', borderLeft: activeMenu === 'finance' ? '4px solid #60a5fa' : '4px solid transparent' }}>

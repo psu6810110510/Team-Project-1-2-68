@@ -137,10 +137,6 @@ export class BookingService {
     });
   }
 
-  async getBookingsByUser(userId: string): Promise<Booking[]> {
-    // ...existing...
-  }
-
   async getAllBookings(): Promise<Booking[]> {
     return this.bookingRepo.find({
       relations: ['user', 'schedule', 'schedule.course'],
