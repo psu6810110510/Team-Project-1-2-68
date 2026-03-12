@@ -1,14 +1,59 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import '../styles/LoginTheme.css';
 import { ChevronLeft, PlayCircle, CheckCircle, FileText, MonitorPlay, Download } from 'lucide-react';
+import { paymentAPI } from '../api/paymentAPI';
+import { courseAPI } from '../api/courseAPI';
 
 export default function CourseLearning() {
     const navigate = useNavigate();
     const { courseId } = useParams<{ courseId: string }>();
 
-    let courseTitle = courseId === '1' ? 'Data Science with Python' : 'Data Visualization';
+    const [accessStatus, setAccessStatus] = useState<'checking' | 'allowed' | 'denied' | 'pending'>('checking');
+    const [realLessons, setRealLessons] = useState<any[]>([]);
+    const [realCourseTitle, setRealCourseTitle] = useState<string>('');
+
+    useEffect(() => {
+        const checkAccess = async () => {
+            const storedUser = localStorage.getItem('user');
+            if (!storedUser || !courseId) {
+                setAccessStatus('denied');
+                return;
+            }
+            const user = JSON.parse(storedUser);
+            try {
+                const res = await paymentAPI.checkCourseAccess(user.id, courseId);
+                if (res.data.has_access) {
+                    setAccessStatus('allowed');
+                    // Load actual course lessons
+                    try {
+                        const [courseRes, lessonsRes] = await Promise.all([
+                            courseAPI.getCourseById(courseId),
+                            courseAPI.getLessonsByCourse(courseId),
+                        ]);
+                        setRealCourseTitle(courseRes.data.title || '');
+                        setRealLessons(lessonsRes.data.data || []);
+                    } catch {
+                        // Fall back to mock data if fetch fails
+                    }
+                } else {
+                    // Check if user has a PENDING/SUBMITTED payment
+                    const paymentsRes = await paymentAPI.getUserPayments(user.id);
+                    const hasPending = paymentsRes.data.data.some(
+                        p => p.course_ids.includes(courseId) &&
+                            (p.status === 'PAYMENT_SUBMITTED' || p.status === 'PENDING_PAYMENT')
+                    );
+                    setAccessStatus(hasPending ? 'pending' : 'denied');
+                }
+            } catch {
+                setAccessStatus('denied');
+            }
+        };
+        checkAccess();
+    }, [courseId]);
+
+    let courseTitle = realCourseTitle || (courseId === '1' ? 'Data Science with Python' : 'Data Visualization');
     let instructorName = 'นายอาร์ม ตัวจริง';
     let videoUrl = '';
 
@@ -18,7 +63,7 @@ export default function CourseLearning() {
             const parsed = JSON.parse(savedCourses);
             const matched = parsed.find((c: any) => c.id.toString() === courseId);
             if (matched) {
-                courseTitle = matched.title;
+                if (!realCourseTitle) courseTitle = matched.title;
                 instructorName = matched.instructor || instructorName;
                 videoUrl = matched.videoUrl || '';
             }
@@ -54,6 +99,71 @@ export default function CourseLearning() {
     const initialLesson = course.modules.flatMap(m => m.lessons).find(l => l.isCurrent) || course.modules[0].lessons[0];
     const [activeLesson, setActiveLesson] = useState(initialLesson);
     const [downloadingModule, setDownloadingModule] = useState<string | null>(null);
+
+    // ---- Access gate ----
+    if (accessStatus === 'checking') {
+        return (
+            <div className="page-container" style={{ background: '#f8fafc', minHeight: '100vh' }}>
+                <Header />
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', flexDirection: 'column', gap: '16px', color: '#64748b' }}>
+                    <div style={{ fontSize: '2rem' }}>⏳</div>
+                    <p>กำลังตรวจสอบสิทธิ์การเข้าถึง...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (accessStatus === 'pending') {
+        return (
+            <div className="page-container" style={{ background: '#f8fafc', minHeight: '100vh' }}>
+                <Header />
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', flexDirection: 'column', gap: '20px', padding: '20px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '4rem' }}>⏳</div>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0A1C39' }}>รอการยืนยันการชำระเงิน</h2>
+                    <p style={{ color: '#64748b', maxWidth: '400px', lineHeight: 1.7 }}>
+                        คำขอชำระเงินของคุณอยู่ระหว่างการตรวจสอบ<br />
+                        เมื่อแอดมินยืนยันแล้ว คุณจะสามารถเข้าถึงคอร์สนี้ได้ทันที
+                    </p>
+                    <button
+                        onClick={() => navigate('/courses')}
+                        style={{ padding: '12px 28px', background: '#0A1C39', color: 'white', border: 'none', borderRadius: '10px', fontSize: '1rem', fontWeight: 'bold', cursor: 'pointer' }}
+                    >
+                        กลับหน้าคอร์ส
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (accessStatus === 'denied') {
+        return (
+            <div className="page-container" style={{ background: '#f8fafc', minHeight: '100vh' }}>
+                <Header />
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', flexDirection: 'column', gap: '20px', padding: '20px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '4rem' }}>🔒</div>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0A1C39' }}>คุณยังไม่ได้ลงทะเบียนคอร์สนี้</h2>
+                    <p style={{ color: '#64748b', maxWidth: '400px', lineHeight: 1.7 }}>
+                        กรุณาซื้อคอร์สก่อน แล้วรอการยืนยันจากแอดมิน<br />
+                        จากนั้นคุณจะสามารถเข้าถึงวิดีโอและเอกสารทั้งหมดได้
+                    </p>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                        <button
+                            onClick={() => navigate(`/courses/${courseId}`)}
+                            style={{ padding: '12px 28px', background: '#16a34a', color: 'white', border: 'none', borderRadius: '10px', fontSize: '1rem', fontWeight: 'bold', cursor: 'pointer' }}
+                        >
+                            ดูรายละเอียดคอร์ส
+                        </button>
+                        <button
+                            onClick={() => navigate('/courses')}
+                            style={{ padding: '12px 28px', background: '#0A1C39', color: 'white', border: 'none', borderRadius: '10px', fontSize: '1rem', fontWeight: 'bold', cursor: 'pointer' }}
+                        >
+                            คอร์สทั้งหมด
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     const handleDownloadSheet = (targetModuleTitle: string) => {
         setDownloadingModule(targetModuleTitle);
@@ -158,7 +268,51 @@ export default function CourseLearning() {
                     <div style={{ flex: '1 1 350px', background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '20px', height: 'fit-content' }}>
                         <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#0f172a', marginBottom: '16px' }}>เนื้อหาคอร์สเรียน</h2>
 
-                        <div style={{ marginBottom: '20px' }}>
+                        {realLessons.length > 0 ? (
+                          /* Real lessons from API */
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {realLessons.map((lesson, idx) => (
+                              <div key={lesson.id || idx} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
+                                <div style={{ background: '#f1f5f9', padding: '12px 16px', borderBottom: '1px solid #e2e8f0' }}>
+                                  <span style={{ fontWeight: 'bold', color: '#334155', fontSize: '0.9rem' }}>
+                                    บทที่ {lesson.sequence_order || idx + 1}: {lesson.topic_name}
+                                  </span>
+                                </div>
+                                <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                  {lesson.video_url ? (
+                                    <a
+                                      href={lesson.video_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e40af', fontSize: '0.9rem', fontWeight: '500', textDecoration: 'none' }}
+                                    >
+                                      <PlayCircle size={18} color="#3b82f6" />
+                                      วิดีโอบทเรียน
+                                    </a>
+                                  ) : (
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#94a3b8', fontSize: '0.9rem' }}>
+                                      <PlayCircle size={18} />
+                                      ยังไม่มีวิดีโอ
+                                    </span>
+                                  )}
+                                  {lesson.pdf_url ? (
+                                    <a
+                                      href={lesson.pdf_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#92400e', fontSize: '0.9rem', fontWeight: '500', textDecoration: 'none' }}
+                                    >
+                                      <Download size={18} color="#f59e0b" />
+                                      เอกสาร PDF
+                                    </a>
+                                  ) : null}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <>
+                            <div style={{ marginBottom: '20px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#64748b', marginBottom: '8px' }}>
                                 <span>ความคืบหน้า</span>
                                 <span style={{ fontWeight: 'bold', color: '#0284c7' }}>{course.progress}%</span>
@@ -166,9 +320,8 @@ export default function CourseLearning() {
                             <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
                                 <div style={{ width: `${course.progress}%`, background: '#38bdf8', height: '100%', borderRadius: '4px' }}></div>
                             </div>
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                             {course.modules.map(module => (
                                 <div key={module.id} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f1f5f9', padding: '12px 16px', borderBottom: '1px solid #e2e8f0' }}>
@@ -240,7 +393,9 @@ export default function CourseLearning() {
                                     </div>
                                 </div>
                             ))}
-                        </div>
+                            </div>
+                          </>
+                        )} {/* end ternary realLessons */}
                     </div>
                 </div>
             </div>

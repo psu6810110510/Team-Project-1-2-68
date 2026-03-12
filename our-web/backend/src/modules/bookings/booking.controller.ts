@@ -84,6 +84,12 @@ export class BookingController {
     };
   }
 
+  @Get('course/:courseId/onsite-count')
+  async getOnsiteBookedCount(@Param('courseId') courseId: string) {
+    const count = await this.bookingService.getOnsiteBookedCountByCourse(courseId);
+    return { count };
+  }
+
   @Get('schedule/:scheduleId/stats')
   async getBookingStats(@Param('scheduleId') scheduleId: string) {
     return this.bookingService.getBookingStats(scheduleId);

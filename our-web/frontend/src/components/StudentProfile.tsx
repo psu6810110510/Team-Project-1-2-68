@@ -8,6 +8,9 @@ import { Search, ShoppingCart, Menu, User, BookOpen, Heart, LogOut, Edit3, Camer
 import logoImage from '../assets/logo.png';
 import fullLogo from '../assets/name.png';
 import Footer from './Footer';
+import { paymentAPI, type PaymentRecord } from '../api/paymentAPI';
+import { courseAPI, type Course as APICourse } from '../api/courseAPI';
+import { examAPI } from '../api/examAPI';
 
 // ✅ ดึงค่า URL จากไฟล์ .env
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -31,7 +34,26 @@ export default function StudentProfile() {
   const [editValue, setEditValue] = useState('');
   const [oldPassword, setOldPassword] = useState('');
 
-  // --- 2. Mock Data ข้อมูลจำลอง ---
+  // --- 2. Real course data from confirmed payments ---
+  const [realMyCourses, setRealMyCourses] = useState<Array<{
+    id: string; title: string; instructor: string; startDate: string;
+    expireDate: string; lastAccess: string; progress: number; image: string;
+  }>>([]);
+  const [realPurchases, setRealPurchases] = useState<PaymentRecord[]>([]);
+  const [loadingCourses, setLoadingCourses] = useState(true);
+  // --- exam state ---
+  const [courseExams, setCourseExams] = useState<Array<{ courseTitle: string; exams: Array<{ id: string; title: string; type: string; total_score: number }> }>>([])
+  const [loadingExams, setLoadingExams] = useState(false);
+  const [activeExam, setActiveExam] = useState<null | {
+    id: string; title: string; type: string; total_score: number;
+    questions: Array<{ id: string; question_text: string; score_points: number; sequence_order?: number;
+      choices: Array<{ id: string; choice_label: string; choice_text: string }> }>;
+  }>(null);
+  const [examAnswers, setExamAnswers] = useState<Record<string, string>>({});
+  const [examResult, setExamResult] = useState<null | { total_score: number; percentage: number; correct_answers: number; total_questions: number }>(null);
+  const [examStartTime, setExamStartTime] = useState<Date | null>(null);
+  const [submittingExam, setSubmittingExam] = useState(false);
+  // --- 2. Mock Data ข้อมูลจำลอง (fallback) ---
   const myCourses = [
     {
       id: 1,
@@ -84,9 +106,9 @@ export default function StudentProfile() {
     { id: 202, title: 'C Programming', date: '10 ธ.ค. 66', price: '฿990', image: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=300&q=80' }
   ];
 
-  // --- 3. ดึงข้อมูลผู้ใช้ ---
+  // --- 3. ดึงข้อมูลผู้ใช้ + คอร์สที่ซื้อแล้ว ---
   useEffect(() => {
-    const fetchUserProfile = async () => {
+    const fetchAll = async () => {
       const storedUser = localStorage.getItem('user');
       const token = localStorage.getItem('access_token');
 
@@ -105,9 +127,68 @@ export default function StudentProfile() {
           description: userObj.description || prev.description,
           image: userObj.image || prev.image
         }));
+
+        // ดึงประวัติการชำระเงิน
+        try {
+          const paymentsRes = await paymentAPI.getUserPayments(userObj.id);
+          const allPayments = paymentsRes.data.data;
+          setRealPurchases(allPayments);
+
+          // กรองเฉพาะที่ยืนยันแล้ว แล้วดึงรายละเอียดคอร์ส
+          const confirmedPayments = allPayments.filter(p => p.status === 'CONFIRMED');
+          const courseIds = Array.from(new Set(confirmedPayments.flatMap(p => p.course_ids)));
+
+          const courseDetails = await Promise.all(
+            courseIds.map(id => courseAPI.getCourseById(id).then(r => r.data).catch(() => null))
+          );
+
+          const courseMap: Record<string, APICourse> = {};
+          courseDetails.forEach(c => { if (c) courseMap[c.id] = c; });
+
+          const coursesForDisplay = courseIds
+            .filter(id => courseMap[id])
+            .map(id => {
+              const c = courseMap[id];
+              const payment = confirmedPayments.find(p => p.course_ids.includes(id));
+              return {
+                id,
+                title: c.title,
+                instructor: c.instructor_name || c.instructor?.full_name || 'ผู้สอน',
+                startDate: payment ? new Date(payment.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' }) : '-',
+                expireDate: c.online_expiry ? `${c.online_expiry} เดือน` : 'ไม่จำกัด',
+                lastAccess: '-',
+                progress: 0,
+                image: c.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80',
+              };
+            });
+
+          setRealMyCourses(coursesForDisplay);
+
+          // โหลดข้อสอบของคอร์สที่ซื้อแล้ว
+          try {
+            const examGroups: typeof courseExams = [];
+            for (const id of courseIds) {
+              try {
+                const examRes = await examAPI.getExamsByCourse(id);
+                const exams = examRes.data.data;
+                if (exams && exams.length > 0) {
+                  const c = courseMap[id];
+                  examGroups.push({ courseTitle: c?.title || id, exams });
+                }
+              } catch { /* course may have no exams */ }
+            }
+            setCourseExams(examGroups);
+          } catch (err) {
+            console.error('Error loading exams:', err);
+          }
+        } catch (err) {
+          console.error('Error loading courses:', err);
+        } finally {
+          setLoadingCourses(false);
+        }
       }
     };
-    fetchUserProfile();
+    fetchAll();
   }, [navigate]);
 
   const handleLogout = () => {
@@ -332,6 +413,7 @@ export default function StudentProfile() {
               <li className={`menu-item ${activeMenu === 'courses' ? 'active' : ''}`} onClick={() => setActiveMenu('courses')}><BookOpen size={20} /> คอร์สเรียนของฉัน</li>
               <li className={`menu-item ${activeMenu === 'completed' ? 'active' : ''}`} onClick={() => setActiveMenu('completed')}><CheckSquare size={20} /> เรียนจบแล้ว</li>
               <li className={`menu-item ${activeMenu === 'favorites' ? 'active' : ''}`} onClick={() => setActiveMenu('favorites')}><Heart size={20} /> สิ่งที่ถูกใจ</li>
+              <li className={`menu-item ${activeMenu === 'exams' ? 'active' : ''}`} onClick={() => setActiveMenu('exams')}><MonitorPlay size={20} /> ระบบสอบออนไลน์</li>
               <li className={`menu-item ${activeMenu === 'purchases' ? 'active' : ''}`} onClick={() => setActiveMenu('purchases')}><CheckSquare size={20} /> ประวัติการซื้อ</li>
               <li className={`menu-item ${activeMenu === 'certificates' ? 'active' : ''}`} onClick={() => setActiveMenu('certificates')}><Award size={20} /> ใบประกาศ</li>
               <li className="menu-item logout" onClick={handleLogout}><LogOut size={20} /> ออกจากระบบ</li>
@@ -378,19 +460,42 @@ export default function StudentProfile() {
                 <div className="section-header"><span className="section-title-text">บริการสำหรับผู้เรียน</span></div>
                 <div className="services-grid">
                   <div className="service-card"><div className="service-icon-box"><FileText size={32} /></div><div className="service-text">คลังโจทย์</div></div>
-                  <div className="service-card"><div className="service-icon-box"><MonitorPlay size={32} /></div><div className="service-text">ระบบสอบออนไลน์</div></div>
+                  <div className="service-card" style={{ cursor: 'pointer' }} onClick={() => setActiveMenu('exams')}><div className="service-icon-box"><MonitorPlay size={32} /></div><div className="service-text">ระบบสอบออนไลน์</div></div>
                 </div>
 
                 <div className="section-header"><span className="section-title-text">คอร์สเรียนของฉัน</span></div>
 
+                {loadingCourses ? (
+                  <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
+                    <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>⏳</div>
+                    <div>กำลังโหลดคอร์สเรียน...</div>
+                  </div>
+                ) : realMyCourses.length === 0 ? (
+                  <div style={{
+                    textAlign: 'center', padding: '3rem', background: '#f8fafc',
+                    borderRadius: '12px', border: '1px dashed #cbd5e1', color: '#94a3b8'
+                  }}>
+                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📚</div>
+                    <p style={{ marginBottom: '1rem', fontSize: '1rem' }}>ยังไม่มีคอร์สเรียน</p>
+                    <button
+                      onClick={() => navigate('/courses')}
+                      style={{ padding: '10px 24px', background: '#0A1C39', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '500' }}
+                    >
+                      เรียกดูคอร์สทั้งหมด
+                    </button>
+                  </div>
+                ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                  {myCourses.map((course) => (
+                  {realMyCourses.map((course) => (
                     <div key={course.id} style={{
                       display: 'flex', flexWrap: 'wrap', background: 'white', border: '1px solid #e2e8f0',
                       borderRadius: '12px', padding: '1.2rem', gap: '1.5rem', alignItems: 'flex-start',
                       boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
                     }}>
-                      <img src={course.image} alt={course.title} style={{ width: '180px', height: '130px', objectFit: 'cover', borderRadius: '10px', flexShrink: 0 }} />
+                      <img src={course.image} alt={course.title}
+                        style={{ width: '180px', height: '130px', objectFit: 'cover', borderRadius: '10px', flexShrink: 0 }}
+                        onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80'; }}
+                      />
 
                       <div style={{ flex: 1, width: '100%', minWidth: '250px' }}>
                         <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '0.8rem', color: '#0f172a' }}>{course.title}</h3>
@@ -399,7 +504,6 @@ export default function StudentProfile() {
                           <div>อาจารย์ : <span style={{ color: '#334155', fontWeight: '500' }}>{course.instructor}</span></div>
                           <div>เริ่มเรียน : {course.startDate}</div>
                           <div>หมดเวลาเรียน : {course.expireDate}</div>
-                          <div>เรียนล่าสุด : {course.lastAccess}</div>
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginTop: 'auto', flexWrap: 'wrap' }}>
@@ -422,14 +526,15 @@ export default function StudentProfile() {
                     </div>
                   ))}
                 </div>
+                )}
 
                 <div className="section-header" style={{ marginTop: '3rem' }}>
                   <span className="section-title-text">สถิติการเรียนรู้</span>
                 </div>
                 <div className="stats-grid">
-                  <div className="stat-box"><Clock size={32} color="#64748b" style={{ margin: '0 auto' }} /><div className="stat-number">120 ชม.</div><div className="stat-label">ชั่วโมงเรียน</div></div>
-                  <div className="stat-box"><Calendar size={32} color="#64748b" style={{ margin: '0 auto' }} /><div className="stat-number">2</div><div className="stat-label">คอร์สที่เรียน</div></div>
-                  <div className="stat-box"><Award size={32} color="#64748b" style={{ margin: '0 auto' }} /><div className="stat-number">2</div><div className="stat-label">ใบประกาศ</div></div>
+                  <div className="stat-box"><Clock size={32} color="#64748b" style={{ margin: '0 auto' }} /><div className="stat-number">-</div><div className="stat-label">ชั่วโมงเรียน</div></div>
+                  <div className="stat-box"><Calendar size={32} color="#64748b" style={{ margin: '0 auto' }} /><div className="stat-number">{realMyCourses.length}</div><div className="stat-label">คอร์สที่เรียน</div></div>
+                  <div className="stat-box"><Award size={32} color="#64748b" style={{ margin: '0 auto' }} /><div className="stat-number">0</div><div className="stat-label">ใบประกาศ</div></div>
                 </div>
               </>
             )}
@@ -491,20 +596,179 @@ export default function StudentProfile() {
               </>
             )}
 
+            {/* 3.5 หน้าระบบสอบออนไลน์ */}
+            {activeMenu === 'exams' && (
+              <>
+                <div className="content-header"><span className="content-title">ระบบสอบออนไลน์</span></div>
+
+                {/* Modal ทำข้อสอบ */}
+                {activeExam && (
+                  <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 2000, display: 'flex', justifyContent: 'center', alignItems: 'flex-start', overflowY: 'auto', padding: '2rem 1rem' }}>
+                    <div style={{ background: 'white', borderRadius: '16px', width: '100%', maxWidth: '760px', padding: '2rem', boxShadow: '0 25px 50px rgba(0,0,0,0.3)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                        <div>
+                          <h2 style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#0f172a' }}>{activeExam.title}</h2>
+                          <span style={{ background: '#dbeafe', color: '#1d4ed8', padding: '3px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600' }}>{activeExam.type}</span>
+                        </div>
+                        {!examResult && <button onClick={() => { setActiveExam(null); setExamAnswers({}); setExamResult(null); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px' }}><X size={22} color="#94a3b8" /></button>}
+                      </div>
+
+                      {examResult ? (
+                        <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+                          <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>{examResult.percentage >= 60 ? '🎉' : '📘'}</div>
+                          <h3 style={{ fontSize: '1.8rem', fontWeight: 'bold', color: examResult.percentage >= 60 ? '#16a34a' : '#dc2626', marginBottom: '0.5rem' }}>{examResult.percentage.toFixed(1)}%</h3>
+                          <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>คะแนน {examResult.total_score} / {activeExam.total_score} &nbsp;|&nbsp; ถูก {examResult.correct_answers} / {examResult.total_questions} ข้อ</p>
+                          <p style={{ fontSize: '1.1rem', color: examResult.percentage >= 60 ? '#15803d' : '#b91c1c', fontWeight: '600', marginBottom: '2rem' }}>{examResult.percentage >= 60 ? 'ผ่านเกณฑ์ ✅' : 'ไม่ผ่านเกณฑ์ ❌ (ต้องได้ 60% ขึ้นไป)'}</p>
+                          <button onClick={() => { setActiveExam(null); setExamAnswers({}); setExamResult(null); }} style={{ padding: '10px 28px', background: '#0A1C39', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '500' }}>ปิด</button>
+                        </div>
+                      ) : (
+                        <>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '2rem' }}>
+                            {activeExam.questions.map((q, qi) => (
+                              <div key={q.id} style={{ background: '#f8fafc', borderRadius: '10px', padding: '1.2rem', border: '1px solid #e2e8f0' }}>
+                                <p style={{ fontWeight: '600', color: '#0f172a', marginBottom: '0.8rem' }}>{qi + 1}. {q.question_text} <span style={{ color: '#94a3b8', fontWeight: '400', fontSize: '0.85rem' }}>({q.score_points} คะแนน)</span></p>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                  {q.choices.map((c) => (
+                                    <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', background: examAnswers[q.id] === c.id ? '#dbeafe' : 'white', border: `1px solid ${examAnswers[q.id] === c.id ? '#3b82f6' : '#e2e8f0'}`, transition: 'all 0.15s' }}>
+                                      <input type="radio" name={q.id} value={c.id} checked={examAnswers[q.id] === c.id} onChange={() => setExamAnswers(prev => ({ ...prev, [q.id]: c.id }))} style={{ accentColor: '#3b82f6' }} />
+                                      <span style={{ fontWeight: '600', color: '#3b82f6', minWidth: '20px' }}>{c.choice_label}.</span>
+                                      <span style={{ color: '#334155' }}>{c.choice_text}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>ตอบแล้ว {Object.keys(examAnswers).length} / {activeExam.questions.length} ข้อ</span>
+                            <button
+                              disabled={submittingExam || Object.keys(examAnswers).length < activeExam.questions.length}
+                              onClick={async () => {
+                                const storedUser = localStorage.getItem('user');
+                                if (!storedUser) return;
+                                const userObj = JSON.parse(storedUser);
+                                const spent = examStartTime ? Math.round((Date.now() - examStartTime.getTime()) / 1000) : undefined;
+                                setSubmittingExam(true);
+                                try {
+                                  const answers = Object.entries(examAnswers).map(([question_id, choice_id]) => ({ question_id, choice_id }));
+                                  const res = await examAPI.submitExam(activeExam.id, { user_id: userObj.id, answers, time_spent_seconds: spent });
+                                  setExamResult(res.data);
+                                } catch (err) {
+                                  console.error('Submit error', err);
+                                  alert('เกิดข้อผิดพลาดในการส่งข้อสอบ');
+                                } finally {
+                                  setSubmittingExam(false);
+                                }
+                              }}
+                              style={{ padding: '10px 28px', background: Object.keys(examAnswers).length < activeExam.questions.length ? '#94a3b8' : '#16a34a', color: 'white', border: 'none', borderRadius: '8px', cursor: Object.keys(examAnswers).length < activeExam.questions.length ? 'not-allowed' : 'pointer', fontWeight: '600', fontSize: '0.95rem' }}
+                            >{submittingExam ? 'กำลังส่ง...' : 'ส่งคำตอบ'}</button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {loadingCourses ? (
+                  <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}><div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>⏳</div><div>กำลังโหลด...</div></div>
+                ) : courseExams.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '3rem', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1', color: '#94a3b8' }}>
+                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📝</div>
+                    <p style={{ marginBottom: '1rem' }}>ยังไม่มีข้อสอบในคอร์สที่คุณซื้อ</p>
+                    <p style={{ fontSize: '0.85rem' }}>ข้อสอบจะปรากฏที่นี่เมื่ออาจารย์เพิ่มข้อสอบในคอร์สที่คุณลงทะเบียน</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginTop: '1rem' }}>
+                    {courseExams.map((group, gi) => (
+                      <div key={gi}>
+                        <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#0f172a', marginBottom: '0.8rem', paddingBottom: '0.5rem', borderBottom: '2px solid #e2e8f0' }}>📚 {group.courseTitle}</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                          {group.exams.map((exam) => (
+                            <div key={exam.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1rem 1.2rem', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', flexWrap: 'wrap', gap: '12px' }}>
+                              <div>
+                                <p style={{ fontWeight: '600', color: '#0f172a', marginBottom: '4px' }}>{exam.title}</p>
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                  <span style={{ background: '#dbeafe', color: '#1d4ed8', padding: '2px 10px', borderRadius: '20px', fontSize: '0.78rem', fontWeight: '600' }}>{exam.type}</span>
+                                  <span style={{ background: '#f1f5f9', color: '#475569', padding: '2px 10px', borderRadius: '20px', fontSize: '0.78rem' }}>คะแนนเต็ม {exam.total_score}</span>
+                                </div>
+                              </div>
+                              <button
+                                onClick={async () => {
+                                  setLoadingExams(true);
+                                  try {
+                                    const res = await examAPI.getExamForStudent(exam.id);
+                                    setActiveExam(res.data);
+                                    setExamAnswers({});
+                                    setExamResult(null);
+                                    setExamStartTime(new Date());
+                                  } catch (err) {
+                                    console.error(err);
+                                    alert('ไม่สามารถโหลดข้อสอบได้');
+                                  } finally {
+                                    setLoadingExams(false);
+                                  }
+                                }}
+                                style={{ padding: '8px 20px', background: '#0A1C39', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '500', fontSize: '0.9rem', whiteSpace: 'nowrap' }}
+                              >{loadingExams ? '...' : '🖊️ เข้าทำข้อสอบ'}</button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
             {/* 4. หน้าประวัติการซื้อ */}
             {activeMenu === 'purchases' && (
               <>
                 <div className="content-header"><span className="content-title">ประวัติการซื้อ</span></div>
-                <div className="favorites-grid">
-                  {purchasedHistory.map((item) => (
-                    <div key={item.id} className="fav-card">
-                      <div className="fav-card-heart" style={{ cursor: 'default' }}><CheckSquare size={18} color="#0284c7" /></div>
-                      <img src={item.image} alt={item.title} className="fav-card-img" />
-                      <h3 className="fav-card-title">{item.title}</h3>
-                      <p style={{ color: '#0284c7', fontWeight: 'bold', marginTop: '0.5rem' }}>{item.price}</p>
-                    </div>
-                  ))}
-                </div>
+                {realPurchases.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
+                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🧾</div>
+                    <p>ยังไม่มีประวัติการซื้อ</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+                    {realPurchases.map((p) => (
+                      <div key={p.id} style={{
+                        background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px',
+                        padding: '1.2rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '4px' }}>
+                              {new Date(p.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
+                            </div>
+                            {p.course_titles.map((title, i) => (
+                              <div key={i} style={{ fontSize: '0.95rem', color: '#0f172a', fontWeight: '500', marginBottom: '2px' }}>
+                                • {title}
+                              </div>
+                            ))}
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                            <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#16a34a' }}>
+                              ฿{Number(p.total_amount).toLocaleString()}
+                            </span>
+                            {p.status === 'CONFIRMED' && (
+                              <span style={{ background: '#dcfce7', color: '#16a34a', padding: '3px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>✅ ยืนยันแล้ว</span>
+                            )}
+                            {p.status === 'PAYMENT_SUBMITTED' && (
+                              <span style={{ background: '#fef08a', color: '#ca8a04', padding: '3px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>⏳ รอตรวจสอบ</span>
+                            )}
+                            {p.status === 'PENDING_PAYMENT' && (
+                              <span style={{ background: '#e2e8f0', color: '#64748b', padding: '3px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>รอชำระ</span>
+                            )}
+                            {p.status === 'REJECTED' && (
+                              <span style={{ background: '#fee2e2', color: '#dc2626', padding: '3px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>❌ ปฏิเสธ</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </>
             )}
 

@@ -5,9 +5,6 @@ import {
   Users, 
   Award, 
   Clock, 
-  Star, 
-  TrendingUp,
-  CheckCircle,
   ArrowRight,
   Play,
   MessageCircle
@@ -15,12 +12,13 @@ import {
 import Header from './Header';
 import '../styles/Home.css';
 import homeicon from '../assets/homeicon.png';
-import courseLeft from '../assets/courseleftimage.png';
-import courseRight from '../assets/courserightimage.png';
 import Footer from './Footer';
+import { courseAPI, CourseStatus } from '../api/courseAPI';
+import type { Course } from '../api/courseAPI';
 
 export default function Home() {
   const [user, setUser] = useState<any>(null);
+  const [popularCourses, setPopularCourses] = useState<Course[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -29,6 +27,15 @@ export default function Home() {
       setUser(JSON.parse(userData));
     }
   }, [navigate]);
+
+  useEffect(() => {
+    courseAPI.getAllCourses(6, 0, CourseStatus.PUBLISHED)
+      .then(res => {
+        const courses = res.data?.data ?? [];
+        setPopularCourses(courses.slice(0, 3));
+      })
+      .catch(() => setPopularCourses([]));
+  }, []);
 
   const features = [
     {
@@ -60,36 +67,6 @@ export default function Home() {
     { number: '4.8/5', label: 'คะแนนเฉลี่ย' }
   ];
 
-  const popularCourses = [
-    {
-      id: 1,
-      title: 'Python สำหรับผู้เริ่มต้น',
-      instructor: 'อ.สมชาย ใจดี',
-      students: 2500,
-      rating: 4.9,
-      price: 1500,
-      image: courseLeft
-    },
-    {
-      id: 2,
-      title: 'React & TypeScript',
-      instructor: 'อ.สมหญิง เก่งโค้ด',
-      students: 1800,
-      rating: 4.8,
-      price: 2000,
-      image: homeicon
-    },
-    {
-      id: 3,
-      title: 'Data Science with Python',
-      instructor: 'อ.วิทย์ วิเคราะห์',
-      students: 3200,
-      rating: 5.0,
-      price: 2500,
-      image: courseRight
-    }
-  ];
-
   return (
     <div className="home-page">
       <Header user={user} />
@@ -113,13 +90,6 @@ export default function Home() {
               >
                 <Play size={20} />
                 เริ่มเรียนเลย
-              </button>
-              <button 
-                className="btn-secondary"
-                onClick={() => navigate('/courses')}
-              >
-                ดูคอร์สทั้งหมด
-                <ArrowRight size={20} />
               </button>
             </div>
 
@@ -168,36 +138,38 @@ export default function Home() {
         </div>
 
         <div className="courses-grid">
-          {popularCourses.map((course) => (
-            <div key={course.id} className="course-card">
-              <div className="course-image">
-                <img src={course.image} alt={course.title} />
-                <div className="course-badge">
-                  <Star size={16} fill="#f59e0b" color="#f59e0b" />
-                  {course.rating}
+          {popularCourses.length === 0 ? (
+            <p style={{ textAlign: 'center', color: '#888', gridColumn: '1/-1' }}>ยังไม่มีคอร์สที่เผยแพร่ในขณะนี้</p>
+          ) : (
+            popularCourses.map((course) => (
+              <div key={course.id} className="course-card" onClick={() => navigate(`/courses/${course.id}`)}>
+                <div className="course-image">
+                  <img
+                    src={course.thumbnail_url || homeicon}
+                    alt={course.title}
+                    onError={(e) => { (e.target as HTMLImageElement).src = homeicon; }}
+                  />
+                </div>
+                <div className="course-content">
+                  <h3>{course.title}</h3>
+                  <p className="course-instructor">
+                    {course.instructor_name || course.instructor?.full_name || 'ไม่ระบุผู้สอน'}
+                  </p>
+                  <div className="course-meta">
+                    <span className="course-students">
+                      <Users size={16} />
+                      {(course.students_enrolled ?? 0).toLocaleString()} คน
+                    </span>
+                  </div>
+                  <div className="course-footer">
+                    <span className="course-price">
+                      {course.price ? `฿${course.price.toLocaleString()}` : 'ฟรี'}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div className="course-content">
-                <h3>{course.title}</h3>
-                <p className="course-instructor">{course.instructor}</p>
-                <div className="course-meta">
-                  <span className="course-students">
-                    <Users size={16} />
-                    {course.students.toLocaleString()} คน
-                  </span>
-                </div>
-                <div className="course-footer">
-                  <span className="course-price">฿{course.price.toLocaleString()}</span>
-                  <button 
-                    className="btn-enroll"
-                    onClick={() => navigate('/courses')}
-                  >
-                    ดูรายละเอียด
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
 
         <div className="view-all-container">
