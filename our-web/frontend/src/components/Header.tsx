@@ -51,6 +51,18 @@ export default function Header({ user }: HeaderProps) {
         </div>
         
         <div className="header-right">
+          {/* ปุ่มกลับหน้าหลัก */}
+          <button 
+            className="home-btn"
+            onClick={() => navigate('/dashboard')}
+            aria-label="กลับหน้าหลัก"
+          >
+            <svg viewBox="0 0 24 24" fill="white" width="24" height="24">
+              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+            </svg>
+            <span className="home-text">หน้าหลัก</span>
+          </button>
+
           {/* Hamburger Menu */}
           <div className="menu-wrapper" ref={menuRef}>
             <button 
@@ -114,7 +126,31 @@ export default function Header({ user }: HeaderProps) {
             </svg>
           </button>
 
-          <div className="profile-section">
+          <div className="profile-section" onClick={() => {
+              // ถ้ายังไม่ login ให้ไปหน้า login
+              if (!user) {
+                const stored = localStorage.getItem('user');
+                if (!stored) {
+                  navigate('/login');
+                  return;
+                }
+                try {
+                  const parsed = JSON.parse(stored);
+                  const role = parsed.role?.toUpperCase();
+                  if (role === 'ADMIN') navigate('/admin-dashboard');
+                  else if (role === 'TEACHER') navigate('/teacher-dashboard');
+                  else navigate('/profile');
+                } catch(e) {
+                  navigate('/login');
+                }
+                return;
+              }
+              // ถ้า login แล้ว ไปตาม role
+              const role = user.role?.toUpperCase();
+              if (role === 'ADMIN') navigate('/admin-dashboard');
+              else if (role === 'TEACHER') navigate('/teacher-dashboard');
+              else navigate('/profile');
+            }} style={{ cursor: 'pointer' }}>
             {user?.profileImage ? (
               <img 
                 src={user.profileImage} 

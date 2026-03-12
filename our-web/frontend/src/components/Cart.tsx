@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import '../styles/Cart.css';
+import qrImage from '../assets/QR.png';
 
 interface CartItem {
   id: number;
@@ -19,6 +20,7 @@ export default function Cart() {
   const [user, setUser] = useState<any>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
+  const [showQrPopup, setShowQrPopup] = useState(false);
 
   useEffect(() => {
     // โหลดข้อมูลผู้ใช้
@@ -89,11 +91,17 @@ export default function Cart() {
       alert('กรุณาเลือกคอร์สที่ต้องการชำระเงิน');
       return;
     }
-    
-    const itemsToCheckout = cartItems.filter(item => selectedItems.includes(item.id));
-    // TODO: ส่งข้อมูลไปยังหน้าชำระเงิน
-    console.log('Checkout items:', itemsToCheckout);
-    alert(`กำลังดำเนินการชำระเงินจำนวน ${calculateTotal()} บาท`);
+    setShowQrPopup(true);
+  };
+
+  const handleConfirmPayment = () => {
+    setShowQrPopup(false);
+    // ลบคอร์สที่ชำระเงินออกจากตะกร้า
+    const remainingItems = cartItems.filter(item => !selectedItems.includes(item.id));
+    setCartItems(remainingItems);
+    setSelectedItems([]);
+    localStorage.setItem('cart', JSON.stringify(remainingItems));
+    alert('ชำระเงินสำเร็จ! ขอบคุณค่ะ');
   };
 
   return (
@@ -194,6 +202,27 @@ export default function Cart() {
           )}
         </div>
       </main>
+
+      {/* QR Code Payment Popup */}
+      {showQrPopup && (
+        <div className="qr-overlay" onClick={() => setShowQrPopup(false)}>
+          <div className="qr-popup" onClick={(e) => e.stopPropagation()}>
+            <button className="qr-close-btn" onClick={() => setShowQrPopup(false)}>
+              &times;
+            </button>
+            <h2 className="qr-title">สแกน QR Code เพื่อชำระเงิน</h2>
+            <div className="qr-image-container">
+              <img src={qrImage} alt="QR Code สำหรับชำระเงิน" className="qr-image" />
+            </div>
+            <div className="qr-total">
+              ยอดรวม: <span className="qr-amount">{calculateTotal().toLocaleString()}</span> บาท
+            </div>
+            <button className="qr-confirm-btn" onClick={handleConfirmPayment}>
+              ยืนยันการชำระเงิน
+            </button>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>
