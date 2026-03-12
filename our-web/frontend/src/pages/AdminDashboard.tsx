@@ -998,6 +998,78 @@ export default function AdminDashboard() {
             )}
 
             {/* ==========================================
+              BOOKINGS MENU (รายการจอง)
+              ========================================== */}
+            {activeMenu === 'bookings' && (
+              <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start', padding: '25px', width: '100%' }}>
+                <h2 style={{ fontSize: '1.5rem', color: '#0f172a', marginBottom: '20px', fontWeight: 'bold' }}>รายการจองออฟไลน์ทั้งหมด</h2>
+                
+                {loadingBookings ? (
+                  <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b', width: '100%' }}>
+                    กำลังโหลดข้อมูลการจอง...
+                  </div>
+                ) : (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ color: '#64748b', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0' }}>
+                        <th style={{ padding: '12px 0', fontWeight: '500' }}>รหัสการจอง</th>
+                        <th style={{ padding: '12px 0', fontWeight: '500' }}>ชื่อผู้จอง</th>
+                        <th style={{ padding: '12px 0', fontWeight: '500' }}>คอร์สเรียน</th>
+                        <th style={{ padding: '12px 0', fontWeight: '500' }}>รูปแบบ</th>
+                        <th style={{ padding: '12px 0', fontWeight: '500' }}>สถานะ</th>
+                        <th style={{ padding: '12px 0', fontWeight: '500', textAlign: 'right' }}>จัดการ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {bookings.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} style={{ textAlign: 'center', padding: '20px', color: '#94a3b8' }}>ไม่มีข้อมูลการจอง</td>
+                        </tr>
+                      ) : (
+                        bookings.map((b, idx) => (
+                          <tr key={b.id || idx} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
+                            <td style={{ padding: '12px 0' }}>{b.id?.substring(0, 8)}...</td>
+                            <td style={{ padding: '12px 0' }}>
+                              <div>{b.user_name}</div>
+                              <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{b.user_email}</div>
+                            </td>
+                            <td style={{ padding: '12px 0' }}>{b.course_name}</td>
+                            <td style={{ padding: '12px 0' }}>{b.learning_mode}</td>
+                            <td style={{ padding: '12px 0' }}>
+                              {b.status === BStatus.CONFIRMED && <span style={{ background: '#dcfce7', color: '#16a34a', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>ยืนยันแล้ว</span>}
+                              {b.status === BStatus.PENDING && <span style={{ background: '#fef08a', color: '#ca8a04', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>รอยืนยัน</span>}
+                              {b.status === BStatus.CANCELLED && <span style={{ background: '#fee2e2', color: '#ef4444', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>ยกเลิกแล้ว</span>}
+                              {b.status === BStatus.COMPLETED && <span style={{ background: '#dbeafe', color: '#2563eb', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>เสร็จสิ้น</span>}
+                            </td>
+                            <td style={{ padding: '12px 0', textAlign: 'right' }}>
+                              {(b.status === BStatus.PENDING || b.status === BStatus.CONFIRMED) && (
+                                <button
+                                  onClick={async () => {
+                                    if (confirm('ยืนยันยกเลิกการจองนี้?')) {
+                                      try {
+                                        await bookingAPI.cancelBooking(b.id);
+                                        loadBookings();
+                                      } catch (err) {
+                                        alert('ยกเลิกไม่สำเร็จ');
+                                      }
+                                    }
+                                  }}
+                                  style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}
+                                >
+                                  ยกเลิก
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            )}
+
+            {/* ==========================================
               SETTINGS
               ========================================== */}
             {activeMenu === 'settings' && (
