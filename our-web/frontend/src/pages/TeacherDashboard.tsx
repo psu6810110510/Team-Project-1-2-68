@@ -295,7 +295,8 @@ export default function TeacherDashboard() {
     title: '',
     instructor: `อ.${teacherData.firstName} ${teacherData.lastName}`,
     description: '', price: '', tags: '',
-    isOnsite: true, onsiteSeats: '', onsiteDays: [] as string[], onsiteTimeStart: '', onsiteTimeEnd: '', onsiteDuration: '', onsiteExamSchedule: '',
+    isOnsite: true, onsiteSeats: '', onsiteDays: [] as string[], onsiteTimeStart: '', onsiteTimeEnd: '', onsiteDuration: '',
+    onsiteSchedules: [{ startDate: '', endDate: '' }] as Array<{startDate: string; endDate: string}>,
     isOnline: true, onlineExpiry: ''
   };
 
@@ -305,15 +306,69 @@ export default function TeacherDashboard() {
     setCourseForm(prev => ({ ...prev, instructor: `อ.${teacherData.firstName} ${teacherData.lastName}` }));
   }, [teacherData.firstName, teacherData.lastName]);
 
+  const DAY_MAP: Record<string, number> = { 'จ': 1, 'อ': 2, 'พ': 3, 'พฤ': 4, 'ศ': 5, 'ส': 6, 'อา': 0 };
+  const calcEndDate = (startDateStr: string, days: string[], durationStr: string): string => {
+    const totalDays = parseInt(durationStr);
+    if (!startDateStr || !days.length || isNaN(totalDays) || totalDays <= 0) return '';
+    const dayNums = days.map(d => DAY_MAP[d]).filter((n): n is number => n !== undefined);
+    if (!dayNums.length) return '';
+    let count = 0;
+    const current = new Date(startDateStr + 'T00:00:00');
+    while (true) {
+      if (dayNums.includes(current.getDay())) {
+        count++;
+        if (count === totalDays) break;
+      }
+      current.setDate(current.getDate() + 1);
+    }
+    return current.toISOString().split('T')[0];
+  };
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const yearEndStr = `${new Date().getFullYear()}-12-31`;
+
+  const addSchedule = () => {
+    setCourseForm(prev => ({ ...prev, onsiteSchedules: [...prev.onsiteSchedules, { startDate: '', endDate: '' }] }));
+  };
+
+  const removeSchedule = (idx: number) => {
+    setCourseForm(prev => ({ ...prev, onsiteSchedules: prev.onsiteSchedules.filter((_, i) => i !== idx) }));
+  };
+
+  const updateScheduleStart = (idx: number, startDate: string) => {
+    setCourseForm(prev => ({
+      ...prev,
+      onsiteSchedules: prev.onsiteSchedules.map((s, i) =>
+        i === idx ? { startDate, endDate: calcEndDate(startDate, prev.onsiteDays, prev.onsiteDuration) } : s
+      )
+    }));
+  };
+
   const handleInputChange = (e: any) => {
     const { name, value, type, checked } = e.target;
-    setCourseForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    setCourseForm(prev => {
+      const base = { ...prev, [name]: type === 'checkbox' ? checked : value };
+      if (name === 'onsiteDuration') {
+        return {
+          ...base,
+          onsiteSchedules: prev.onsiteSchedules.map(s => ({
+            ...s,
+            endDate: s.startDate ? calcEndDate(s.startDate, prev.onsiteDays, value) : ''
+          }))
+        };
+      }
+      return base;
+    });
   };
 
   const toggleDay = (day: string) => {
     setCourseForm(prev => {
       const days = prev.onsiteDays?.includes(day) ? prev.onsiteDays.filter(d => d !== day) : [...(prev.onsiteDays || []), day];
-      return { ...prev, onsiteDays: days };
+      const updatedSchedules = prev.onsiteSchedules.map(s => ({
+        ...s,
+        endDate: s.startDate ? calcEndDate(s.startDate, days, prev.onsiteDuration) : ''
+      }));
+      return { ...prev, onsiteDays: days, onsiteSchedules: updatedSchedules };
     });
   };
 
@@ -410,7 +465,9 @@ export default function TeacherDashboard() {
         onsite_time_start: courseForm.onsiteTimeStart || undefined,
         onsite_time_end: courseForm.onsiteTimeEnd || undefined,
         onsite_duration: courseForm.onsiteDuration || undefined,
-        onsite_exam_schedule: courseForm.onsiteExamSchedule || undefined,
+        onsite_exam_schedule: courseForm.onsiteSchedules && courseForm.onsiteSchedules.some(s => s.startDate)
+          ? JSON.stringify(courseForm.onsiteSchedules.filter(s => s.startDate))
+          : undefined,
         is_online: courseForm.isOnline,
         online_expiry: courseForm.onlineExpiry || undefined,
       });
@@ -483,7 +540,15 @@ export default function TeacherDashboard() {
       onsiteTimeStart: course.onsite_time_start || '',
       onsiteTimeEnd: course.onsite_time_end || '',
       onsiteDuration: course.onsite_duration || '',
-      onsiteExamSchedule: course.onsite_exam_schedule || '',
+      onsiteSchedules: (() => {
+        try {
+          if (course.onsite_exam_schedule) {
+            const parsed = JSON.parse(course.onsite_exam_schedule);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          }
+        } catch {}
+        return [{ startDate: '', endDate: '' }];
+      })(),
       isOnline: course.is_online,
       onlineExpiry: course.online_expiry || ''
     });
@@ -519,7 +584,9 @@ export default function TeacherDashboard() {
         onsite_time_start: courseForm.onsiteTimeStart || undefined,
         onsite_time_end: courseForm.onsiteTimeEnd || undefined,
         onsite_duration: courseForm.onsiteDuration || undefined,
-        onsite_exam_schedule: courseForm.onsiteExamSchedule || undefined,
+        onsite_exam_schedule: courseForm.onsiteSchedules && courseForm.onsiteSchedules.some(s => s.startDate)
+          ? JSON.stringify(courseForm.onsiteSchedules.filter(s => s.startDate))
+          : undefined,
         is_online: courseForm.isOnline,
         online_expiry: courseForm.onlineExpiry || undefined,
       });
@@ -1520,7 +1587,37 @@ export default function TeacherDashboard() {
                       </div>
                       <div className="input-group"><label style={labelSmallStyle}>เวลาที่เปิดสอน</label><div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}><div style={{ ...inputContainerStyle, width: '130px', justifyContent: 'center' }}><input type="time" name="onsiteTimeStart" value={courseForm.onsiteTimeStart} onChange={handleInputChange} style={{ ...inputStyleClean, textAlign: 'center' }} /></div><span>-</span><div style={{ ...inputContainerStyle, width: '130px', justifyContent: 'center' }}><input type="time" name="onsiteTimeEnd" value={courseForm.onsiteTimeEnd} onChange={handleInputChange} style={{ ...inputStyleClean, textAlign: 'center' }} /></div></div></div>
                       <div className="input-group"><label style={labelSmallStyle}>ระยะเวลาคอร์ส</label><div style={inputContainerStyle}><input id="onsiteDuration" type="text" name="onsiteDuration" value={courseForm.onsiteDuration} placeholder="กรอกจำนวนวัน" onChange={handleInputChange} style={inputStyleClean} /><label htmlFor="onsiteDuration" style={{ cursor: 'pointer' }}><Edit2 size={14} color="#9ca3af" /></label></div></div>
-                      <div className="input-group"><label style={labelSmallStyle}>ตารางการเปิดสอบประจำปี</label><div style={inputContainerStyle}><input id="onsiteExamSchedule" type="text" name="onsiteExamSchedule" value={courseForm.onsiteExamSchedule} placeholder="เช่น 2568" onChange={handleInputChange} style={inputStyleClean} /><label htmlFor="onsiteExamSchedule" style={{ cursor: 'pointer' }}><Edit2 size={14} color="#9ca3af" /></label></div></div>
+                      <div className="input-group">
+                        <label style={labelSmallStyle}>รอบการเปิดสอนประจำปี</label>
+                        {courseForm.onsiteSchedules.map((schedule, rIdx) => (
+                          <div key={rIdx} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '0.78rem', color: '#374151', minWidth: '52px' }}>รอบที่ {rIdx + 1}</span>
+                            <input
+                              type="date"
+                              value={schedule.startDate}
+                              min={todayStr}
+                              max={yearEndStr}
+                              onChange={(e) => updateScheduleStart(rIdx, e.target.value)}
+                              style={{ padding: '3px 6px', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '0.78rem', width: '132px' }}
+                            />
+                            <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>ถึง</span>
+                            <input
+                              type="date"
+                              value={schedule.endDate}
+                              readOnly
+                              style={{ padding: '3px 6px', border: '1px solid #e5e7eb', borderRadius: '4px', fontSize: '0.78rem', width: '132px', background: '#f9fafb', color: '#6b7280' }}
+                            />
+                            {rIdx > 0 && (
+                              <button type="button" onClick={() => removeSchedule(rIdx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', fontSize: '0.9rem', fontWeight: 'bold', padding: '0 4px' }}>✕</button>
+                            )}
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={addSchedule}
+                          style={{ marginTop: '8px', fontSize: '0.78rem', color: '#374151', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '4px', padding: '3px 10px', cursor: 'pointer' }}
+                        >+ เพิ่มรอบ</button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1634,7 +1731,37 @@ export default function TeacherDashboard() {
                       </div>
                       <div className="input-group"><label style={labelSmallStyle}>เวลาที่เปิดสอน</label><div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}><div style={{ ...inputContainerStyle, width: '130px', justifyContent: 'center' }}><input type="time" name="onsiteTimeStart" value={courseForm.onsiteTimeStart} onChange={handleInputChange} style={{ ...inputStyleClean, textAlign: 'center' }} /></div><span>-</span><div style={{ ...inputContainerStyle, width: '130px', justifyContent: 'center' }}><input type="time" name="onsiteTimeEnd" value={courseForm.onsiteTimeEnd} onChange={handleInputChange} style={{ ...inputStyleClean, textAlign: 'center' }} /></div></div></div>
                       <div className="input-group"><label style={labelSmallStyle}>ระยะเวลาคอร์ส</label><div style={inputContainerStyle}><input id="onsiteDuration" type="text" name="onsiteDuration" value={courseForm.onsiteDuration} placeholder="กรอกจำนวนวัน" onChange={handleInputChange} style={inputStyleClean} /><label htmlFor="onsiteDuration" style={{ cursor: 'pointer' }}><Edit2 size={14} color="#9ca3af" /></label></div></div>
-                      <div className="input-group"><label style={labelSmallStyle}>ตารางการเปิดสอบประจำปี</label><div style={inputContainerStyle}><input id="onsiteExamSchedule" type="text" name="onsiteExamSchedule" value={courseForm.onsiteExamSchedule} placeholder="เช่น 2568" onChange={handleInputChange} style={inputStyleClean} /><label htmlFor="onsiteExamSchedule" style={{ cursor: 'pointer' }}><Edit2 size={14} color="#9ca3af" /></label></div></div>
+                      <div className="input-group">
+                        <label style={labelSmallStyle}>รอบการเปิดสอนประจำปี</label>
+                        {courseForm.onsiteSchedules.map((schedule, rIdx) => (
+                          <div key={rIdx} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '0.78rem', color: '#374151', minWidth: '52px' }}>รอบที่ {rIdx + 1}</span>
+                            <input
+                              type="date"
+                              value={schedule.startDate}
+                              min={todayStr}
+                              max={yearEndStr}
+                              onChange={(e) => updateScheduleStart(rIdx, e.target.value)}
+                              style={{ padding: '3px 6px', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '0.78rem', width: '132px' }}
+                            />
+                            <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>ถึง</span>
+                            <input
+                              type="date"
+                              value={schedule.endDate}
+                              readOnly
+                              style={{ padding: '3px 6px', border: '1px solid #e5e7eb', borderRadius: '4px', fontSize: '0.78rem', width: '132px', background: '#f9fafb', color: '#6b7280' }}
+                            />
+                            {rIdx > 0 && (
+                              <button type="button" onClick={() => removeSchedule(rIdx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', fontSize: '0.9rem', fontWeight: 'bold', padding: '0 4px' }}>✕</button>
+                            )}
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={addSchedule}
+                          style={{ marginTop: '8px', fontSize: '0.78rem', color: '#374151', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '4px', padding: '3px 10px', cursor: 'pointer' }}
+                        >+ เพิ่มรอบ</button>
+                      </div>
                     </div>
                   )}
                 </div>

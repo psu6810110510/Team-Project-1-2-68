@@ -219,6 +219,18 @@ export const courseAPI = {
     );
     return response.data;
   },
+
+  // ==========================================
+  // Favorites
+  // ==========================================
+  getMyFavorites: () =>
+    apiClient.get<{ favorites: Course[] }>('/users/me/favorites'),
+
+  addToFavorites: (courseId: string) =>
+    apiClient.post<{ message: string }>(`/users/${courseId}/favorite`),
+
+  removeFromFavorites: (courseId: string) =>
+    apiClient.delete<{ message: string }>(`/users/${courseId}/favorite`),
 };
 
 export default courseAPI;

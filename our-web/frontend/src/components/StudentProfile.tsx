@@ -43,8 +43,11 @@ export default function StudentProfile() {
   }>>([]);
   const [realPurchases, setRealPurchases] = useState<PaymentRecord[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
+  const [favoriteCourses, setFavoriteCourses] = useState<APICourse[]>([]);
+  const [loadingFavorites, setLoadingFavorites] = useState(true);
+  
   // --- exam state ---
-  const [courseExams, setCourseExams] = useState<Array<{ courseTitle: string; exams: Array<{ id: string; title: string; type: string; total_score: number }> }>>([])
+  const [courseExams, setCourseExams] = useState<Array<{ courseTitle: string; exams: Array<{ id: string; title: string; type: string; total_score: number }> }>>([]);
   const [loadingExams, setLoadingExams] = useState(false);
   const [activeExam, setActiveExam] = useState<null | {
     id: string; title: string; type: string; total_score: number;
@@ -56,9 +59,13 @@ export default function StudentProfile() {
   const [examStartTime, setExamStartTime] = useState<Date | null>(null);
   const [submittingExam, setSubmittingExam] = useState(false);
 
-  const [favoriteCourses] = useState<any[]>([]);
+  // ข้อมูลจำลองสำหรับประวัติที่ยังไม่ได้ผูก API (เก็บไว้ตามโครงสร้างเดิม)
+  const purchasedHistory = [
+    { id: 201, title: 'Data Structures & Algorithms', date: '12 ม.ค. 67', price: '฿1,290', image: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&w=300&q=80' },
+    { id: 202, title: 'C Programming', date: '10 ธ.ค. 66', price: '฿990', image: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=300&q=80' }
+  ];
 
-  // --- 3. ดึงข้อมูลผู้ใช้ + คอร์สที่ซื้อแล้ว ---
+  // --- 3. ดึงข้อมูลผู้ใช้ + คอร์สที่ซื้อแล้ว + คอร์สที่ถูกใจ ---
   useEffect(() => {
     const fetchAll = async () => {
       const storedUser = localStorage.getItem('user');
@@ -111,7 +118,6 @@ export default function StudentProfile() {
                   const lessonsRes = await courseAPI.getLessonsByCourse(id);
                   const rawLessons = lessonsRes.data.data;
                   if (rawLessons && rawLessons.length > 0) {
-                    // Deduplicate logic same as CourseLearning.tsx
                     const uniqueLessonTitles = new Set();
                     rawLessons.forEach((l: any) => {
                       const parts = l.topic_name.split(' - ');
@@ -121,11 +127,9 @@ export default function StudentProfile() {
                     
                     const totalUnique = uniqueLessonTitles.size;
                     
-                    // Load progress from localStorage
                     const savedProgress = localStorage.getItem(`progress_${userObj.id}_${id}`);
                     if (savedProgress) {
                       const completedIds = JSON.parse(savedProgress);
-                      // Since completedIds are from raw lesson IDs, we should count how many UNIQUE titles they represent
                       const completedUniqueTitles = new Set();
                       completedIds.forEach((compId: string) => {
                         const l = rawLessons.find((rl: any) => rl.id === compId);
@@ -205,6 +209,16 @@ export default function StudentProfile() {
           console.error('Error loading courses:', err);
         } finally {
           setLoadingCourses(false);
+        }
+
+        // ดึงคอร์สที่ถูกใจ
+        try {
+          const favoritesRes = await courseAPI.getMyFavorites();
+          setFavoriteCourses(favoritesRes.data.favorites);
+        } catch (err) {
+          console.error('Error loading favorites:', err);
+        } finally {
+          setLoadingFavorites(false);
         }
       }
     };
@@ -286,7 +300,6 @@ export default function StudentProfile() {
       }
       if (token) {
         try {
-          // ✅ เปลี่ยนมาใช้ API_URL
           const response = await fetch(`${API_URL}/auth/change-password`, {
             method: 'PATCH',
             headers: {
@@ -326,7 +339,6 @@ export default function StudentProfile() {
 
     if (token) {
       try {
-        // ✅ เปลี่ยนมาใช้ API_URL
         await fetch(`${API_URL}/auth/profile`, {
           method: 'PATCH',
           headers: {
@@ -375,7 +387,6 @@ export default function StudentProfile() {
 
         if (token) {
           try {
-            // ✅ เปลี่ยนมาใช้ API_URL
             await fetch(`${API_URL}/auth/profile`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -532,8 +543,6 @@ export default function StudentProfile() {
                       </div>
                     )}
 
-                    <div className="section-header"><span className="section-title-text">คอร์สเรียนของฉัน</span></div>
-
                     {realMyCourses.length === 0 ? (
                       <div style={{
                         textAlign: 'center', padding: '3rem', background: '#f8fafc',
@@ -549,50 +558,50 @@ export default function StudentProfile() {
                         </button>
                       </div>
                     ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                  {realMyCourses.map((course) => (
-                    <div key={course.id} style={{
-                      display: 'flex', flexWrap: 'wrap', background: 'white', border: '1px solid #e2e8f0',
-                      borderRadius: '12px', padding: '1.2rem', gap: '1.5rem', alignItems: 'flex-start',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-                    }}>
-                      <img src={course.image} alt={course.title}
-                        style={{ width: '180px', height: '130px', objectFit: 'cover', borderRadius: '10px', flexShrink: 0 }}
-                        onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80'; }}
-                      />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        {realMyCourses.map((course) => (
+                          <div key={course.id} style={{
+                            display: 'flex', flexWrap: 'wrap', background: 'white', border: '1px solid #e2e8f0',
+                            borderRadius: '12px', padding: '1.2rem', gap: '1.5rem', alignItems: 'flex-start',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                          }}>
+                            <img src={course.image} alt={course.title}
+                              style={{ width: '180px', height: '130px', objectFit: 'cover', borderRadius: '10px', flexShrink: 0 }}
+                              onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80'; }}
+                            />
 
-                      <div style={{ flex: 1, width: '100%', minWidth: '250px' }}>
-                        <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '0.8rem', color: '#0f172a' }}>{course.title}</h3>
+                            <div style={{ flex: 1, width: '100%', minWidth: '250px' }}>
+                              <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '0.8rem', color: '#0f172a' }}>{course.title}</h3>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.5rem', fontSize: '0.9rem', color: '#64748b', marginBottom: '1rem' }}>
-                          <div>อาจารย์ : <span style={{ color: '#334155', fontWeight: '500' }}>{course.instructor}</span></div>
-                          <div>เริ่มเรียน : {course.startDate}</div>
-                          <div>หมดเวลาเรียน : {course.expireDate}</div>
-                        </div>
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.5rem', fontSize: '0.9rem', color: '#64748b', marginBottom: '1rem' }}>
+                                <div>อาจารย์ : <span style={{ color: '#334155', fontWeight: '500' }}>{course.instructor}</span></div>
+                                <div>เริ่มเรียน : {course.startDate}</div>
+                                <div>หมดเวลาเรียน : {course.expireDate}</div>
+                              </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginTop: 'auto', flexWrap: 'wrap' }}>
-                          <div style={{ flex: 1, minWidth: '150px' }}>
-                            <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                              <div style={{ width: `${course.progress}%`, background: '#38bdf8', height: '100%', borderRadius: '4px' }}></div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginTop: 'auto', flexWrap: 'wrap' }}>
+                                <div style={{ flex: 1, minWidth: '150px' }}>
+                                  <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                                    <div style={{ width: `${course.progress}%`, background: '#38bdf8', height: '100%', borderRadius: '4px' }}></div>
+                                  </div>
+                                  <div style={{ fontSize: '0.85rem', color: '#0284c7', fontWeight: '600', marginTop: '6px' }}>{course.progress}% Completed</div>
+                                </div>
+                                <button style={{
+                                  padding: '8px 24px', background: '#1e293b', color: 'white', borderRadius: '30px',
+                                  border: 'none', cursor: 'pointer', fontWeight: '500', fontSize: '0.9rem',
+                                }}
+                                  onClick={() => navigate(`/learning/${course.id}`)}
+                                  onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                                  onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                                >เรียนต่อ</button>
+                              </div>
                             </div>
-                            <div style={{ fontSize: '0.85rem', color: '#0284c7', fontWeight: '600', marginTop: '6px' }}>{course.progress}% Completed</div>
                           </div>
-                          <button style={{
-                            padding: '8px 24px', background: '#1e293b', color: 'white', borderRadius: '30px',
-                            border: 'none', cursor: 'pointer', fontWeight: '500', fontSize: '0.9rem',
-                          }}
-                            onClick={() => navigate(`/learning/${course.id}`)}
-                            onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                            onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                          >เรียนต่อ</button>
-                        </div>
+                        ))}
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    )}
+                  </>
                 )}
-              </>
-            )}
 
                 <div className="section-header" style={{ marginTop: '3rem' }}>
                   <span className="section-title-text">สถิติการเรียนรู้</span>
@@ -657,15 +666,28 @@ export default function StudentProfile() {
             {activeMenu === 'favorites' && (
               <>
                 <div className="content-header"><span className="content-title">สิ่งที่ถูกใจ</span></div>
-                <div className="favorites-grid">
-                  {favoriteCourses.map((course) => (
-                    <div key={course.id} className="fav-card">
-                      <div className="fav-card-heart"><Heart size={18} fill="#ef4444" color="#ef4444" /></div>
-                      <img src={course.image} alt={course.title} className="fav-card-img" />
-                      <h3 className="fav-card-title">{course.title}</h3>
-                    </div>
-                  ))}
-                </div>
+                {loadingFavorites ? (
+                  <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>กำลังโหลด...</div>
+                ) : favoriteCourses.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>ยังไม่มีคอร์สที่ถูกใจ</div>
+                ) : (
+                  <div className="favorites-grid">
+                    {favoriteCourses.map((course) => (
+                      <div key={course.id} className="fav-card" onClick={() => navigate(`/courses/${course.id}`)} style={{ cursor: 'pointer' }}>
+                        <div className="fav-card-heart"><Heart size={18} fill="#ef4444" color="#ef4444" /></div>
+                        <img 
+                          src={course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=300&q=80'} 
+                          alt={course.title} 
+                          className="fav-card-img" 
+                        />
+                        <h3 className="fav-card-title">{course.title}</h3>
+                        <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.5rem' }}>
+                          {course.instructor_name || 'ผู้สอน'}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </>
             )}
 

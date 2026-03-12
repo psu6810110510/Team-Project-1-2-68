@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User, UserRole } from '../../entities/user.entity';
 import { Profile } from '../../entities/profile.entity';
+import { Course } from '../../entities/course.entity';
 
 export interface CreateUserDto {
   email: string;
@@ -29,6 +30,7 @@ export class UserService {
   constructor(
     @InjectRepository(User) private userRepo: Repository<User>,
     @InjectRepository(Profile) private profileRepo: Repository<Profile>,
+    @InjectRepository(Course) private courseRepo: Repository<Course>,
   ) {}
 
   async createUser(dto: CreateUserDto): Promise<User> {
@@ -105,5 +107,75 @@ export class UserService {
 
   async getUserProfile(userId: string) {
     return this.profileRepo.findOne({ where: { user_id: userId } });
+  }
+
+  // Favorite courses methods
+  async getUserFavorites(userId: string) {
+    const user = await this.userRepo.findOne({
+      where: { id: userId },
+      relations: ['favorite_courses'],
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return {
+      favorites: user.favorite_courses.map((course) => ({
+        id: course.id,
+        title: course.title,
+        description: course.description,
+        thumbnail_url: course.thumbnail_url,
+        price: course.price,
+        instructor_name: course.instructor_name,
+        students_enrolled: course.students_enrolled,
+      })),
+    };
+  }
+
+  async addFavoriteCourse(userId: string, courseId: string) {
+    const user = await this.userRepo.findOne({
+      where: { id: userId },
+      relations: ['favorite_courses'],
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const course = await this.courseRepo.findOne({
+      where: { id: courseId },
+    });
+
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
+    // Check if already favorited
+    const alreadyFavorited = user.favorite_courses.some((c) => c.id === courseId);
+    if (alreadyFavorited) {
+      return { message: 'Course already in favorites' };
+    }
+
+    user.favorite_courses.push(course);
+    await this.userRepo.save(user);
+
+    return { message: 'Course added to favorites' };
+  }
+
+  async removeFavoriteCourse(userId: string, courseId: string) {
+    const user = await this.userRepo.findOne({
+      where: { id: userId },
+      relations: ['favorite_courses'],
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    user.favorite_courses = user.favorite_courses.filter((c) => c.id !== courseId);
+    await this.userRepo.save(user);
+
+    return { message: 'Course removed from favorites' };
   }
 }

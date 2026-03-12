@@ -6,10 +6,13 @@ import {
   UpdateDateColumn,
   OneToOne,
   OneToMany,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
 import { Profile } from './profile.entity';
 import { Booking } from './booking.entity';
 import { ExamResult } from './exam-result.entity';
+import { Course } from './course.entity';
 
 export enum UserRole {
   STUDENT = 'STUDENT',
@@ -64,4 +67,12 @@ export class User {
 
   @OneToMany(() => ExamResult, (examResult) => examResult.user)
   exam_results: ExamResult[];
+
+  @ManyToMany(() => Course, (course) => course.liked_by_users)
+  @JoinTable({
+    name: 'user_favorite_courses',
+    joinColumn: { name: 'user_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'course_id', referencedColumnName: 'id' },
+  })
+  favorite_courses: Course[];
 }
