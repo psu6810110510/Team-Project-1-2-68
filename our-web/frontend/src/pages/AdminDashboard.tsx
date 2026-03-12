@@ -1041,7 +1041,24 @@ export default function AdminDashboard() {
                               {b.status === BStatus.CANCELLED && <span style={{ background: '#fee2e2', color: '#ef4444', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>ยกเลิกแล้ว</span>}
                               {b.status === BStatus.COMPLETED && <span style={{ background: '#dbeafe', color: '#2563eb', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>เสร็จสิ้น</span>}
                             </td>
-                            <td style={{ padding: '12px 0', textAlign: 'right' }}>
+                            <td style={{ padding: '12px 0', textAlign: 'right', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                              {b.status === BStatus.PENDING && (
+                                <button
+                                  onClick={async () => {
+                                    if (confirm('ยืนยันอนุญาตการจองคอร์สนี้?')) {
+                                      try {
+                                        await bookingAPI.confirmBooking(b.id);
+                                        loadBookings();
+                                      } catch (err) {
+                                        alert('ยืนยันไม่สำเร็จ');
+                                      }
+                                    }
+                                  }}
+                                  style={{ background: '#16a34a', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                >
+                                  ✅ ยืนยัน
+                                </button>
+                              )}
                               {(b.status === BStatus.PENDING || b.status === BStatus.CONFIRMED) && (
                                 <button
                                   onClick={async () => {
@@ -1054,9 +1071,9 @@ export default function AdminDashboard() {
                                       }
                                     }
                                   }}
-                                  style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}
+                                  style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}
                                 >
-                                  ยกเลิก
+                                  ❌ ยกเลิก
                                 </button>
                               )}
                             </td>
