@@ -295,4 +295,11 @@ export class CourseController {
       message: 'Lesson updated successfully',
     };
   }
+
+  @Delete('lessons/:lessonId')
+  @HttpCode(204)
+  async deleteLesson(@Param('lessonId') lessonId: string) {
+    await this.courseService.deleteLesson(lessonId);
+    return { message: 'Lesson deleted successfully' };
+  }
 }

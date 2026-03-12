@@ -321,4 +321,9 @@ export class CourseService {
     Object.assign(lesson, dto);
     return this.lessonRepo.save(lesson);
   }
+
+  async deleteLesson(id: string): Promise<void> {
+    const lesson = await this.getLessonById(id);
+    await this.lessonRepo.remove(lesson);
+  }
 }

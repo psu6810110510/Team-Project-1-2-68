@@ -704,3 +704,155 @@
     flex-direction: column;
   }
 }
+/* Syllabus / Course Content */
+.cd-syllabus {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.cd-chapter-group {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.cd-chapter-group:last-child {
+  border-bottom: none;
+}
+
+.cd-chapter-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #f8fafc;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.cd-chapter-header:hover {
+  background: #f1f5f9;
+}
+
+.cd-chapter-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+}
+
+.cd-chapter-label {
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 14px;
+}
+
+.cd-chapter-name {
+  color: #334155;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.cd-chapter-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #64748b;
+}
+
+.cd-lesson-count {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.cd-sublesson-list {
+  background: white;
+}
+
+.cd-sublesson-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  border-top: 1px solid #f8fafc;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cd-sublesson-item:hover {
+  background: #fdfdfd;
+  padding-left: 28px;
+}
+
+.cd-sublesson-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #475569;
+}
+
+.cd-sublesson-title {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.cd-icon-video {
+  color: #3b82f6;
+}
+
+.cd-icon-text {
+  color: #64748b;
+}
+
+.cd-pdf-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #3b82f6;
+  font-size: 13px;
+  text-decoration: none;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.cd-pdf-link:hover {
+  background: #eff6ff;
+}
+
+/* Locked States */
+.cd-sublesson-locked {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.cd-sublesson-locked:hover {
+  background: none;
+  padding-left: 24px;
+}
+
+.cd-lock-icon {
+  font-size: 14px;
+  filter: grayscale(1);
+}
+
+.cd-pdf-link.disabled {
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+@media (max-width: 480px) {
+  .cd-chapter-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .cd-chapter-meta {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

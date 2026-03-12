@@ -4,7 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import {
   User, LogOut, Edit3, Camera, ChevronLeft,
   PlusCircle, Clock, AlertCircle, CheckCircle, BookOpen, X,
-  Image as ImageIcon, Video, Edit2, Check, Bell
+  Image as ImageIcon, 
+  Trash2,
+  Video, 
+Edit2, Check, Bell
 } from 'lucide-react';
 import '../styles/LoginTheme.css';
 import '../styles/ProfileTheme.css';
@@ -603,13 +606,32 @@ export default function TeacherDashboard() {
               };
             }
             
-            groupedLessons[parentName].subLessons.push({
-              id: lesson.id,
-              title: childName,
-              content: lesson.content || '',
-              video_url: lesson.video_url || '',
-              pdf_url: lesson.pdf_url || ''
-            });
+            // Check for potential duplicate in same chapter
+            const existingSub = groupedLessons[parentName].subLessons.find(s => s.title === childName);
+
+            if (existingSub) {
+              // Deduplication logic: prefer the one with content or video
+              const hasOldContent = !!existingSub.content || !!existingSub.video_url;
+              const hasNewContent = !!lesson.content || !!lesson.video_url;
+
+              if (!hasOldContent && hasNewContent) {
+                // Replace with the one that has content
+                existingSub.id = lesson.id;
+                existingSub.content = lesson.content || '';
+                existingSub.video_url = lesson.video_url || '';
+                existingSub.pdf_url = lesson.pdf_url || '';
+              }
+              // Else keep the existing one (usually we want to keep the one with data)
+              console.log(`⚠️ Deduplicated duplicate sub-lesson: "${parentName} - ${childName}"`);
+            } else {
+              groupedLessons[parentName].subLessons.push({
+                id: lesson.id,
+                title: childName,
+                content: lesson.content || '',
+                video_url: lesson.video_url || '',
+                pdf_url: lesson.pdf_url || ''
+              });
+            }
           } else {
             // If no " - " separator, treat as a single lesson
             if (!groupedLessons[lesson.topic_name]) {
@@ -619,7 +641,7 @@ export default function TeacherDashboard() {
                 subLessons: []
               };
             }
-            
+
             groupedLessons[lesson.topic_name].subLessons.push({
               id: lesson.id,
               title: lesson.topic_name,
@@ -629,20 +651,9 @@ export default function TeacherDashboard() {
             });
           }
         });
-        
-        // Convert to array
+
+        // Convert to array and update state
         const lessonsArray = Object.values(groupedLessons);
-        console.log('✅ [Open Modal] Grouped lessons:', lessonsArray);
-        lessonsArray.forEach((lesson, idx) => {
-          console.log(`  Lesson ${idx + 1}:`, lesson.topic_name);
-          lesson.subLessons.forEach((sub, subIdx) => {
-            console.log(`    SubLesson ${idx + 1}.${subIdx + 1}:`, {
-              title: sub.title,
-              video_url: sub.video_url,
-              pdf_url: sub.pdf_url
-            });
-          });
-        });
         setLessons(lessonsArray);
       } else {
         // Initialize with one empty lesson if no existing lessons
@@ -698,16 +709,6 @@ export default function TeacherDashboard() {
           video_url: '',
           pdf_url: ''
         }]
-      };
-    }));
-  };
-
-  const handleRemoveSubLesson = (lessonIndex: number, subLessonIndex: number) => {
-    setLessons(prev => prev.map((lesson, idx) => {
-      if (idx !== lessonIndex) return lesson;
-      return {
-        ...lesson,
-        subLessons: lesson.subLessons.filter((_, i) => i !== subLessonIndex)
       };
     }));
   };
@@ -866,13 +867,6 @@ export default function TeacherDashboard() {
         const groupedLessons: { [key: string]: typeof lessons[0] } = {};
         
         existingLessons.forEach((lesson) => {
-          console.log('📖 Processing lesson:', {
-            id: lesson.id,
-            topic: lesson.topic_name,
-            video_url: lesson.video_url,
-            pdf_url: lesson.pdf_url
-          });
-          
           const parts = lesson.topic_name.split(' - ');
           
           if (parts.length >= 2) {
@@ -887,30 +881,37 @@ export default function TeacherDashboard() {
               };
             }
             
-            groupedLessons[parentName].subLessons.push({
-              id: lesson.id,
-              title: childName,
-              content: lesson.content || '',
-              video_url: lesson.video_url || '',
-              pdf_url: lesson.pdf_url || ''
-            });
+            // Check for potential duplicate in same chapter
+            const existingSub = groupedLessons[parentName].subLessons.find(s => s.title === childName);
+            
+            if (existingSub) {
+              // Deduplication logic: prefer the one with content or video
+              const hasOldContent = !!existingSub.content || !!existingSub.video_url;
+              const hasNewContent = !!lesson.content || !!lesson.video_url;
+              
+              if (!hasOldContent && hasNewContent) {
+                // Replace with the one that has content
+                existingSub.id = lesson.id;
+                existingSub.content = lesson.content || '';
+                existingSub.video_url = lesson.video_url || '';
+                existingSub.pdf_url = lesson.pdf_url || '';
+              }
+              // Else keep the existing one (usually we want to keep the one with data)
+              console.log(`⚠️ Deduplicated duplicate sub-lesson: "${parentName} - ${childName}"`);
+            } else {
+              groupedLessons[parentName].subLessons.push({
+                id: lesson.id,
+                title: childName,
+                content: lesson.content || '',
+                video_url: lesson.video_url || '',
+                pdf_url: lesson.pdf_url || ''
+              });
+            }
           }
         });
         
         // Convert to array and update state
         const lessonsArray = Object.values(groupedLessons);
-        console.log('✅ Grouped lessons:', lessonsArray);
-        lessonsArray.forEach((lesson, idx) => {
-          console.log(`  📚 Lesson ${idx + 1}:`, lesson.topic_name);
-          lesson.subLessons.forEach((sub, subIdx) => {
-            console.log(`    📄 SubLesson ${idx + 1}.${subIdx + 1}:`, {
-              id: sub.id,
-              title: sub.title,
-              video_url: sub.video_url,
-              pdf_url: sub.pdf_url
-            });
-          });
-        });
         setLessons(lessonsArray);
       }
       
@@ -1871,9 +1872,29 @@ export default function TeacherDashboard() {
                               }}
                             />
                           </div>
-                          {lesson.subLessons.length > 1 && (
+                          {lesson.subLessons.length > 0 && (
                             <button
-                              onClick={() => handleRemoveSubLesson(lessonIndex, subIndex)}
+                              onClick={async () => {
+                                if (subLesson.id) {
+                                  const confirmDelete = confirm(`คุณต้องการลบเนื้อหา "${subLesson.title}" ใช่หรือไม่?\n\nการลบนี้จะนำข้อมูลออกจากฐานข้อมูลทันที`);
+                                  if (!confirmDelete) return;
+                                  try {
+                                    await courseAPI.deleteLesson(subLesson.id);
+                                    // Remove from state
+                                    const updatedLessons = [...lessons];
+                                    updatedLessons[lessonIndex].subLessons.splice(subIndex, 1);
+                                    setLessons(updatedLessons);
+                                  } catch (error) {
+                                    console.error('Error deleting lesson:', error);
+                                    alert('เกิดข้อผิดพลาดในการลบเนื้อหา');
+                                  }
+                                } else {
+                                  // Just remove from local state
+                                  const updatedLessons = [...lessons];
+                                  updatedLessons[lessonIndex].subLessons.splice(subIndex, 1);
+                                  setLessons(updatedLessons);
+                                }
+                              }}
                               style={{
                                 background: 'none',
                                 border: 'none',
@@ -1881,13 +1902,14 @@ export default function TeacherDashboard() {
                                 cursor: 'pointer',
                                 padding: '5px'
                               }}
+                              title="ลบบทเรียนย่อย"
                             >
-                              <X size={20} />
+                              <Trash2 size={20} />
                             </button>
                           )}
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
                           {/* Video Upload */}
                           <div>
                             <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: 'bold', color: '#475569' }}>
@@ -2001,6 +2023,33 @@ export default function TeacherDashboard() {
                               </div>
                             )}
                           </div>
+                        </div>
+
+                        {/* Lesson Content Textarea */}
+                        <div style={{ marginBottom: '5px' }}>
+                          <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: 'bold', color: '#475569' }}>
+                            📝 รายละเอียดเนื้อหา (Lesson Content)
+                          </label>
+                          <textarea
+                            id={`lesson-content-${lessonIndex}-${subIndex}`}
+                            placeholder="กรอกรายละเอียดเนื้อหาสำหรับบทเรียนนี้..."
+                            value={subLesson.content || ''}
+                            onChange={(e) => handleSubLessonChange(lessonIndex, subIndex, 'content', e.target.value)}
+                            rows={4}
+                            style={{
+                              width: '100%',
+                              padding: '12px',
+                              fontSize: '0.95rem',
+                              border: subLesson.content ? '2px solid #3b82f6' : '1px solid #cbd5e1',
+                              borderRadius: '8px',
+                              outline: 'none',
+                              background: '#ffffff',
+                              color: '#0f172a',
+                              boxSizing: 'border-box',
+                              resize: 'vertical',
+                              lineHeight: '1.6'
+                            }}
+                          />
                         </div>
                       </div>
                     ))}

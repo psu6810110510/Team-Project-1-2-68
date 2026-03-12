@@ -179,6 +179,9 @@ export const courseAPI = {
   updateLesson: (lessonId: string, data: Partial<CreateLessonDto>) =>
     apiClient.put<{ id: string; message: string }>(`/courses/lessons/${lessonId}`, data),
 
+  deleteLesson: (lessonId: string) =>
+    apiClient.delete<{ message: string }>(`/courses/lessons/${lessonId}`),
+
   // ==========================================
   // File Upload
   // ==========================================
