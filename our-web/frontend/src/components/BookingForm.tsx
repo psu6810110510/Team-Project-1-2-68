@@ -20,6 +20,8 @@ const BookingForm = ({
   const [learningMode, setLearningMode] = useState<LearningMode | null>(null);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
+  // mapping schedule id -> stats
+  const [statsMap, setStatsMap] = useState<Record<string, ScheduleStats>>({});
   const [scheduleStats, setScheduleStats] = useState<ScheduleStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +34,19 @@ const BookingForm = ({
       try {
         setLoading(true);
         const response = await bookingAPI.getSchedulesByCourse(courseId);
-        setSchedules(response.data.data || []);
+        const list = response.data.data || [];
+        setSchedules(list);
+
+        // prefetch stats for each schedule so we can show availability immediately
+        const statsPromises = list.map((sch) =>
+          bookingAPI.getScheduleStats(sch.id).then((res) => res.data)
+        );
+        const allStats = await Promise.all(statsPromises);
+        const map: Record<string, ScheduleStats> = {};
+        allStats.forEach((s) => {
+          map[s.schedule_id] = s;
+        });
+        setStatsMap(map);
       } catch (err: any) {
         setError('ไม่สามารถโหลดเวลาเรียนได้');
         console.error(err);
@@ -51,6 +65,8 @@ const BookingForm = ({
       try {
         const statsResponse = await bookingAPI.getScheduleStats(selectedSchedule.id);
         setScheduleStats(statsResponse.data);
+        // store in map as well
+        setStatsMap((prev) => ({ ...prev, [selectedSchedule.id]: statsResponse.data }));
       } catch (err: any) {
         console.error('Error fetching schedule stats:', err);
       }
@@ -204,7 +220,9 @@ const BookingForm = ({
               </div>
               <div className="schedules-list">
                 {schedules.map((schedule) => {
-                  const bookedSeats = scheduleStats ? scheduleStats.onsite_count : 0;
+                  // use per-schedule stats if available
+                  const statsForThis = statsMap[schedule.id];
+                  const bookedSeats = statsForThis ? statsForThis.onsite_count : 0;
                   const totalSeats = schedule.max_onsite_seats || 999;
                   const availableSeats = Math.max(0, totalSeats - bookedSeats);
                   const isFull = totalSeats > 0 && availableSeats === 0;
