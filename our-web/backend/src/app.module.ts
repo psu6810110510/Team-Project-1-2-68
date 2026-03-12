@@ -28,6 +28,7 @@ import { TeacherModule } from './modules/teachers/teacher.module';
 import { UploadModule } from './upload/upload.module';
 import { PaymentModule } from './modules/payments/payment.module';
 import { AuthModule } from './auth/auth.module'; // ✅ Auth module หลัก (JWT + Google OAuth)
+import { ScheduleModule } from './modules/schedules/schedule.module';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { AuthModule } from './auth/auth.module'; // ✅ Auth module หลัก
     AuthModule,
     UserModule,
     CourseModule,
+    ScheduleModule,
     ExamModule,
     BookingModule,
     SeatQuotaModule,
