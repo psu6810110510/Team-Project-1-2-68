@@ -29,7 +29,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/auth/google/callback" element={<GoogleCallback />} />
           <Route path="/profile" element={<StudentProfile />} />
