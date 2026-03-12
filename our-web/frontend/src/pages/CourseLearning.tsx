@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import '../styles/LoginTheme.css';
-import { ChevronLeft, PlayCircle, CheckCircle, FileText, MonitorPlay, Download } from 'lucide-react';
+import { ChevronLeft, PlayCircle, FileText, MonitorPlay, Download, ChevronDown, ChevronUp } from 'lucide-react';
 import { paymentAPI } from '../api/paymentAPI';
-import { courseAPI } from '../api/courseAPI';
+import { courseAPI, type Lesson } from '../api/courseAPI';
 
 export default function CourseLearning() {
     const navigate = useNavigate();
@@ -12,7 +12,9 @@ export default function CourseLearning() {
 
     const [accessStatus, setAccessStatus] = useState<'checking' | 'allowed' | 'denied' | 'pending'>('checking');
     const [realLessons, setRealLessons] = useState<any[]>([]);
-    const [realCourseTitle, setRealCourseTitle] = useState<string>('');
+    const [realCourse, setRealCourse] = useState<any>(null);
+    const [activeLesson, setActiveLesson] = useState<any>(null);
+    const [expandedChapters, setExpandedChapters] = useState<{ [key: string]: boolean }>({});
 
     useEffect(() => {
         const checkAccess = async () => {
@@ -26,19 +28,61 @@ export default function CourseLearning() {
                 const res = await paymentAPI.checkCourseAccess(user.id, courseId);
                 if (res.data.has_access) {
                     setAccessStatus('allowed');
-                    // Load actual course lessons
                     try {
                         const [courseRes, lessonsRes] = await Promise.all([
                             courseAPI.getCourseById(courseId),
                             courseAPI.getLessonsByCourse(courseId),
                         ]);
-                        setRealCourseTitle(courseRes.data.title || '');
-                        setRealLessons(lessonsRes.data.data || []);
-                    } catch {
-                        // Fall back to mock data if fetch fails
+                        setRealCourse(courseRes.data);
+                        
+                        const rawLessons = lessonsRes.data.data;
+                        if (rawLessons && rawLessons.length > 0) {
+                            const grouped: any[] = [];
+                            const chapterMap: { [key: string]: any } = {};
+
+                            rawLessons.forEach((lesson: Lesson) => {
+                                const parts = lesson.topic_name.split(' - ');
+                                const chapterName = parts.length > 1 ? parts[0] : 'ทั่วไป';
+                                const subTitle = parts.length > 1 ? parts.slice(1).join(' - ') : lesson.topic_name;
+
+                                if (!chapterMap[chapterName]) {
+                                    chapterMap[chapterName] = {
+                                        title: chapterName,
+                                        lessons: []
+                                    };
+                                    grouped.push(chapterMap[chapterName]);
+                                }
+
+                                // Deduplicate sub-lessons by subTitle
+                                const existingLesson = chapterMap[chapterName].lessons.find((l: any) => l.displayTitle === subTitle);
+                                
+                                if (existingLesson) {
+                                    // Prefer the one with more content
+                                    const hasOldContent = !!existingLesson.content || !!existingLesson.video_url;
+                                    const hasNewContent = !!lesson.content || !!lesson.video_url;
+                                    
+                                    if (!hasOldContent && hasNewContent) {
+                                        // Replace with the new one that has content
+                                        Object.assign(existingLesson, {
+                                            ...lesson,
+                                            displayTitle: subTitle
+                                        });
+                                    }
+                                } else {
+                                    chapterMap[chapterName].lessons.push({
+                                        ...lesson,
+                                        displayTitle: subTitle
+                                    });
+                                }
+                            });
+                            setRealLessons(grouped);
+                            setExpandedChapters({ [grouped[0].title]: true });
+                            setActiveLesson(grouped[0].lessons[0]);
+                        }
+                    } catch (e) {
+                        console.error('Error fetching course data:', e);
                     }
                 } else {
-                    // Check if user has a PENDING/SUBMITTED payment
                     const paymentsRes = await paymentAPI.getUserPayments(user.id);
                     const hasPending = paymentsRes.data.data.some(
                         p => p.course_ids.includes(courseId) &&
@@ -53,52 +97,6 @@ export default function CourseLearning() {
         checkAccess();
     }, [courseId]);
 
-    let courseTitle = realCourseTitle || (courseId === '1' ? 'Data Science with Python' : 'Data Visualization');
-    let instructorName = 'นายอาร์ม ตัวจริง';
-    let videoUrl = '';
-
-    try {
-        const savedCourses = localStorage.getItem('teacherCourses');
-        if (savedCourses) {
-            const parsed = JSON.parse(savedCourses);
-            const matched = parsed.find((c: any) => c.id.toString() === courseId);
-            if (matched) {
-                if (!realCourseTitle) courseTitle = matched.title;
-                instructorName = matched.instructor || instructorName;
-                videoUrl = matched.videoUrl || '';
-            }
-        }
-    } catch (e) { }
-
-    // Mock course data
-    const course = {
-        title: courseTitle,
-        instructor: instructorName,
-        progress: courseId === '1' ? 30 : 15,
-        modules: [
-            {
-                id: 1,
-                title: 'บทที่ 1: แนะนำวิชาเรียน',
-                lessons: [
-                    { id: 101, title: 'Introduction to Course', duration: '5:30', isCompleted: true, type: 'video' },
-                    { id: 102, title: 'Course Setup', duration: '12:00', isCompleted: true, type: 'video' },
-                ]
-            },
-            {
-                id: 2,
-                title: 'บทที่ 2: พื้นฐาน (Fundamentals)',
-                lessons: [
-                    { id: 201, title: 'Variables and Data Types', duration: '18:45', isCompleted: false, type: 'video', isCurrent: true },
-                    { id: 202, title: 'Control Structures', duration: '25:10', isCompleted: false, type: 'video' },
-                    { id: 203, title: 'แบบฝึกหัดท้ายบท', duration: '10 mins', isCompleted: false, type: 'quiz' },
-                ]
-            }
-        ]
-    };
-
-    const initialLesson = course.modules.flatMap(m => m.lessons).find(l => l.isCurrent) || course.modules[0].lessons[0];
-    const [activeLesson, setActiveLesson] = useState(initialLesson);
-    const [downloadingModule, setDownloadingModule] = useState<string | null>(null);
 
     // ---- Access gate ----
     if (accessStatus === 'checking') {
@@ -165,19 +163,6 @@ export default function CourseLearning() {
         );
     }
 
-    const handleDownloadSheet = (targetModuleTitle: string) => {
-        setDownloadingModule(targetModuleTitle);
-        setTimeout(() => {
-            // สร้างไฟล์ PDF จำลองสำหรับดาวน์โหลด
-            const link = document.createElement('a');
-            link.href = 'data:application/pdf;base64,JVBERi0xLjQKJcOkw7zDtsOfCjIgMCBvYmoKPDwvTGVuZ3RoIDMgMCBSL0ZpbHRlci9GbGF0ZURlY29kZT4+CnN0cmVhbQp4nDPQM1Qo5ypUMFAwALJMLU31jBQsTAz1DMyhHDBtZABlweTzi1PzSjQyzSxN9UwNDZQMlYrzU1IqFQIyE0syqxKTS5RzFQrzc3LylZISy1JzE+EaKgAAs/sYMQplbmRzdHJlYW0KZW5kb2JqCgozIDAgb2JqCjgwCmVuZG9iagoKNCAwIG9iago8PC9UeXBlL1BhZ2UvTWVkaWFCb3hbMCAwIDU5NSA4NDJdL1Jlc291cmNlczw8L0ZvbnQ8PC9GMCA2IDAgUj4+Pj4vQ29udGVudHMgMiAwIFIvUGFyZW50IDUgMCBSPj4KZW5kb2JqCgo1IDAgb2JqCjw8L1R5cGUvUGFnZXMvQ291bnQgMS9LaWRzWzQgMCBSXT4+CmVuZG9iagoKNiAwIG9iago8PC9UeXBlL0ZvbnQvU3VidHlwZS9UeXBlMS9CYXNlRm9udC9UaW1lcy1Sb21hbj4+CmVuZG9iagoKMSAwIG9iago8PC9UeXBlL0NhdGFsb2cvUGFnZXMgNSAwIFI+PgplbmRvYmoKCjcgMCBvYmoKPDwvUHJvZHVjZXIoQ291cnNlIExlYXJuaW5nIE1vY2svQW50aWdyYXZpdHkpL0NyZWF0aW9uRGF0ZShEOjIwMjYwMzEwMDAwMDAwWik+PgplbmRvYmoKCnhyZWYKMCA4CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDI5NCAwMDAwMCBuIAowMDAwMDAwMDE1IDAwMDAwIG4gCjAwMDAwMDAxNjYgMDAwMDAgbiAKMDAwMDAwMDE4NSAwMDAwMCBuIAowMDAwMDAwMjQxIDAwMDAwIG4gCjAwMDAwMDAxMTAgMDAwMDAgbiAKMDAwMDAwMDIxMCAwMDAwMCBuIAp0cmFpbGVyCjw8L1NpemUgOC9Sb290IDEgMCBSL0luZm8gNyAwIFI+PgpzdGFydHhyZWYKMzEwCiUlRU9GCg==';
-            link.download = `sheet_${targetModuleTitle.replace(/\s+/g, '_')}.pdf`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            setDownloadingModule(null);
-        }, 1000);
-    };
 
     return (
         <div className="page-container" style={{ background: '#f8fafc', minHeight: '100vh' }}>
@@ -195,8 +180,7 @@ export default function CourseLearning() {
                         </div>
                         <span>ย้อนกลับ</span>
                     </div>
-                    <span style={{ color: '#cbd5e1' }}>|</span>
-                    <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#0f172a' }}>{course.title}</span>
+                    <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#0f172a' }}>{realCourse?.title || 'กำลังโหลด...'}</span>
                 </div>
 
                 <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
@@ -216,50 +200,51 @@ export default function CourseLearning() {
                             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
                             overflow: 'hidden'
                         }}>
-                            {activeLesson.type === 'video' ? (
-                                videoUrl ? (
+                            {activeLesson ? (
+                                activeLesson.video_url ? (
                                     <video
-                                        src={videoUrl}
+                                        src={activeLesson.video_url}
                                         controls
                                         autoPlay
                                         style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'black' }}
                                     />
                                 ) : (
-                                    <>
-                                        <MonitorPlay size={64} color="#3b82f6" style={{ marginBottom: '16px' }} />
-                                        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', textAlign: 'center' }}>
-                                            กำลังเล่น: {activeLesson.title}
-                                        </h2>
-                                        <p style={{ color: '#94a3b8', marginTop: '8px' }}>
-                                            กรุณากดเล่นวิดีโอเพื่อเริ่มเรียน
-                                        </p>
-                                    </>
+                                    <div style={{ textAlign: 'center' }}>
+                                        <FileText size={64} color="#3b82f6" style={{ marginBottom: '16px' }} />
+                                        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>เอกสารประกอบการเรียน</h2>
+                                        <p style={{ color: '#94a3b8', marginTop: '8px' }}>บทเรียนนี้ไม่มีวิดีโอ กรุณาดูเอกสารประกอบ</p>
+                                    </div>
                                 )
                             ) : (
-                                <>
-                                    <FileText size={64} color="#3b82f6" style={{ marginBottom: '16px' }} />
-                                    <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', textAlign: 'center' }}>
-                                        กำลังทำแบบทดสอบ: {activeLesson.title}
-                                    </h2>
-                                    <p style={{ color: '#94a3b8', marginTop: '8px' }}>
-                                        คลิกเพื่อเริ่มทำแบบทดสอบ
-                                    </p>
-                                </>
+                                <div style={{ textAlign: 'center' }}>
+                                    <MonitorPlay size={64} color="#3b82f6" style={{ marginBottom: '16px' }} />
+                                    <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>กรุณาเลือกบทเรียน</h2>
+                                </div>
                             )}
                         </div>
 
                         {/* Current Lesson Info */}
                         <div style={{ background: 'white', padding: '24px', borderRadius: '12px', marginTop: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                             <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0f172a', marginBottom: '8px' }}>
-                                {activeLesson.title}
+                                {activeLesson?.topic_name || activeLesson?.displayTitle || 'เลือกบทเรียน'}
                             </h1>
-                            <p style={{ color: '#64748b', marginBottom: '16px' }}>สอนโดย {course.instructor}</p>
+                            <p style={{ color: '#64748b', marginBottom: '16px' }}>สอนโดย {realCourse?.instructor_name || realCourse?.instructor?.full_name || 'อาจารย์ผู้สอน'}</p>
 
-                            <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                                <h3 style={{ fontWeight: 'bold', color: '#334155', marginBottom: '8px' }}>รายละเอียดเนื้อหา</h3>
-                                <p style={{ color: '#475569', lineHeight: '1.6' }}>
-                                    {activeLesson.type === 'quiz' ? 'แบบฝึกหัดสำหรับทดสอบความเข้าใจในบทเรียนนี้' : 'ในบทนี้เราจะมาเรียนรู้เกี่ยวกับตัวแปรและประเภทข้อมูลที่เป็นพื้นฐานสำคัญในการเขียนโปรแกรม การทำความเข้าใจโครงสร้างข้อมูลพื้นฐานจะช่วยให้สามารถเขียนโปรแกรมได้อย่างมีประสิทธิภาพมากขึ้น'}
-                                </p>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                {realCourse?.description && (
+                                    <div style={{ padding: '20px', background: '#f0f9ff', borderRadius: '12px', border: '1px solid #bae6fd', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                                        <h3 style={{ fontWeight: 'bold', color: '#0369a1', marginBottom: '12px', fontSize: '1.1rem' }}>รายละเอียดวิชา (Course Description)</h3>
+                                        <p style={{ color: '#0c4a6e', lineHeight: '1.8', whiteSpace: 'pre-wrap', fontSize: '1rem' }}>
+                                            {realCourse.description}
+                                        </p>
+                                    </div>
+                                )}
+
+                                {!realCourse?.description && (
+                                    <div style={{ padding: '20px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', textAlign: 'center', color: '#64748b' }}>
+                                        <p>ไม่มีรายละเอียดเพิ่มเติมสำหรับคอร์สนี้</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -269,133 +254,98 @@ export default function CourseLearning() {
                         <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#0f172a', marginBottom: '16px' }}>เนื้อหาคอร์สเรียน</h2>
 
                         {realLessons.length > 0 ? (
-                          /* Real lessons from API */
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            {realLessons.map((lesson, idx) => (
-                              <div key={lesson.id || idx} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
-                                <div style={{ background: '#f1f5f9', padding: '12px 16px', borderBottom: '1px solid #e2e8f0' }}>
-                                  <span style={{ fontWeight: 'bold', color: '#334155', fontSize: '0.9rem' }}>
-                                    บทที่ {lesson.sequence_order || idx + 1}: {lesson.topic_name}
-                                  </span>
-                                </div>
-                                <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                  {lesson.video_url ? (
-                                    <a
-                                      href={lesson.video_url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e40af', fontSize: '0.9rem', fontWeight: '500', textDecoration: 'none' }}
-                                    >
-                                      <PlayCircle size={18} color="#3b82f6" />
-                                      วิดีโอบทเรียน
-                                    </a>
-                                  ) : (
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#94a3b8', fontSize: '0.9rem' }}>
-                                      <PlayCircle size={18} />
-                                      ยังไม่มีวิดีโอ
-                                    </span>
-                                  )}
-                                  {lesson.pdf_url ? (
-                                    <a
-                                      href={lesson.pdf_url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#92400e', fontSize: '0.9rem', fontWeight: '500', textDecoration: 'none' }}
-                                    >
-                                      <Download size={18} color="#f59e0b" />
-                                      เอกสาร PDF
-                                    </a>
-                                  ) : null}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <>
-                            <div style={{ marginBottom: '20px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#64748b', marginBottom: '8px' }}>
-                                <span>ความคืบหน้า</span>
-                                <span style={{ fontWeight: 'bold', color: '#0284c7' }}>{course.progress}%</span>
-                            </div>
-                            <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                                <div style={{ width: `${course.progress}%`, background: '#38bdf8', height: '100%', borderRadius: '4px' }}></div>
-                            </div>
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                            {course.modules.map(module => (
-                                <div key={module.id} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f1f5f9', padding: '12px 16px', borderBottom: '1px solid #e2e8f0' }}>
-                                        <span style={{ fontWeight: 'bold', color: '#334155' }}>{module.title}</span>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleDownloadSheet(module.title); }}
-                                            disabled={downloadingModule === module.title}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                {realLessons.map((chapter: any, cIdx: number) => (
+                                    <div key={cIdx} style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                                        <button 
+                                            onClick={() => setExpandedChapters(prev => ({ ...prev, [chapter.title]: !prev[chapter.title] }))}
                                             style={{
-                                                background: 'white',
-                                                border: '1px solid #cbd5e1',
-                                                padding: '4px 8px',
-                                                borderRadius: '4px',
-                                                cursor: downloadingModule === module.title ? 'not-allowed' : 'pointer',
-                                                color: '#3b82f6',
+                                                width: '100%',
+                                                textAlign: 'left',
+                                                background: '#f8fafc',
+                                                padding: '14px 16px',
+                                                border: 'none',
+                                                borderBottom: expandedChapters[chapter.title] ? '1px solid #e2e8f0' : 'none',
                                                 display: 'flex',
+                                                justifyContent: 'space-between',
                                                 alignItems: 'center',
-                                                gap: '6px',
-                                                fontSize: '0.75rem',
-                                                fontWeight: 'bold',
-                                                opacity: downloadingModule === module.title ? 0.5 : 1
+                                                cursor: 'pointer',
+                                                transition: 'all 0.3s ease'
                                             }}
-                                            title={`ดาวน์โหลดชีท ${module.title}`}
+                                            onMouseEnter={(e) => (e.currentTarget.style.background = '#f1f5f9')}
+                                            onMouseLeave={(e) => (e.currentTarget.style.background = '#f8fafc')}
                                         >
-                                            <Download size={14} />
-                                            {downloadingModule === module.title ? 'กำลังโหลด...' : 'ชีทเรียน'}
+                                            <span style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.95rem' }}>
+                                                {chapter.title}
+                                            </span>
+                                            {expandedChapters[chapter.title] ? <ChevronUp size={18} color="#64748b" /> : <ChevronDown size={18} color="#64748b" />}
                                         </button>
+                                        
+                                        {expandedChapters[chapter.title] && (
+                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                {chapter.lessons.map((lesson: any, sIdx: number) => {
+                                                    const isSelected = activeLesson?.id === lesson.id;
+                                                    return (
+                                                        <div
+                                                            key={lesson.id || sIdx}
+                                                            onClick={() => setActiveLesson(lesson)}
+                                                            style={{
+                                                                padding: '12px 16px',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '12px',
+                                                                background: isSelected ? '#eff6ff' : 'white',
+                                                                borderLeft: isSelected ? '4px solid #3b82f6' : '4px solid transparent',
+                                                                borderBottom: '1px solid #f1f5f9',
+                                                                cursor: 'pointer',
+                                                                transition: 'all 0.2s ease'
+                                                            }}
+                                                            onMouseEnter={(e) => !isSelected && (e.currentTarget.style.background = '#f8fafc')}
+                                                            onMouseLeave={(e) => !isSelected && (e.currentTarget.style.background = 'white')}
+                                                        >
+                                                            {lesson.video_url ? (
+                                                                <PlayCircle size={18} color={isSelected ? '#3b82f6' : '#94a3b8'} />
+                                                            ) : (
+                                                                <FileText size={18} color={isSelected ? '#3b82f6' : '#94a3b8'} />
+                                                            )}
+                                                            <div style={{ flex: 1, overflow: 'hidden' }}>
+                                                                <p style={{
+                                                                    fontSize: '0.85rem',
+                                                                    fontWeight: isSelected ? '600' : '500',
+                                                                    color: isSelected ? '#1e40af' : '#475569',
+                                                                    whiteSpace: 'nowrap',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis'
+                                                                }}>
+                                                                    {lesson.displayTitle}
+                                                                </p>
+                                                            </div>
+                                                            {lesson.pdf_url && (
+                                                                <a 
+                                                                    href={lesson.pdf_url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    style={{ color: '#94a3b8', display: 'flex' }}
+                                                                    title="ดาวน์โหลด PDF"
+                                                                >
+                                                                    <Download size={16} />
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
                                     </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                        {module.lessons.map(lesson => {
-                                            const isSelected = activeLesson.id === lesson.id;
-                                            return (
-                                                <div
-                                                    key={lesson.id}
-                                                    onClick={() => setActiveLesson(lesson)}
-                                                    style={{
-                                                        padding: '12px 16px',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '12px',
-                                                        borderBottom: '1px solid #f1f5f9',
-                                                        background: isSelected ? '#ebf8ff' : 'white',
-                                                        borderLeft: isSelected ? '4px solid #0ea5e9' : '4px solid transparent',
-                                                        cursor: 'pointer'
-                                                    }}
-                                                >
-                                                    {lesson.isCompleted ? (
-                                                        <CheckCircle size={20} color="#10b981" style={{ flexShrink: 0 }} />
-                                                    ) : lesson.type === 'video' ? (
-                                                        <PlayCircle size={20} color={isSelected ? '#0ea5e9' : '#94a3b8'} style={{ flexShrink: 0 }} />
-                                                    ) : (
-                                                        <FileText size={20} color={isSelected ? '#0ea5e9' : '#94a3b8'} style={{ flexShrink: 0 }} />
-                                                    )}
-                                                    <div style={{ flex: 1, overflow: 'hidden' }}>
-                                                        <p style={{
-                                                            color: isSelected ? '#0369a1' : (lesson.isCompleted ? '#475569' : '#64748b'),
-                                                            fontWeight: isSelected ? '600' : 'normal',
-                                                            fontSize: '0.9rem',
-                                                            whiteSpace: 'nowrap',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis'
-                                                        }}>
-                                                            {lesson.title}
-                                                        </p>
-                                                        <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>{lesson.duration}</p>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            ))}
+                                ))}
                             </div>
-                          </>
-                        )} {/* end ternary realLessons */}
+                        ) : (
+                            <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
+                                <FileText size={48} style={{ margin: '0 auto 16px', opacity: 0.5 }} />
+                                <p>ยังไม่มีเนื้อหาในบทเรียนนี้</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

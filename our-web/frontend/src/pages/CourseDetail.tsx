@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Heart } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import BookingForm from '../components/BookingForm';
-import { courseAPI, type Course } from '../api/courseAPI';
+import { PlayCircle, FileText, Download, ChevronDown, ChevronUp } from 'lucide-react';
+import { courseAPI, type Course, type Lesson } from '../api/courseAPI';
+import paymentAPI from '../api/paymentAPI';
 import '../styles/CourseDetail.css';
 
 interface CartItem {
@@ -33,6 +36,10 @@ const CourseDetail = () => {
   const [onsiteBooked, setOnsiteBooked] = useState<number | null>(null);
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [bookingMsg, setBookingMsg] = useState('');
+  const [lessons, setLessons] = useState<any[]>([]);
+  const [expandedChapters, setExpandedChapters] = useState<{ [key: string]: boolean }>({});
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  const [checkingAccess, setCheckingAccess] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -40,16 +47,98 @@ const CourseDetail = () => {
 
     if (!courseId) return;
 
-    const fetchCourse = async () => {
+    const fetchData = async () => {
       try {
-        const res = await courseAPI.getCourseById(courseId);
-        setCourse(res.data);
-        if (res.data.is_onsite) {
+        const [courseRes, lessonsRes] = await Promise.all([
+          courseAPI.getCourseById(courseId),
+          courseAPI.getLessonsByCourse(courseId)
+        ]);
+        
+        setCourse(courseRes.data);
+        if (courseRes.data.is_onsite) {
           try {
             const seatRes = await courseAPI.getOnsiteBookedCount(courseId);
             setOnsiteBooked(seatRes.data.count);
           } catch {
             setOnsiteBooked(0);
+          }
+        }
+
+        // Group lessons
+        const rawLessons = lessonsRes.data.data;
+        if (rawLessons && rawLessons.length > 0) {
+          const grouped: any[] = [];
+          const chapterMap: { [key: string]: any } = {};
+
+          rawLessons.forEach((lesson: Lesson) => {
+            const fullTopic = lesson.topic_name.trim();
+            
+            let chapterLabel = '';
+            let chapterName = '';
+            let displayTitle = fullTopic;
+
+            // 1. ตรวจสอบรูปแบบ "บทที่ X"
+            const chapterMatch = fullTopic.match(/บทที่\s*(\d+)/i);
+            
+            if (chapterMatch) {
+              const chapterNum = chapterMatch[1];
+              chapterLabel = `บทที่ ${chapterNum}`;
+              
+              // หาข้อความหลังจาก "บทที่ X"
+              const remainder = fullTopic.substring(chapterMatch.index! + chapterMatch[0].length).trim()
+                .replace(/^[:\-]/, '').trim(); // ลบ : หรือ - ที่ติดมาข้างหน้า
+
+              if (remainder.includes(' - ')) {
+                // รูปแบบ "บทที่ 1: ชื่อบท - หัวข้อย่อย"
+                const parts = remainder.split(' - ');
+                chapterName = parts[0].trim();
+                displayTitle = parts.slice(1).join(' - ').trim();
+              } else {
+                // รูปแบบ "บทที่ 1: หัวข้อย่อย" หรือ "บทที่ 1"
+                chapterName = ''; // ถ้าไม่มีส่วนแยก ให้ปล่อยว่างเพื่อให้แสดงแค่ Label
+                displayTitle = remainder || chapterLabel;
+              }
+            } else if (fullTopic.includes(' - ')) {
+              // 2. กรณีไม่มี "บทที่" แต่มี " - " เช่น "Workshop - หัวข้อย่อย"
+              const parts = fullTopic.split(' - ');
+              chapterLabel = parts[0].trim();
+              chapterName = '';
+              displayTitle = parts.slice(1).join(' - ').trim();
+            } else {
+              // 3. รูปแบบอื่นๆ
+              chapterLabel = 'เนื้อหาหลัก';
+              chapterName = '';
+              displayTitle = fullTopic;
+            }
+
+            // ปรับแต่ง Chapter Name หากไปซ้ำกับ displayTitle (กรณีชื่อบทกับชื่อบทเรียนเหมือนกัน)
+            if (chapterName === displayTitle) {
+              chapterName = '';
+            }
+
+            if (!chapterMap[chapterLabel]) {
+              chapterMap[chapterLabel] = {
+                title: chapterLabel,
+                name: chapterName,
+                lessons: [],
+                seenTopics: new Set() // ใช้สำหรับ deduplication ในระดับบท
+              };
+              grouped.push(chapterMap[chapterLabel]);
+            }
+
+            // 4. Deduplication: ถ้าหัวข้อย่อยซ้ำกันในบทเดิม ไม่ต้องแสดงเพิ่ม
+            if (!chapterMap[chapterLabel].seenTopics.has(displayTitle)) {
+              chapterMap[chapterLabel].seenTopics.add(displayTitle);
+              chapterMap[chapterLabel].lessons.push({
+                ...lesson,
+                displayTitle: displayTitle
+              });
+            }
+          });
+          setLessons(grouped);
+          
+          if (grouped.length > 0) {
+            setExpandedChapters({ [grouped[0].title]: true });
           }
         }
       } catch (err: any) {
@@ -63,30 +152,75 @@ const CourseDetail = () => {
         setLoading(false);
       }
     };
+    
+    const checkAccess = async () => {
+      if (!isLoggedIn || !courseId) {
+        setCheckingAccess(false);
+        return;
+      }
 
-    fetchCourse();
-  }, [courseId, navigate]);
+      try {
+        const userData = localStorage.getItem('user');
+        if (userData) {
+          const user = JSON.parse(userData);
+          // Admin และ Instructor ของคอร์สนี้ เข้าดูได้เลย
+          if (user.role === 'ADMIN' || (course && (user.id === course.instructor_id))) {
+            setIsEnrolled(true);
+            setCheckingAccess(false);
+            return;
+          }
 
-  // Sync wishlist & cart state from localStorage
+          const res = await paymentAPI.checkCourseAccess(user.id, courseId);
+          setIsEnrolled(res.data.has_access);
+        }
+      } catch (err) {
+        console.error('Error checking access:', err);
+      } finally {
+        setCheckingAccess(false);
+      }
+    };
+
+    fetchData();
+    checkAccess();
+  }, [courseId, navigate, isLoggedIn, course?.instructor_id]); // เพิ่ม dep ของ instructor_id เพื่อเช็คสิทธิ์ครู
+
+  // Sync favorites from API & cart state from localStorage
   useEffect(() => {
     if (!courseId) return;
-    const wishlist: string[] = JSON.parse(localStorage.getItem('wishlist') || '[]');
-    setIsWishlisted(wishlist.includes(courseId));
+    const loadFavorites = async () => {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        try {
+          const favoritesRes = await courseAPI.getMyFavorites();
+          const favoriteIds = favoritesRes.data.favorites.map((c: Course) => c.id);
+          setIsWishlisted(favoriteIds.includes(courseId));
+        } catch (err) {
+          console.error('Error loading favorites:', err);
+        }
+      }
+    };
+    loadFavorites();
     const cart: CartItem[] = JSON.parse(localStorage.getItem('cart') || '[]');
     setInCart(cart.some((c) => c.id === courseId));
   }, [courseId]);
 
-  const handleWishlist = () => {
+  const handleWishlist = async () => {
     if (!courseId) return;
-    const wishlist: string[] = JSON.parse(localStorage.getItem('wishlist') || '[]');
-    let updated: string[];
-    if (isWishlisted) {
-      updated = wishlist.filter((id) => id !== courseId);
-    } else {
-      updated = [...wishlist, courseId];
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      navigate('/login');
+      return;
     }
-    localStorage.setItem('wishlist', JSON.stringify(updated));
-    setIsWishlisted(!isWishlisted);
+    try {
+      if (isWishlisted) {
+        await courseAPI.removeFromFavorites(courseId);
+      } else {
+        await courseAPI.addToFavorites(courseId);
+      }
+      setIsWishlisted(!isWishlisted);
+    } catch (err) {
+      console.error('Error updating favorites:', err);
+    }
   };
 
   const handleAddToCart = () => {
@@ -128,6 +262,9 @@ const CourseDetail = () => {
       selectedType: selectedType || undefined,
     };
     localStorage.setItem('cart', JSON.stringify([...cart, item]));
+    // แจ้งเตือน Header ให้อัปเดตจำนวนตะกร้า
+    window.dispatchEvent(new Event('cart-updated'));
+    
     setInCart(true);
     setCartMsg('เพิ่มลงตะกร้าแล้ว!');
     setTimeout(() => setCartMsg(''), 2500);
@@ -228,6 +365,83 @@ const CourseDetail = () => {
             <div className="cd-section">
               <h2 className="cd-section-title">เกี่ยวกับคอร์สนี้</h2>
               <p className="cd-description">{course.description}</p>
+            </div>
+          )}
+
+          {/* Lesson Content Section */}
+          {lessons.length > 0 && (
+            <div className="cd-section">
+              <h2 className="cd-section-title">เนื้อหาของคอร์ส</h2>
+              <div className="cd-syllabus">
+                {lessons.map((chapter: { title: string; name?: string; lessons: any[] }, cIdx: number) => (
+                  <div key={cIdx} className="cd-chapter-group">
+                    <button 
+                      className="cd-chapter-header"
+                      onClick={() => setExpandedChapters(prev => ({
+                        ...prev,
+                        [chapter.title]: !prev[chapter.title]
+                      }))}
+                    >
+                      <div className="cd-chapter-info">
+                        <span className="cd-chapter-label">{chapter.title}:</span>
+                        {chapter.name && <span className="cd-chapter-name">{chapter.name}</span>}
+                      </div>
+                      <div className="cd-chapter-meta">
+                        <span className="cd-lesson-count">{chapter.lessons.length} บทเรียน</span>
+                        {expandedChapters[chapter.title] ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                      </div>
+                    </button>
+                    
+                    {expandedChapters[chapter.title] && (
+                      <div className="cd-sublesson-list">
+                        {chapter.lessons.map((sub: any, sIdx: number) => {
+                          const isLocked = !isEnrolled && !checkingAccess;
+                          
+                          return (
+                            <div 
+                              key={sub.id || sIdx} 
+                              className={`cd-sublesson-item ${isLocked ? 'cd-sublesson-locked' : ''}`}
+                              onClick={() => {
+                                if (!isLocked) {
+                                  navigate(`/learning/${courseId}?lessonId=${sub.id}`);
+                                }
+                              }}
+                            >
+                              <div className="cd-sublesson-main">
+                                {isLocked ? (
+                                  <span className="cd-lock-icon">🔒</span>
+                                ) : sub.video_url ? (
+                                  <PlayCircle size={18} className="cd-icon-video" />
+                                ) : (
+                                  <FileText size={18} className="cd-icon-text" />
+                                )}
+                                <span className="cd-sublesson-title">{sub.displayTitle}</span>
+                              </div>
+                              <div className="cd-sublesson-actions">
+                                {sub.pdf_url && (
+                                  <a 
+                                    href={isLocked ? '#' : sub.pdf_url} 
+                                    target={isLocked ? '_self' : '_blank'} 
+                                    rel="noopener noreferrer"
+                                    className={`cd-pdf-link ${isLocked ? 'disabled' : ''}`}
+                                    onClick={(e) => {
+                                      if (isLocked) e.preventDefault();
+                                      e.stopPropagation();
+                                    }}
+                                  >
+                                    <Download size={16} />
+                                    <span>เอกสาร</span>
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -342,9 +556,20 @@ const CourseDetail = () => {
             {/* price big */}
             <p className="cd-action-price">{formatPrice(course.price)}</p>
 
-            <div className="cd-type-badges">
-              {course.is_online && <span className="cd-type-badge online">🖥️ ออนไลน์</span>}
-              {course.is_onsite && <span className="cd-type-badge onsite">🏫 ออนไซต์</span>}
+            <div className="cd-type-badges-row">
+              <div className="cd-type-badges">
+                {course.is_online && <span className="cd-type-badge online">🖥️ ออนไลน์</span>}
+                {course.is_onsite && <span className="cd-type-badge onsite">🏫 ออนไซต์</span>}
+              </div>
+              {isLoggedIn && (
+                <button
+                  className={`cd-heart-btn ${isWishlisted ? 'liked' : ''}`}
+                  onClick={handleWishlist}
+                  title={isWishlisted ? 'นำออกจากสิ่งที่ถูกใจ' : 'บันทึกสิ่งที่ถูกใจ'}
+                >
+                  <Heart size={20} fill={isWishlisted ? '#ef4444' : 'none'} color={isWishlisted ? '#ef4444' : '#475569'} />
+                </button>
+              )}
             </div>
 
             {!isLoggedIn ? (
@@ -366,14 +591,6 @@ const CourseDetail = () => {
                   onClick={() => setShowBookingForm(true)}
                 >
                   📅 จองการเรียน
-                </button>
-
-                <button
-                  className={`cd-wishlist-btn ${isWishlisted ? 'wishlisted' : ''}`}
-                  onClick={handleWishlist}
-                  title={isWishlisted ? 'นำออกจากสิ่งที่ถูกใจ' : 'บันทึกสิ่งที่ถูกใจ'}
-                >
-                  {isWishlisted ? '❤️' : '🤍'}
                 </button>
               </div>
             )}
@@ -490,7 +707,8 @@ const CourseDetail = () => {
               courseId={courseId || ''}
               isOnline={course.is_online}
               isOnsite={course.is_onsite}
-              onBookingComplete={(bookingId) => {
+              onBookingComplete={(bookingId: string) => {
+                console.log('Booking complete for:', bookingId);
                 setShowBookingForm(false);
                 setBookingMsg('✓ จองการเรียนสำเร็จแล้ว!');
                 setTimeout(() => setBookingMsg(''), 3000);

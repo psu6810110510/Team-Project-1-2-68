@@ -6,6 +6,7 @@ import { courseAPI, CourseLevel, CourseStatus, type Course } from '../api/course
 import courseLeftImage from '../assets/courseleftimage.png';
 import courseRightImage from '../assets/courserightimage.png';
 import '../styles/Courses.css';
+import { Heart } from 'lucide-react';
 
 const Courses = () => {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -18,6 +19,7 @@ const Courses = () => {
   const [selectedLevels, setSelectedLevels] = useState<CourseLevel[]>([]);
   const [filterOnline, setFilterOnline] = useState(false);
   const [filterOnsite, setFilterOnsite] = useState(false);
+  const [likedCourses, setLikedCourses] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,6 +34,16 @@ const Courses = () => {
         // Fetch only PUBLISHED courses for students
         const response = await courseAPI.getAllCourses(100, 0, CourseStatus.PUBLISHED);
         setCourses(response.data.data);
+
+        // Fetch user's favorite courses
+        try {
+          const favoritesRes = await courseAPI.getMyFavorites();
+          const favoriteIds = new Set(favoritesRes.data.favorites.map(c => c.id));
+          setLikedCourses(favoriteIds);
+        } catch (err) {
+          console.error('Error fetching favorites:', err);
+        }
+
         setLoading(false);
       } catch (err: any) {
         console.error('Error fetching courses:', err);
@@ -47,6 +59,29 @@ const Courses = () => {
 
     fetchCourses();
   }, [navigate]);
+
+  const toggleLike = async (courseId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    
+    const isLiked = likedCourses.has(courseId);
+    
+    try {
+      if (isLiked) {
+        await courseAPI.removeFromFavorites(courseId);
+        setLikedCourses(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(courseId);
+          return newSet;
+        });
+      } else {
+        await courseAPI.addToFavorites(courseId);
+        setLikedCourses(prev => new Set(prev).add(courseId));
+      }
+    } catch (err) {
+      console.error('Error toggling favorite:', err);
+      alert('ไม่สามารถเพิ่ม/ลบคอร์สที่ถูกใจได้');
+    }
+  };
 
   // Filter courses based on search term
   const filteredCourses = courses.filter((course) => {
@@ -305,6 +340,18 @@ const Courses = () => {
                         {level}
                       </div>
                     )}
+                    <button
+                      className="like-button"
+                      onClick={(e) => toggleLike(course.id, e)}
+                      aria-label={likedCourses.has(course.id) ? 'Unlike course' : 'Like course'}
+                    >
+                      <Heart
+                        size={20}
+                        fill={likedCourses.has(course.id) ? '#ef4444' : 'none'}
+                        stroke={likedCourses.has(course.id) ? '#ef4444' : '#64748b'}
+                        strokeWidth={2}
+                      />
+                    </button>
                   </div>
                   <div className="course-info">
                     <h3 className="course-title">{course.title}</h3>

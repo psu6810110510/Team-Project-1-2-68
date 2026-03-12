@@ -10,6 +10,7 @@ interface HeaderProps {
     role: string;
     id: number;
     profileImage?: string;
+    image?: string;
   };
 }
 
@@ -17,6 +18,40 @@ export default function Header({ user }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const [cartCount, setCartCount] = useState(0);
+
+  // ฟังก์ชันโหลดจำนวนสินค้าในตะกร้า
+  const updateCartCount = () => {
+    try {
+      const storedCart = localStorage.getItem('cart');
+      if (storedCart) {
+        const cart = JSON.parse(storedCart);
+        setCartCount(Array.isArray(cart) ? cart.length : 0);
+      } else {
+        setCartCount(0);
+      }
+    } catch (e) {
+      setCartCount(0);
+    }
+  };
+
+  useEffect(() => {
+    updateCartCount();
+
+    // ฟัง event custom เพื่ออัปเดตจำนวนตะกร้าแบบ real-time
+    window.addEventListener('cart-updated', updateCartCount);
+    
+    // ฟัง storage event กรณีเปิดหลาย tab
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'cart') {
+        updateCartCount();
+      }
+    });
+
+    return () => {
+      window.removeEventListener('cart-updated', updateCartCount);
+    };
+  }, []);
 
   // ปิดเมนูเมื่อคลิกข้างนอก
   useEffect(() => {
@@ -121,9 +156,14 @@ export default function Header({ user }: HeaderProps) {
             onClick={() => navigate('/cart')}
             aria-label="Shopping Cart"
           >
-            <svg viewBox="0 0 24 24" fill="white" width="24" height="24">
-              <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
-            </svg>
+            <div className="cart-icon-wrapper">
+              <svg viewBox="0 0 24 24" fill="white" width="24" height="24">
+                <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
+              </svg>
+              {cartCount > 0 && (
+                <span className="cart-badge">{cartCount}</span>
+              )}
+            </div>
           </button>
 
           <div className="profile-section" onClick={() => {
@@ -151,9 +191,9 @@ export default function Header({ user }: HeaderProps) {
               else if (role === 'TEACHER') navigate('/teacher-dashboard');
               else navigate('/profile');
             }} style={{ cursor: 'pointer' }}>
-            {user?.profileImage ? (
+            {user?.image || user?.profileImage ? (
               <img 
-                src={user.profileImage} 
+                src={user.image || user.profileImage} 
                 alt="Profile" 
                 className="profile-image"
               />

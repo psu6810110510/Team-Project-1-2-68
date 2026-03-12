@@ -52,6 +52,7 @@ export class AuthService {
         email: savedUser.email,
         full_name: savedUser.full_name, 
         role: savedUser.role,
+        image: savedUser.image,
       },
     };
   }
@@ -87,6 +88,7 @@ export class AuthService {
         full_name: user.full_name, 
         role: user.role,
         phone: user.phone,
+        image: user.image,
       },
     };
   }
@@ -145,6 +147,7 @@ export class AuthService {
         email: user.email,
         full_name: user.full_name,
         role: user.role,
+        image: user.image,
       },
     };
   }

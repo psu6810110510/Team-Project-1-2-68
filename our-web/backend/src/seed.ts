@@ -286,41 +286,48 @@ async function seed() {
       }
       console.log('✅ สร้าง Schedule ตัวอย่างสำหรับคอร์ส onsite เสร็จ');
 
-<<<<<<< HEAD
-    console.log('\n🎉 Seed เสร็จสมบูรณ์!\n');
-=======
-      // ดึงคอร์ส Full Stack ที่สร้างขึ้น
-      const fullStackCourse = await courseRepository.findOne({
-        where: { title: 'Full Stack Web Development' },
-      });
-      if (fullStackCourse) {
-        const today = new Date();
-        // สร้าง schedules สำหรับ Tuesday, Thursday
-        const schedules = [
-          { day: 'Tuesday', dayOffset: getNextDay(today, 2) }, // Tuesday
-          { day: 'Thursday', dayOffset: getNextDay(today, 4) }, // Thursday
-        ];
+    // ดึงคอร์ส Full Stack ที่สร้างขึ้น
+    const fullStackCourse = await courseRepository.findOne({
+      where: { title: 'Full Stack Web Development' },
+    });
+    if (fullStackCourse) {
+      // Helper function to get next date for a specific weekday
+      const getNextDate = (weekday: number) => {
+        const now = new Date();
+        const date = new Date(now);
+        const diff = (weekday + 7 - date.getDay()) % 7 || 7;
+        date.setDate(date.getDate() + diff);
+        return date;
+      };
 
-        for (const schedule of schedules) {
-          const startTime = new Date(schedule.dayOffset);
-          startTime.setHours(14, 0, 0, 0);
-          
-          const endTime = new Date(schedule.dayOffset);
-          endTime.setHours(17, 0, 0, 0);
+      // สร้าง schedules สำหรับ Tuesday (2), Thursday (4)
+      const schedules = [
+        { day: 'Tuesday', weekday: 2 },
+        { day: 'Thursday', weekday: 4 },
+      ];
 
-          const scheduleEntry = scheduleRepository.create({
-            course_id: fullStackCourse.id,
-            start_time: startTime,
-            end_time: endTime,
-            max_onsite_seats: 25,
-            room_location: 'Room 202, Building B',
-          });
-          await scheduleRepository.save(scheduleEntry);
-        }
-        console.log('✅ สร้าง Schedules สำหรับ Full Stack Course');
+      for (const schedule of schedules) {
+        const dayDate = getNextDate(schedule.weekday);
+        
+        const startTime = new Date(dayDate);
+        startTime.setHours(14, 0, 0, 0);
+        
+        const endTime = new Date(dayDate);
+        endTime.setHours(17, 0, 0, 0);
+
+        const scheduleEntry = scheduleRepository.create({
+          course_id: fullStackCourse.id,
+          start_time: startTime,
+          end_time: endTime,
+          max_onsite_seats: 25,
+          room_location: 'Room 202, Building B',
+        });
+        await scheduleRepository.save(scheduleEntry);
       }
-    
->>>>>>> a93e4607f08d7a8e8ca7eca1ebf9e3caf15744cf
+      console.log('✅ สร้าง Schedules สำหรับ Full Stack Course');
+    }
+
+    console.log('\n🎉 Seed เสร็จสมบูรณ์!\n');
     console.log('📝 บัญชีที่สร้างขึ้น:');
     console.log('┌─────────────────────────────────────────────────────┐');
     console.log('│ Role      │ Email                    │ Password      │');

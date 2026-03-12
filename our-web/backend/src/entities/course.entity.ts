@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   OneToMany,
   ManyToOne,
+  ManyToMany,
   JoinColumn,
 } from 'typeorm';
 import { Schedule } from './schedule.entity';
@@ -119,4 +120,7 @@ export class Course {
 
   @OneToMany(() => Exam, (exam) => exam.course)
   exams: Exam[];
+
+  @ManyToMany(() => User, (user) => user.favorite_courses)
+  liked_by_users: User[];
 }

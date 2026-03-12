@@ -145,12 +145,6 @@ const BookingForm = ({
     });
   };
 
-  const getAvailableSeats = () => {
-    if (!selectedSchedule || !scheduleStats) return 0;
-    if (!selectedSchedule.max_onsite_seats) return 999;
-    return Math.max(0, selectedSchedule.max_onsite_seats - scheduleStats.onsite_count);
-  };
-
   return (
     <div className="booking-form">
       <div className="booking-form-header">
@@ -198,57 +192,92 @@ const BookingForm = ({
       {/* Schedule Selection for ONSITE */}
       {learningMode === LearningMode.ONSITE && (
         <div className="booking-section">
-          <label className="section-label">เลือกเวลาเรียน</label>
+          <label className="section-label">📅 เลือกเวลาเรียน (ออนไซต์)</label>
           {loading ? (
             <div className="loading">กำลังโหลดเวลาเรียน...</div>
           ) : schedules.length === 0 ? (
             <div className="no-schedules">ไม่มีเวลาเรียนที่สามารถจองได้</div>
           ) : (
-            <div className="schedules-list">
-              {schedules.map((schedule) => {
-                const seats = getAvailableSeats();
-                return (
-                  <div
-                    key={schedule.id}
-                    className={`schedule-item ${
-                      selectedSchedule?.id === schedule.id ? 'selected' : ''
-                    }`}
-                    onClick={() => {
-                      if (seats > 0 || !schedule.max_onsite_seats) {
-                        setSelectedSchedule(schedule);
-                      }
-                    }}
-                  >
-                    <div className="schedule-info">
-                      <div className="schedule-date">
-                        📅 {formatDate(schedule.start_time)}
-                      </div>
-                      <div className="schedule-time">
-                        🕐 {new Date(schedule.start_time).toLocaleTimeString('th-TH', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}{' '}
-                        -{' '}
-                        {new Date(schedule.end_time).toLocaleTimeString('th-TH', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </div>
-                      {schedule.room_location && (
-                        <div className="schedule-location">
-                          📍 {schedule.room_location}
+            <>
+              <div style={{ marginBottom: '12px', fontSize: '0.9rem', color: '#64748b', textAlign: 'center' }}>
+                ⏱️ เลือกเวลาเรียนที่มีที่นั่งว่าง
+              </div>
+              <div className="schedules-list">
+                {schedules.map((schedule) => {
+                  const bookedSeats = scheduleStats ? scheduleStats.onsite_count : 0;
+                  const totalSeats = schedule.max_onsite_seats || 999;
+                  const availableSeats = Math.max(0, totalSeats - bookedSeats);
+                  const isFull = totalSeats > 0 && availableSeats === 0;
+                  
+                  return (
+                    <div
+                      key={schedule.id}
+                      className={`schedule-item ${
+                        selectedSchedule?.id === schedule.id ? 'selected' : ''
+                      } ${isFull ? 'disabled' : ''}`}
+                      onClick={() => {
+                        if (!isFull) {
+                          setSelectedSchedule(schedule);
+                        }
+                      }}
+                      style={{
+                        opacity: isFull ? 0.5 : 1,
+                        cursor: isFull ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      <div className="schedule-info">
+                        <div className="schedule-date">
+                          📅 {formatDate(schedule.start_time)}
                         </div>
-                      )}
-                      {schedule.max_onsite_seats && (
-                        <div className={`schedule-seats ${seats === 0 ? 'full' : ''}`}>
-                          {'🪑 ' + seats + ' seats available'}
+                        <div className="schedule-time">
+                          🕐 {new Date(schedule.start_time).toLocaleTimeString('th-TH', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}{' '}
+                          -{' '}
+                          {new Date(schedule.end_time).toLocaleTimeString('th-TH', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
                         </div>
-                      )}
+                        {schedule.room_location && (
+                          <div className="schedule-location">
+                            📍 {schedule.room_location}
+                          </div>
+                        )}
+                        
+                        {/* Seat Information */}
+                        <div style={{
+                          marginTop: '8px',
+                          padding: '8px 10px',
+                          backgroundColor: isFull ? '#fee2e2' : '#ecfdf5',
+                          borderRadius: '6px',
+                          fontSize: '0.9rem',
+                          fontWeight: '500',
+                          color: isFull ? '#991b1b' : '#065f46',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center'
+                        }}>
+                          <div>
+                            {isFull ? (
+                              <>❌ เต็มแล้ว</>
+                            ) : availableSeats < 5 ? (
+                              <>⚠️ เหลือเพียง {availableSeats} ที่</>
+                            ) : (
+                              <>✅ ว่าง {availableSeats} ที่</>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '0.85rem', opacity: 0.8 }}>
+                            {availableSeats}/{totalSeats}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
       )}
