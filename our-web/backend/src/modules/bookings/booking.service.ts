@@ -196,10 +196,20 @@ export class BookingService {
     });
     if (!schedule) throw new NotFoundException('Schedule not found');
 
-    const total = await this.bookingRepo.count({ where: { schedule_id: scheduleId } });
-    const confirmed = await this.bookingRepo.count({ where: { schedule_id: scheduleId, status: BookingStatus.CONFIRMED } });
-    const onsite = await this.bookingRepo.count({ where: { schedule_id: scheduleId, learning_mode: LearningMode.ONSITE } });
-    const online = await this.bookingRepo.count({ where: { schedule_id: scheduleId, learning_mode: LearningMode.ONLINE } });
+    const validStatuses = [BookingStatus.CONFIRMED, BookingStatus.PENDING];
+    
+    const total = await this.bookingRepo.count({ 
+      where: { schedule_id: scheduleId, status: In(validStatuses) } 
+    });
+    const confirmed = await this.bookingRepo.count({ 
+      where: { schedule_id: scheduleId, status: BookingStatus.CONFIRMED } 
+    });
+    const onsite = await this.bookingRepo.count({ 
+      where: { schedule_id: scheduleId, learning_mode: LearningMode.ONSITE, status: In(validStatuses) } 
+    });
+    const online = await this.bookingRepo.count({ 
+      where: { schedule_id: scheduleId, learning_mode: LearningMode.ONLINE, status: In(validStatuses) } 
+    });
 
     // 🌟 ดึงข้อมูล Quota ทั้งหมดของ Schedule นี้
     const quotas = await this.seatQuotaRepo.find({ where: { schedule_id: scheduleId } });
