@@ -7,6 +7,7 @@ import BookingForm from '../components/BookingForm';
 import { PlayCircle, FileText, Download, ChevronDown, ChevronUp } from 'lucide-react';
 import { courseAPI, type Course, type Lesson } from '../api/courseAPI';
 import paymentAPI from '../api/paymentAPI';
+import bookingAPI, { type Schedule } from '../api/bookingAPI';
 import '../styles/CourseDetail.css';
 
 interface CartItem {
@@ -18,6 +19,7 @@ interface CartItem {
   is_online: boolean;
   is_onsite: boolean;
   selectedType?: 'online' | 'onsite';
+  schedule_id?: string;
 }
 
 const CourseDetail = () => {
@@ -40,6 +42,8 @@ const CourseDetail = () => {
   const [expandedChapters, setExpandedChapters] = useState<{ [key: string]: boolean }>({});
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [checkingAccess, setCheckingAccess] = useState(true);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -59,6 +63,10 @@ const CourseDetail = () => {
           try {
             const seatRes = await courseAPI.getOnsiteBookedCount(courseId);
             setOnsiteBooked(seatRes.data.count);
+            
+            // Fetch schedules for booking
+            const schedRes = await bookingAPI.getSchedulesByCourse(courseId);
+            setSchedules(schedRes.data.data || []);
           } catch {
             setOnsiteBooked(0);
           }
@@ -250,6 +258,13 @@ const CourseDetail = () => {
       alert('กรุณาเลือกประเภทการเรียน');
       return;
     }
+    
+    // ตรวจสอบว่าถ้าเลือก onsite หรือมีแต่ onsite ต้องเลือกรอบเวลาเรียน
+    const isChoosingOnsite = selectedType === 'onsite' || (!course.is_online && course.is_onsite);
+    if (isChoosingOnsite && !selectedScheduleId) {
+      alert('กรุณาเลือกรอบเวลาเรียน');
+      return;
+    }
     const cart: CartItem[] = JSON.parse(localStorage.getItem('cart') || '[]');
     const item: CartItem = {
       id: courseId,
@@ -260,6 +275,7 @@ const CourseDetail = () => {
       is_online: course.is_online,
       is_onsite: course.is_onsite,
       selectedType: selectedType || undefined,
+      schedule_id: selectedScheduleId || undefined,
     };
     localStorage.setItem('cart', JSON.stringify([...cart, item]));
     // แจ้งเตือน Header ให้อัปเดตจำนวนตะกร้า
@@ -269,6 +285,7 @@ const CourseDetail = () => {
     setCartMsg('เพิ่มลงตะกร้าแล้ว!');
     setTimeout(() => setCartMsg(''), 2500);
     setShowCartModal(false);
+    setSelectedScheduleId(null);
   };
 
   const formatPrice = (price?: number | string) => {
@@ -683,6 +700,54 @@ const CourseDetail = () => {
                     {course.is_online && <span className="cd-type-badge online">🖥️ ออนไลน์</span>}
                     {course.is_onsite && <span className="cd-type-badge onsite">🏫 ออนไซต์</span>}
                   </div>
+                </div>
+              )}
+
+              {/* Schedule Selection if onsite is selected */}
+              {(selectedType === 'onsite' || (!course.is_online && course.is_onsite)) && (
+                <div className="cd-modal-course-info" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <p className="cd-modal-label" style={{ minWidth: 'auto', marginBottom: '8px' }}>เลือกรอบเวลาเรียน <span style={{ color: '#ef4444' }}>*</span></p>
+                  
+                  {schedules.length === 0 ? (
+                    <p style={{ color: '#64748b', fontSize: '0.9rem' }}>ไม่มีรอบเวลาเปิดรับในขณะนี้</p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+                      {schedules.map((schedule) => {
+                        const date = new Date(schedule.start_time);
+                        const formattedDate = date.toLocaleDateString('th-TH', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                        const timeStart = new Date(schedule.start_time).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                        const timeEnd = new Date(schedule.end_time).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                        
+                        return (
+                          <label key={schedule.id} style={{
+                            display: 'flex', alignItems: 'center', padding: '10px 12px',
+                            border: `1px solid ${selectedScheduleId === schedule.id ? '#0A1C39' : '#e2e8f0'}`,
+                            borderRadius: '8px', cursor: 'pointer',
+                            background: selectedScheduleId === schedule.id ? '#f8fafc' : 'white'
+                          }}>
+                            <input
+                              type="radio"
+                              name="scheduleSelection"
+                              value={schedule.id}
+                              checked={selectedScheduleId === schedule.id}
+                              onChange={() => setSelectedScheduleId(schedule.id)}
+                              style={{ marginRight: '10px' }}
+                            />
+                            <div>
+                              <div style={{ fontSize: '0.95rem', fontWeight: '500', color: '#0f172a' }}>
+                                📅 {formattedDate} ({timeStart} - {timeEnd})
+                              </div>
+                              {schedule.room_location && (
+                                <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '4px' }}>
+                                  📍 ห้อง: {schedule.room_location}
+                                </div>
+                              )}
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
