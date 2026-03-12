@@ -251,11 +251,42 @@
   margin: 0 0 14px 0;
 }
 
+.cd-type-badges-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
 .cd-type-badges {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 22px;
+}
+
+.cd-heart-btn {
+  background: white;
+  border: 2px solid #cbd5e1;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.cd-heart-btn:hover {
+  border-color: #ef4444;
+  transform: scale(1.1);
+}
+
+.cd-heart-btn.liked {
+  border-color: #ef4444;
+  background: #fef2f2;
 }
 
 .cd-type-badge {

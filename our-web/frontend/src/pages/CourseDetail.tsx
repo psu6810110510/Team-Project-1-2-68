@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Heart } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import BookingForm from '../components/BookingForm';
@@ -67,26 +68,43 @@ const CourseDetail = () => {
     fetchCourse();
   }, [courseId, navigate]);
 
-  // Sync wishlist & cart state from localStorage
+  // Sync favorites from API & cart state from localStorage
   useEffect(() => {
     if (!courseId) return;
-    const wishlist: string[] = JSON.parse(localStorage.getItem('wishlist') || '[]');
-    setIsWishlisted(wishlist.includes(courseId));
+    const loadFavorites = async () => {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        try {
+          const favoritesRes = await courseAPI.getMyFavorites();
+          const favoriteIds = favoritesRes.data.favorites.map((c: Course) => c.id);
+          setIsWishlisted(favoriteIds.includes(courseId));
+        } catch (err) {
+          console.error('Error loading favorites:', err);
+        }
+      }
+    };
+    loadFavorites();
     const cart: CartItem[] = JSON.parse(localStorage.getItem('cart') || '[]');
     setInCart(cart.some((c) => c.id === courseId));
   }, [courseId]);
 
-  const handleWishlist = () => {
+  const handleWishlist = async () => {
     if (!courseId) return;
-    const wishlist: string[] = JSON.parse(localStorage.getItem('wishlist') || '[]');
-    let updated: string[];
-    if (isWishlisted) {
-      updated = wishlist.filter((id) => id !== courseId);
-    } else {
-      updated = [...wishlist, courseId];
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      navigate('/login');
+      return;
     }
-    localStorage.setItem('wishlist', JSON.stringify(updated));
-    setIsWishlisted(!isWishlisted);
+    try {
+      if (isWishlisted) {
+        await courseAPI.removeFromFavorites(courseId);
+      } else {
+        await courseAPI.addToFavorites(courseId);
+      }
+      setIsWishlisted(!isWishlisted);
+    } catch (err) {
+      console.error('Error updating favorites:', err);
+    }
   };
 
   const handleAddToCart = () => {
@@ -342,9 +360,20 @@ const CourseDetail = () => {
             {/* price big */}
             <p className="cd-action-price">{formatPrice(course.price)}</p>
 
-            <div className="cd-type-badges">
-              {course.is_online && <span className="cd-type-badge online">🖥️ ออนไลน์</span>}
-              {course.is_onsite && <span className="cd-type-badge onsite">🏫 ออนไซต์</span>}
+            <div className="cd-type-badges-row">
+              <div className="cd-type-badges">
+                {course.is_online && <span className="cd-type-badge online">🖥️ ออนไลน์</span>}
+                {course.is_onsite && <span className="cd-type-badge onsite">🏫 ออนไซต์</span>}
+              </div>
+              {isLoggedIn && (
+                <button
+                  className={`cd-heart-btn ${isWishlisted ? 'liked' : ''}`}
+                  onClick={handleWishlist}
+                  title={isWishlisted ? 'นำออกจากสิ่งที่ถูกใจ' : 'บันทึกสิ่งที่ถูกใจ'}
+                >
+                  <Heart size={20} fill={isWishlisted ? '#ef4444' : 'none'} color={isWishlisted ? '#ef4444' : '#475569'} />
+                </button>
+              )}
             </div>
 
             {!isLoggedIn ? (
@@ -366,14 +395,6 @@ const CourseDetail = () => {
                   onClick={() => setShowBookingForm(true)}
                 >
                   📅 จองการเรียน
-                </button>
-
-                <button
-                  className={`cd-wishlist-btn ${isWishlisted ? 'wishlisted' : ''}`}
-                  onClick={handleWishlist}
-                  title={isWishlisted ? 'นำออกจากสิ่งที่ถูกใจ' : 'บันทึกสิ่งที่ถูกใจ'}
-                >
-                  {isWishlisted ? '❤️' : '🤍'}
                 </button>
               </div>
             )}

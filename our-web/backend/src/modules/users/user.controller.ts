@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Body, Param, Put, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Query, Delete, UseGuards, Request } from '@nestjs/common';
 import { UserService } from './user.service';
 import type { CreateUserDto, UpdateUserDto } from './user.service';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
 @Controller('users')
 export class UserController {
@@ -62,5 +63,27 @@ export class UserController {
       profile: profile || null,
       message: 'User updated successfully',
     };
+  }
+
+  // Favorite courses endpoints
+  @UseGuards(JwtAuthGuard)
+  @Get('me/favorites')
+  async getMyFavorites(@Request() req) {
+    const userId = req.user.sub;
+    return await this.userService.getUserFavorites(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':courseId/favorite')
+  async addFavorite(@Request() req, @Param('courseId') courseId: string) {
+    const userId = req.user.sub;
+    return await this.userService.addFavoriteCourse(userId, courseId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':courseId/favorite')
+  async removeFavorite(@Request() req, @Param('courseId') courseId: string) {
+    const userId = req.user.sub;
+    return await this.userService.removeFavoriteCourse(userId, courseId);
   }
 }

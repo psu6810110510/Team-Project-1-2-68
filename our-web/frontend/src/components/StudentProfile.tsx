@@ -41,6 +41,8 @@ export default function StudentProfile() {
   }>>([]);
   const [realPurchases, setRealPurchases] = useState<PaymentRecord[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
+  const [favoriteCourses, setFavoriteCourses] = useState<APICourse[]>([]);
+  const [loadingFavorites, setLoadingFavorites] = useState(true);
   // --- exam state ---
   const [courseExams, setCourseExams] = useState<Array<{ courseTitle: string; exams: Array<{ id: string; title: string; type: string; total_score: number }> }>>([])
   const [loadingExams, setLoadingExams] = useState(false);
@@ -96,17 +98,12 @@ export default function StudentProfile() {
     }
   ];
 
-  const favoriteCourses = [
-    { id: 101, title: 'Data Structures & Algorithms', category: 'Computer Science', image: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&w=300&q=80' },
-    { id: 102, title: 'C Programming', category: 'Programming Language', image: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=300&q=80' }
-  ];
-
   const purchasedHistory = [
     { id: 201, title: 'Data Structures & Algorithms', date: '12 ม.ค. 67', price: '฿1,290', image: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&w=300&q=80' },
     { id: 202, title: 'C Programming', date: '10 ธ.ค. 66', price: '฿990', image: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=300&q=80' }
   ];
 
-  // --- 3. ดึงข้อมูลผู้ใช้ + คอร์สที่ซื้อแล้ว ---
+  // --- 3. ดึงข้อมูลผู้ใช้ + คอร์สที่ซื้อแล้ว + คอร์สที่ถูกใจ ---
   useEffect(() => {
     const fetchAll = async () => {
       const storedUser = localStorage.getItem('user');
@@ -185,6 +182,16 @@ export default function StudentProfile() {
           console.error('Error loading courses:', err);
         } finally {
           setLoadingCourses(false);
+        }
+
+        // ดึงคอร์สที่ถูกใจ
+        try {
+          const favoritesRes = await courseAPI.getMyFavorites();
+          setFavoriteCourses(favoritesRes.data.favorites);
+        } catch (err) {
+          console.error('Error loading favorites:', err);
+        } finally {
+          setLoadingFavorites(false);
         }
       }
     };
@@ -584,15 +591,28 @@ export default function StudentProfile() {
             {activeMenu === 'favorites' && (
               <>
                 <div className="content-header"><span className="content-title">สิ่งที่ถูกใจ</span></div>
-                <div className="favorites-grid">
-                  {favoriteCourses.map((course) => (
-                    <div key={course.id} className="fav-card">
-                      <div className="fav-card-heart"><Heart size={18} fill="#ef4444" color="#ef4444" /></div>
-                      <img src={course.image} alt={course.title} className="fav-card-img" />
-                      <h3 className="fav-card-title">{course.title}</h3>
-                    </div>
-                  ))}
-                </div>
+                {loadingFavorites ? (
+                  <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>กำลังโหลด...</div>
+                ) : favoriteCourses.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>ยังไม่มีคอร์สที่ถูกใจ</div>
+                ) : (
+                  <div className="favorites-grid">
+                    {favoriteCourses.map((course) => (
+                      <div key={course.id} className="fav-card" onClick={() => navigate(`/courses/${course.id}`)} style={{ cursor: 'pointer' }}>
+                        <div className="fav-card-heart"><Heart size={18} fill="#ef4444" color="#ef4444" /></div>
+                        <img 
+                          src={course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=300&q=80'} 
+                          alt={course.title} 
+                          className="fav-card-img" 
+                        />
+                        <h3 className="fav-card-title">{course.title}</h3>
+                        <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.5rem' }}>
+                          {course.instructor_name || 'ผู้สอน'}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </>
             )}
 
