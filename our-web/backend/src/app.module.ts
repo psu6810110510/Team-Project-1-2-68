@@ -15,6 +15,7 @@ import {
   Booking,
   ExamResult,
   SeatQuota,
+  Payment,
 } from './entities';
 
 
@@ -24,6 +25,8 @@ import { ExamModule } from './modules/exams/exam.module';
 import { BookingModule } from './modules/bookings/booking.module';
 import { SeatQuotaModule } from './modules/seat-quotas/seat-quota.module';
 import { TeacherModule } from './modules/teachers/teacher.module';
+import { UploadModule } from './upload/upload.module';
+import { PaymentModule } from './modules/payments/payment.module';
 import { AuthModule } from './auth/auth.module'; // ✅ Auth module หลัก (JWT + Google OAuth)
 
 @Module({
@@ -59,6 +62,7 @@ import { AuthModule } from './auth/auth.module'; // ✅ Auth module หลัก
         Booking,
         ExamResult,
         SeatQuota,
+        Payment,
       ],
       synchronize: true,
       logging: true,
@@ -70,6 +74,8 @@ import { AuthModule } from './auth/auth.module'; // ✅ Auth module หลัก
     BookingModule,
     SeatQuotaModule,
     TeacherModule,
+    UploadModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

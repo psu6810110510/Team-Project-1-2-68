@@ -9,6 +9,7 @@ import { Exam, ExamType } from '../../entities/exam.entity';
 import { Question, QuestionType } from '../../entities/question.entity';
 import { Choice } from '../../entities/choice.entity';
 import { Course } from '../../entities/course.entity';
+import { ExamResult } from '../../entities/exam-result.entity';
 
 export interface CreateExamDto {
   course_id: string;
@@ -59,6 +60,12 @@ export interface UpdateChoiceDto {
   is_correct?: boolean;
 }
 
+export interface SubmitExamDto {
+  user_id: string;
+  answers: { question_id: string; choice_id: string }[];
+  time_spent_seconds?: number;
+}
+
 @Injectable()
 export class ExamService {
   constructor(
@@ -66,6 +73,7 @@ export class ExamService {
     @InjectRepository(Question) private questionRepo: Repository<Question>,
     @InjectRepository(Choice) private choiceRepo: Repository<Choice>,
     @InjectRepository(Course) private courseRepo: Repository<Course>,
+    @InjectRepository(ExamResult) private examResultRepo: Repository<ExamResult>,
   ) {}
 
   async createExam(dto: CreateExamDto): Promise<Exam> {
@@ -248,6 +256,79 @@ export class ExamService {
       })),
     );
 
+    return {
+      id: exam.id,
+      title: exam.title,
+      description: exam.description,
+      type: exam.type,
+      total_score: exam.total_score,
+      questions: questionsWithChoices,
+    };
+  }
+
+  async submitExam(examId: string, dto: SubmitExamDto): Promise<ExamResult> {
+    const exam = await this.getExamById(examId);
+    const questions = await this.getQuestionsByExam(examId);
+
+    let correct = 0;
+    let wrong = 0;
+    let earnedScore = 0;
+
+    for (const q of questions) {
+      const answer = dto.answers.find((a) => a.question_id === q.id);
+      if (!answer) continue;
+      const choice = await this.choiceRepo.findOne({ where: { id: answer.choice_id, question_id: q.id } });
+      if (choice?.is_correct) {
+        correct++;
+        earnedScore += q.score_points || 1;
+      } else {
+        wrong++;
+      }
+    }
+
+    const percentage = exam.total_score > 0 ? (earnedScore / exam.total_score) * 100 : 0;
+
+    const result = this.examResultRepo.create({
+      user_id: dto.user_id,
+      exam_id: examId,
+      total_score: earnedScore,
+      percentage,
+      total_questions: questions.length,
+      correct_answers: correct,
+      wrong_answers: wrong,
+      time_spent_seconds: dto.time_spent_seconds,
+      started_at: new Date(),
+      completed_at: new Date(),
+    });
+
+    return this.examResultRepo.save(result);
+  }
+
+  async getStudentResults(userId: string): Promise<ExamResult[]> {
+    return this.examResultRepo.find({
+      where: { user_id: userId },
+      order: { created_at: 'DESC' },
+    });
+  }
+
+  async getExamForStudent(examId: string) {
+    const exam = await this.getExamById(examId);
+    const questions = await this.getQuestionsByExam(examId);
+    const questionsWithChoices = await Promise.all(
+      questions.map(async (q) => ({
+        id: q.id,
+        question_text: q.question_text,
+        type: q.type,
+        score_points: q.score_points,
+        sequence_order: q.sequence_order,
+        choices: (await this.getChoicesByQuestion(q.id)).map((c) => ({
+          id: c.id,
+          choice_label: c.choice_label,
+          choice_text: c.choice_text,
+          // ไม่ส่ง is_correct ให้นักเรียนเห็น
+        })),
+      })),
+    );
     return {
       id: exam.id,
       title: exam.title,

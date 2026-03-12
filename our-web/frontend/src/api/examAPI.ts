@@ -166,6 +166,26 @@ export const examAPI = {
    */
   deleteChoice: (choiceId: string) =>
     apiClient.delete(`/exams/choice/${choiceId}`),
+
+  // ---------- STUDENT endpoints ----------
+
+  /**
+   * ดูข้อสอบสำหรับนักเรียน (ไม่มี is_correct)
+   */
+  getExamForStudent: (examId: string) =>
+    apiClient.get(`/exams/student/${examId}/take`),
+
+  /**
+   * ส่งคำตอบข้อสอบ
+   */
+  submitExam: (examId: string, data: { user_id: string; answers: { question_id: string; choice_id: string }[]; time_spent_seconds?: number }) =>
+    apiClient.post(`/exams/${examId}/submit`, data),
+
+  /**
+   * ดูผลสอบทั้งหมดของนักเรียน
+   */
+  getStudentResults: (userId: string) =>
+    apiClient.get(`/exams/student/results/${userId}`),
 };
 
 export default examAPI;

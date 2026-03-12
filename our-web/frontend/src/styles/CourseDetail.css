@@ -1,0 +1,630 @@
+/* =========================================
+   Course Detail Page
+   ========================================= */
+
+.cd-page {
+  min-height: 100vh;
+  background: #f1f5f9;
+  padding-top: 64px;
+}
+
+.cd-loading,
+.cd-error {
+  text-align: center;
+  padding: 80px 20px;
+  font-size: 1.1rem;
+  color: #64748b;
+}
+
+/* Back bar */
+.cd-back-bar {
+  background: #1B395C;
+  padding: 10px 24px;
+}
+
+.cd-back-btn {
+  background: none;
+  border: none;
+  color: #cbd5e1;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 0.2s;
+}
+
+.cd-back-btn:hover {
+  color: #fff;
+}
+
+/* Main layout */
+.cd-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 32px;
+  align-items: start;
+}
+
+/* =========================================
+   LEFT COLUMN
+   ========================================= */
+
+/* Media */
+.cd-media {
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #1e293b;
+  aspect-ratio: 16/9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.cd-video {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.cd-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cd-no-media {
+  font-size: 5rem;
+}
+
+/* Title */
+.cd-title {
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.35;
+  margin: 0 0 14px 0;
+}
+
+/* Instructor sub-text */
+.cd-instructor-sub {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+  margin: 4px 0 14px 0;
+}
+
+/* Tags */
+.cd-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.cd-tag {
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 13px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+/* Section */
+.cd-section {
+  margin-bottom: 28px;
+}
+
+.cd-section-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 14px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.cd-description {
+  color: #475569;
+  font-size: 0.97rem;
+  line-height: 1.8;
+  margin: 0;
+  white-space: pre-line;
+}
+
+/* Details grid */
+.cd-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+/* Type sub-sections (online / onsite) */
+.cd-type-section {
+  margin-top: 20px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1.5px solid transparent;
+}
+
+.cd-type-section--online {
+  border-color: #bfdbfe;
+  background: #f0f7ff;
+}
+
+.cd-type-section--onsite {
+  border-color: #bbf7d0;
+  background: #f0fff4;
+}
+
+.cd-type-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cd-type-section--online .cd-type-section-header {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.cd-type-section--onsite .cd-type-section-header {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.cd-type-section-icon {
+  font-size: 1.1rem;
+}
+
+.cd-type-section .cd-details-grid {
+  padding: 16px;
+}
+
+.cd-detail-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: white;
+  padding: 14px 16px;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.cd-detail-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.cd-detail-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  margin: 0 0 3px 0;
+}
+
+.cd-detail-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.cd-price {
+  color: #1B395C;
+  font-size: 1rem;
+}
+
+/* =========================================
+   RIGHT COLUMN – ACTION CARD
+   ========================================= */
+
+.cd-sidebar {
+  position: sticky;
+  top: 84px;
+}
+
+.cd-action-card {
+  background: white;
+  border-radius: 16px;
+  padding: 28px 24px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+}
+
+.cd-action-price {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1B395C;
+  margin: 0 0 14px 0;
+}
+
+.cd-type-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+
+.cd-type-badge {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: 20px;
+}
+
+.cd-type-badge.online {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.cd-type-badge.onsite {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+/* Login button */
+.cd-login-btn {
+  width: 100%;
+  padding: 14px;
+  background: #1B395C;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.cd-login-btn:hover {
+  background: #14294a;
+}
+
+/* Action buttons (logged in) */
+.cd-action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.cd-cart-btn {
+  flex: 1;
+  padding: 13px 12px;
+  background: #1B395C;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.cd-cart-btn:hover:not(:disabled) {
+  background: #14294a;
+}
+
+.cd-cart-btn.in-cart {
+  background: #15803d;
+  cursor: default;
+}
+
+.cd-wishlist-btn {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  font-size: 1.4rem;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.cd-wishlist-btn:hover {
+  border-color: #f87171;
+  background: #fff1f1;
+}
+
+.cd-wishlist-btn.wishlisted {
+  border-color: #f87171;
+  background: #fff1f1;
+}
+
+/* Cart message */
+.cd-cart-msg {
+  margin: 10px 0 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #15803d;
+  text-align: center;
+}
+
+/* Go to cart */
+.cd-go-cart-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 11px;
+  background: none;
+  border: 2px solid #1B395C;
+  border-radius: 10px;
+  color: #1B395C;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cd-go-cart-btn:hover {
+  background: #1B395C;
+  color: white;
+}
+
+/* Instructor block */
+.cd-instructor-block {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.cd-instructor-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  margin: 0 0 4px 0;
+}
+
+.cd-instructor-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+/* =========================================
+   Cart Confirmation Modal
+   ========================================= */
+
+.cd-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.cd-modal {
+  background: white;
+  border-radius: 16px;
+  max-width: 520px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  position: relative;
+  animation: slideUp 0.3s ease;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cd-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 50%;
+  color: #64748b;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.cd-modal-close:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.cd-modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  padding: 24px 24px 16px 24px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.cd-modal-content {
+  padding: 24px;
+}
+
+.cd-modal-course-info {
+  margin-bottom: 20px;
+}
+
+.cd-modal-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  margin: 0 0 6px 0;
+}
+
+.cd-modal-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.cd-modal-price {
+  font-size: 1.5rem;
+  color: #1B395C;
+  font-weight: 800;
+}
+
+/* Type selection */
+.cd-modal-type-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.cd-modal-type-option {
+  display: block;
+  padding: 14px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+}
+
+.cd-modal-type-option:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.cd-modal-type-option.selected {
+  border-color: #1B395C;
+  background: #f1f5f9;
+}
+
+.cd-modal-type-option input[type="radio"] {
+  display: none;
+}
+
+.cd-modal-type-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.cd-modal-type-icon {
+  font-size: 1.3rem;
+}
+
+.cd-modal-type-detail {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+/* Type display (when only one type) */
+.cd-modal-type-display {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+/* Modal actions */
+.cd-modal-actions {
+  padding: 16px 24px 24px 24px;
+  display: flex;
+  gap: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.cd-modal-btn {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cd-modal-btn-cancel {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.cd-modal-btn-cancel:hover {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.cd-modal-btn-confirm {
+  background: #1B395C;
+  color: white;
+}
+
+.cd-modal-btn-confirm:hover {
+  background: #14294a;
+}
+
+/* =========================================
+   Responsive
+   ========================================= */
+
+@media (max-width: 900px) {
+  .cd-container {
+    grid-template-columns: 1fr;
+  }
+
+  .cd-sidebar {
+    position: static;
+    order: -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .cd-modal-title {
+    font-size: 1.25rem;
+  }
+
+  .cd-modal-actions {
+    flex-direction: column;
+  }
+}
