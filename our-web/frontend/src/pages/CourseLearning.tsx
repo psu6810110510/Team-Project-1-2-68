@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import '../styles/LoginTheme.css';
-import { ChevronLeft, PlayCircle, FileText, MonitorPlay, Download, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronLeft, PlayCircle, FileText, MonitorPlay, Download, ChevronDown, ChevronUp, CheckCircle } from 'lucide-react';
 import { paymentAPI } from '../api/paymentAPI';
 import { courseAPI, type Lesson } from '../api/courseAPI';
 
@@ -15,6 +15,32 @@ export default function CourseLearning() {
     const [realCourse, setRealCourse] = useState<any>(null);
     const [activeLesson, setActiveLesson] = useState<any>(null);
     const [expandedChapters, setExpandedChapters] = useState<{ [key: string]: boolean }>({});
+    const [completedLessons, setCompletedLessons] = useState<string[]>([]);
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+    // Load progress from localStorage
+    useEffect(() => {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser && courseId) {
+            const user = JSON.parse(storedUser);
+            setCurrentUserId(user.id);
+            const savedProgress = localStorage.getItem(`progress_${user.id}_${courseId}`);
+            if (savedProgress) {
+                setCompletedLessons(JSON.parse(savedProgress));
+            }
+        }
+    }, [courseId]);
+
+    const handleVideoEnded = () => {
+        if (activeLesson && activeLesson.id && currentUserId && courseId) {
+            if (!completedLessons.includes(activeLesson.id)) {
+                const newCompleted = [...completedLessons, activeLesson.id];
+                setCompletedLessons(newCompleted);
+                localStorage.setItem(`progress_${currentUserId}_${courseId}`, JSON.stringify(newCompleted));
+                console.log('✅ Marked lesson as completed:', activeLesson.topic_name);
+            }
+        }
+    };
 
     useEffect(() => {
         const checkAccess = async () => {
@@ -206,6 +232,7 @@ export default function CourseLearning() {
                                         src={activeLesson.video_url}
                                         controls
                                         autoPlay
+                                        onEnded={handleVideoEnded}
                                         style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'black' }}
                                     />
                                 ) : (
@@ -251,7 +278,33 @@ export default function CourseLearning() {
 
                     {/* Sidebar - Course Content */}
                     <div style={{ flex: '1 1 350px', background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '20px', height: 'fit-content' }}>
-                        <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#0f172a', marginBottom: '16px' }}>เนื้อหาคอร์สเรียน</h2>
+                        <div style={{ marginBottom: '20px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#0f172a' }}>เนื้อหาคอร์สเรียน</h2>
+                                {realLessons.length > 0 && (
+                                    <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#16a34a' }}>
+                                        {Math.round((completedLessons.length / realLessons.reduce((acc, ch) => acc + ch.lessons.length, 0)) * 100) || 0}%
+                                    </span>
+                                )}
+                            </div>
+                            
+                            {/* Progress Bar */}
+                            {realLessons.length > 0 && (
+                                <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '10px', overflow: 'hidden' }}>
+                                    <div 
+                                        style={{ 
+                                            width: `${(completedLessons.length / realLessons.reduce((acc, ch) => acc + ch.lessons.length, 0)) * 100}%`,
+                                            height: '100%',
+                                            background: 'linear-gradient(90deg, #22c55e, #16a34a)',
+                                            transition: 'width 0.5s ease-in-out'
+                                        }} 
+                                    />
+                                </div>
+                            )}
+                            <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '6px' }}>
+                                เรียนไปแล้ว {completedLessons.length} จาก {realLessons.reduce((acc, ch) => acc + ch.lessons.length, 0)} บทเรียน
+                            </p>
+                        </div>
 
                         {realLessons.length > 0 ? (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -320,6 +373,9 @@ export default function CourseLearning() {
                                                                     {lesson.displayTitle}
                                                                 </p>
                                                             </div>
+                                                            {completedLessons.includes(lesson.id) && (
+                                                                <CheckCircle size={16} color="#16a34a" style={{ marginLeft: '4px' }} />
+                                                            )}
                                                             {lesson.pdf_url && (
                                                                 <a 
                                                                     href={lesson.pdf_url}
