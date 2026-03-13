@@ -51,7 +51,7 @@ export default function StudentProfile() {
   const [courseExams, setCourseExams] = useState<Array<{ courseTitle: string; exams: Array<{ id: string; title: string; type: string; total_score: number }> }>>([]);
   const [loadingExams, setLoadingExams] = useState(false);
   const [activeExam, setActiveExam] = useState<null | {
-    id: string; title: string; type: string; total_score: number;
+    id: string; title: string; type: string; total_score: number; course_id?: string;
     questions: Array<{ id: string; question_text: string; score_points: number; sequence_order?: number;
       choices: Array<{ id: string; choice_label: string; choice_text: string }> }>;
   }>(null);
@@ -64,11 +64,7 @@ export default function StudentProfile() {
   const [examStartTime, setExamStartTime] = useState<Date | null>(null);
   const [submittingExam, setSubmittingExam] = useState(false);
 
-  // ข้อมูลจำลองสำหรับประวัติที่ยังไม่ได้ผูก API (เก็บไว้ตามโครงสร้างเดิม)
-  const purchasedHistory = [
-    { id: 201, title: 'Data Structures & Algorithms', date: '12 ม.ค. 67', price: '฿1,290', image: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&w=300&q=80' },
-    { id: 202, title: 'C Programming', date: '10 ธ.ค. 66', price: '฿990', image: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=300&q=80' }
-  ];
+
 
   // --- 3. ดึงข้อมูลผู้ใช้ + คอร์สที่ซื้อแล้ว + คอร์สที่ถูกใจ ---
   useEffect(() => {
