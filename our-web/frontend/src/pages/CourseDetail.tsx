@@ -485,7 +485,7 @@ const CourseDetail = () => {
                       <span className="cd-detail-icon">⏳</span>
                       <div>
                         <p className="cd-detail-label">อายุการเข้าถึง</p>
-                        <p className="cd-detail-value">{course.online_expiry}</p>
+                        <p className="cd-detail-value">{course.online_expiry.replace('days', 'วัน').replace('months', 'เดือน')}</p>
                       </div>
                     </div>
                   )}
@@ -524,7 +524,7 @@ const CourseDetail = () => {
                       <span className="cd-detail-icon">🕐</span>
                       <div>
                         <p className="cd-detail-label">เวลาเรียน</p>
-                        <p className="cd-detail-value">{course.onsite_time_start} – {course.onsite_time_end}</p>
+                        <p className="cd-detail-value">{course.onsite_time_start.slice(0, 5)} – {course.onsite_time_end.slice(0, 5)} น.</p>
                       </div>
                     </div>
                   )}
@@ -534,7 +534,7 @@ const CourseDetail = () => {
                       <span className="cd-detail-icon">⏱️</span>
                       <div>
                         <p className="cd-detail-label">ระยะเวลา</p>
-                        <p className="cd-detail-value">{course.onsite_duration}</p>
+                        <p className="cd-detail-value">{course.onsite_duration.replace('weeks', 'สัปดาห์').replace('hours', 'ชั่วโมง').replace('days', 'วัน')}</p>
                       </div>
                     </div>
                   )}
