@@ -557,46 +557,83 @@ const CourseDetail = () => {
                     </div>
                   </div>
 
-                  {course.onsite_days && course.onsite_days.length > 0 && (
-                    <div className="cd-detail-item">
-                      <span className="cd-detail-icon">📅</span>
-                      <div>
-                        <p className="cd-detail-label">วันเรียน</p>
-                        <p className="cd-detail-value">{formatDays(course.onsite_days)}</p>
+                  {schedules.length > 0 ? (
+                    <div className="cd-detail-item" style={{ gridColumn: '1 / -1', flexDirection: 'column', alignItems: 'flex-start' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+                        <span className="cd-detail-icon">📅</span>
+                        <p className="cd-detail-label" style={{ marginBottom: 0, marginLeft: '8px' }}>รอบเรียนที่เปิดรับสมัคร</p>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+                        {schedules.map((schedule) => {
+                          const date = new Date(schedule.start_time);
+                          const dateStr = date.toLocaleDateString('th-TH', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+                          const timeStart = new Date(schedule.start_time).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                          const timeEnd = new Date(schedule.end_time).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                          
+                          return (
+                            <div key={schedule.id} style={{ 
+                              background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0',
+                              display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px'
+                            }}>
+                              <div>
+                                <p style={{ fontWeight: 600, color: '#0f172a', marginBottom: '4px' }}>{dateStr}</p>
+                                <p style={{ fontSize: '0.85rem', color: '#64748b' }}>เวลา: {timeStart} - {timeEnd} น.</p>
+                                {schedule.room_location && (
+                                  <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '2px' }}>📍 {schedule.room_location}</p>
+                                )}
+                              </div>
+                              <div style={{ background: '#ecfdf5', color: '#059669', padding: '6px 12px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600 }}>
+                                รับ {schedule.max_onsite_seats || course.onsite_seats || '-'} ที่นั่ง
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
-                  )}
+                  ) : (
+                    <>
+                      {course.onsite_days && course.onsite_days.length > 0 && (
+                        <div className="cd-detail-item">
+                          <span className="cd-detail-icon">📅</span>
+                          <div>
+                            <p className="cd-detail-label">วันเรียน</p>
+                            <p className="cd-detail-value">{formatDays(course.onsite_days)}</p>
+                          </div>
+                        </div>
+                      )}
 
-                  {course.onsite_time_start && course.onsite_time_end && (
-                    <div className="cd-detail-item">
-                      <span className="cd-detail-icon">🕐</span>
-                      <div>
-                        <p className="cd-detail-label">เวลาเรียน</p>
-                        <p className="cd-detail-value">{course.onsite_time_start.slice(0, 5)} – {course.onsite_time_end.slice(0, 5)} น.</p>
-                      </div>
-                    </div>
-                  )}
+                      {course.onsite_time_start && course.onsite_time_end && (
+                        <div className="cd-detail-item">
+                          <span className="cd-detail-icon">🕐</span>
+                          <div>
+                            <p className="cd-detail-label">เวลาเรียน</p>
+                            <p className="cd-detail-value">{course.onsite_time_start.slice(0, 5)} – {course.onsite_time_end.slice(0, 5)} น.</p>
+                          </div>
+                        </div>
+                      )}
 
-                  {course.onsite_duration && (
-                    <div className="cd-detail-item">
-                      <span className="cd-detail-icon">⏱️</span>
-                      <div>
-                        <p className="cd-detail-label">ระยะเวลา</p>
-                        <p className="cd-detail-value">{course.onsite_duration.replace('weeks', 'สัปดาห์').replace('hours', 'ชั่วโมง').replace('days', 'วัน')}</p>
-                      </div>
-                    </div>
-                  )}
+                      {course.onsite_duration && (
+                        <div className="cd-detail-item">
+                          <span className="cd-detail-icon">⏱️</span>
+                          <div>
+                            <p className="cd-detail-label">ระยะเวลา</p>
+                            <p className="cd-detail-value">{course.onsite_duration.replace('weeks', 'สัปดาห์').replace('hours', 'ชั่วโมง').replace('days', 'วัน')}</p>
+                          </div>
+                        </div>
+                      )}
 
-                  {course.onsite_seats && (
-                    <div className="cd-detail-item">
-                      <span className="cd-detail-icon">💺</span>
-                      <div>
-                        <p className="cd-detail-label">ที่นั่ง</p>
-                        <p className="cd-detail-value">
-                          {onsiteBooked !== null ? `${onsiteBooked}/` : ''}{course.onsite_seats} ที่นั่ง
-                        </p>
-                      </div>
-                    </div>
+                      {course.onsite_seats && (
+                        <div className="cd-detail-item">
+                          <span className="cd-detail-icon">💺</span>
+                          <div>
+                            <p className="cd-detail-label">ที่นั่ง</p>
+                            <p className="cd-detail-value">
+                              {onsiteBooked !== null ? `${onsiteBooked}/` : ''}{course.onsite_seats} ที่นั่ง
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {course.onsite_exam_schedule && (
