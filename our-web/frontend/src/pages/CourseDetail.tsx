@@ -592,47 +592,39 @@ const CourseDetail = () => {
                     </div>
                   ) : (
                     <>
-                      {course.onsite_days && course.onsite_days.length > 0 && (
-                        <div className="cd-detail-item">
-                          <span className="cd-detail-icon">📅</span>
-                          <div>
-                            <p className="cd-detail-label">วันเรียน</p>
-                            <p className="cd-detail-value">{formatDays(course.onsite_days)}</p>
-                          </div>
+                      <div className="cd-detail-item">
+                        <span className="cd-detail-icon">📅</span>
+                        <div>
+                          <p className="cd-detail-label">วันเรียน</p>
+                          <p className="cd-detail-value">{(course.onsite_days && course.onsite_days.length > 0) ? formatDays(course.onsite_days) : '-'}</p>
                         </div>
-                      )}
+                      </div>
 
-                      {course.onsite_time_start && course.onsite_time_end && (
-                        <div className="cd-detail-item">
-                          <span className="cd-detail-icon">🕐</span>
-                          <div>
-                            <p className="cd-detail-label">เวลาเรียน</p>
-                            <p className="cd-detail-value">{course.onsite_time_start.slice(0, 5)} – {course.onsite_time_end.slice(0, 5)} น.</p>
-                          </div>
+                      <div className="cd-detail-item">
+                        <span className="cd-detail-icon">🕐</span>
+                        <div>
+                          <p className="cd-detail-label">เวลาเรียน</p>
+                          <p className="cd-detail-value">{(course.onsite_time_start && course.onsite_time_end) ? `${course.onsite_time_start.slice(0, 5)} – ${course.onsite_time_end.slice(0, 5)} น.` : '-'}</p>
                         </div>
-                      )}
+                      </div>
 
-                      {course.onsite_duration && (
-                        <div className="cd-detail-item">
-                          <span className="cd-detail-icon">⏱️</span>
-                          <div>
-                            <p className="cd-detail-label">ระยะเวลา</p>
-                            <p className="cd-detail-value">{course.onsite_duration.replace('weeks', 'สัปดาห์').replace('hours', 'ชั่วโมง').replace('days', 'วัน')}</p>
-                          </div>
+                      <div className="cd-detail-item">
+                        <span className="cd-detail-icon">⏱️</span>
+                        <div>
+                          <p className="cd-detail-label">ระยะเวลา</p>
+                          <p className="cd-detail-value">{course.onsite_duration ? course.onsite_duration.replace('weeks', 'สัปดาห์').replace('hours', 'ชั่วโมง').replace('days', 'วัน') : '-'}</p>
                         </div>
-                      )}
+                      </div>
 
-                      {course.onsite_seats && (
-                        <div className="cd-detail-item">
-                          <span className="cd-detail-icon">💺</span>
-                          <div>
-                            <p className="cd-detail-label">ที่นั่ง</p>
-                            <p className="cd-detail-value">
-                              {onsiteBooked !== null ? `${onsiteBooked}/` : ''}{course.onsite_seats} ที่นั่ง
-                            </p>
-                          </div>
+                      <div className="cd-detail-item">
+                        <span className="cd-detail-icon">💺</span>
+                        <div>
+                          <p className="cd-detail-label">ที่นั่ง</p>
+                          <p className="cd-detail-value">
+                            {course.onsite_seats ? `${onsiteBooked !== null ? `${onsiteBooked}/` : ''}${course.onsite_seats} ที่นั่ง` : '-'}
+                          </p>
                         </div>
-                      )}
+                      </div>
                     </>
                   )}
 
