@@ -121,6 +121,13 @@ export class ExamService {
     });
   }
 
+  async getAllExams(): Promise<Exam[]> {
+    return this.examRepo.find({
+      relations: ['course'],
+      order: { created_at: 'DESC' },
+    });
+  }
+
   async updateExam(id: string, dto: UpdateExamDto): Promise<Exam> {
     const exam = await this.getExamById(id);
     

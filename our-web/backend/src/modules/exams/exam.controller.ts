@@ -25,6 +25,23 @@ export class ExamController {
     };
   }
 
+  @Get()
+  async getAllExams() {
+    const exams = await this.examService.getAllExams();
+    return {
+      data: exams.map((e) => ({
+        id: e.id,
+        title: e.title,
+        type: e.type,
+        total_score: e.total_score,
+        created_at: e.created_at,
+        course_name: e.course?.title || 'Unknown Course',
+        course_id: e.course_id,
+      })),
+      total: exams.length,
+    };
+  }
+
   @Get(':id')
   async getExam(@Param('id') id: string) {
     return this.examService.getFullExam(id);

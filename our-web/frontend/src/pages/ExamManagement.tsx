@@ -29,6 +29,20 @@ export default function ExamManagement() {
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [editMode, setEditMode] = useState(false);
   
+  const handleBackToDashboard = () => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const userObj = JSON.parse(userStr);
+        if (userObj.role === 'ADMIN') {
+          navigate('/admin-dashboard');
+          return;
+        }
+      } catch (e) {}
+    }
+    navigate('/teacher-dashboard');
+  };
+  
   // Exam Form States
   const [examForm, setExamForm] = useState({
     title: '',
@@ -375,7 +389,7 @@ export default function ExamManagement() {
           <div style={{ marginBottom: '1.5rem' }}>
             <div
               style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', cursor: 'pointer', color: '#64748b' }}
-              onClick={() => navigate('/teacher-dashboard')}
+              onClick={handleBackToDashboard}
             >
               <div style={{ background: '#cbd5e1', borderRadius: '50%', padding: '6px', display: 'flex' }}>
                 <ChevronLeft size={20} color="white" />

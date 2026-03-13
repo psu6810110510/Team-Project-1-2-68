@@ -88,6 +88,12 @@ export const examAPI = {
     apiClient.post('/exams', data),
 
   /**
+   * ดูข้อสอบทั้งหมดสำหรับผู้ดูแลระบบ
+   */
+  getAllExams: () =>
+    apiClient.get('/exams'),
+
+  /**
    * ดูข้อสอบพร้อมคำถามและตัวเลือกทั้งหมด
    */
   getExam: (id: string) =>
