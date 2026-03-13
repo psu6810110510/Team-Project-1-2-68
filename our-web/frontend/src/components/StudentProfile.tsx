@@ -194,12 +194,43 @@ export default function StudentProfile() {
                   console.error(`Error fetching lessons for course ${id}:`, err);
                 }
 
+                let formattedExpiry = 'ไม่จำกัด';
+                if (c.online_expiry && payment) {
+                  let expiryDays = 0;
+                  const expiryStr = c.online_expiry.toLowerCase();
+                  if (expiryStr.includes('day') || expiryStr.includes('วัน')) {
+                    expiryDays = parseInt(expiryStr) || 0;
+                  } else if (expiryStr.includes('month') || expiryStr.includes('เดือน')) {
+                    expiryDays = (parseInt(expiryStr) || 0) * 30;
+                  } else if (expiryStr.includes('year') || expiryStr.includes('ปี')) {
+                    expiryDays = (parseInt(expiryStr) || 0) * 365;
+                  }
+                  
+                  if (expiryDays > 0) {
+                    const paymentDate = new Date(payment.created_at);
+                    const expiryDate = new Date(paymentDate.getTime() + expiryDays * 24 * 60 * 60 * 1000);
+                    const now = new Date();
+                    const diffTime = expiryDate.getTime() - now.getTime();
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays > 0) {
+                      formattedExpiry = `ใช้งานได้อีก ${diffDays} วัน`;
+                    } else {
+                      formattedExpiry = 'หมดอายุแล้ว';
+                    }
+                  } else {
+                    formattedExpiry = c.online_expiry.replace('days', 'วัน').replace('months', 'เดือน');
+                  }
+                } else if (c.online_expiry) {
+                  formattedExpiry = c.online_expiry.replace('days', 'วัน').replace('months', 'เดือน');
+                }
+
                 return {
                   id,
                   title: c.title,
                   instructor: c.instructor_name || c.instructor?.full_name || 'ผู้สอน',
                   startDate: payment ? new Date(payment.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' }) : '-',
-                  expireDate: c.online_expiry ? `${c.online_expiry} เดือน` : 'ไม่จำกัด',
+                  expireDate: formattedExpiry,
                   lastAccess: '-',
                   progress: progressPercent,
                   image: c.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80',
