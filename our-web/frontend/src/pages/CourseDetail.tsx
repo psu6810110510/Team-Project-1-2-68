@@ -43,6 +43,49 @@ const CourseDetail = () => {
   const [checkingAccess, setCheckingAccess] = useState(true);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
+  const [remainingDays, setRemainingDays] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (isEnrolled && course && course.is_online && course.online_expiry) {
+      const calculateRemainingDays = async () => {
+        try {
+          const userData = localStorage.getItem('user');
+          if (userData) {
+            const user = JSON.parse(userData);
+            const paymentsRes = await paymentAPI.getUserPayments(user.id);
+            const confirmedPayment = paymentsRes.data.data.find(
+              (p: any) => p.status === 'CONFIRMED' && p.course_ids.includes(course.id)
+            );
+            
+            if (confirmedPayment) {
+              let expiryDays = 0;
+              const expiryStr = course.online_expiry!.toLowerCase();
+              if (expiryStr.includes('day') || expiryStr.includes('วัน')) {
+                expiryDays = parseInt(expiryStr) || 0;
+              } else if (expiryStr.includes('month') || expiryStr.includes('เดือน')) {
+                expiryDays = (parseInt(expiryStr) || 0) * 30;
+              } else if (expiryStr.includes('year') || expiryStr.includes('ปี')) {
+                expiryDays = (parseInt(expiryStr) || 0) * 365;
+              }
+
+              if (expiryDays > 0) {
+                const paymentDate = new Date(confirmedPayment.created_at);
+                const expiryDate = new Date(paymentDate.getTime() + expiryDays * 24 * 60 * 60 * 1000);
+                const now = new Date();
+                const diffTime = expiryDate.getTime() - now.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                setRemainingDays(diffDays > 0 ? diffDays : 0);
+              }
+            }
+          }
+        } catch (err) {
+          console.error('Error calculating remaining days:', err);
+        }
+      };
+      
+      calculateRemainingDays();
+    }
+  }, [isEnrolled, course]);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -485,7 +528,12 @@ const CourseDetail = () => {
                       <span className="cd-detail-icon">⏳</span>
                       <div>
                         <p className="cd-detail-label">อายุการเข้าถึง</p>
-                        <p className="cd-detail-value">{course.online_expiry.replace('days', 'วัน').replace('months', 'เดือน')}</p>
+                        <p className="cd-detail-value">
+                          {isEnrolled && remainingDays !== null
+                            ? remainingDays > 0 ? `ใช้งานได้อีก ${remainingDays} วัน` : 'หมดอายุแล้ว'
+                            : course.online_expiry.replace('days', 'วัน').replace('months', 'เดือน')
+                          }
+                        </p>
                       </div>
                     </div>
                   )}
