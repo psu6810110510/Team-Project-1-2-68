@@ -10,6 +10,7 @@ import { paymentAPI, type PaymentRecord } from '../api/paymentAPI';
 import { courseAPI, type Course as APICourse } from '../api/courseAPI';
 import { examAPI } from '../api/examAPI';
 import MyBookings from './MyBookings';
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 
 // ✅ ดึงค่า URL จากไฟล์ .env
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -64,9 +65,12 @@ export default function StudentProfile() {
   const [examStartTime, setExamStartTime] = useState<Date | null>(null);
   const [submittingExam, setSubmittingExam] = useState(false);
 
+  // --- 3. Past Exam Results & Analytics ---
+  const [pastExamResults, setPastExamResults] = useState<any[]>([]);
+  const [weaknessAnalytics, setWeaknessAnalytics] = useState<Array<{ subject: string, A: number, fullMark: number }>>([]);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(true);
 
-
-  // --- 3. ดึงข้อมูลผู้ใช้ + คอร์สที่ซื้อแล้ว + คอร์สที่ถูกใจ ---
+  // --- 4. ดึงข้อมูลผู้ใช้ + คอร์สที่ซื้อแล้ว + คอร์สที่ถูกใจ ---
   useEffect(() => {
     const fetchAll = async () => {
       const storedUser = localStorage.getItem('user');
@@ -95,8 +99,50 @@ export default function StudentProfile() {
           setRealPurchases(allPayments);
 
           // กรองเฉพาะที่ยืนยันแล้ว แล้วดึงรายละเอียดคอร์ส
-          const confirmedPayments = allPayments.filter(p => p.status === 'CONFIRMED');
+          const confirmedPayments = allPayments.filter(p => p.status === 'CONFIRMED' || (p.status as string) === 'PAID');
           const courseIds = Array.from(new Set(confirmedPayments.flatMap(p => p.course_ids)));
+
+          // โหลดประวัติผลสอบเพื่อนำมาทำ Analytics Weakness
+          try {
+            setLoadingAnalytics(true);
+            const resultsRes = await examAPI.getStudentResults(userObj.id);
+            const rawResults = resultsRes.data.data || [];
+            if (rawResults.length > 0) {
+              setPastExamResults(rawResults);
+              
+              // ประมวลผลจุดอ่อน
+              const weaknessCounts: Record<string, number> = {};
+              rawResults.forEach((res: any) => {
+                const logs = res.weak_points_log || [];
+                logs.forEach((lessonId: string) => {
+                  weaknessCounts[lessonId] = (weaknessCounts[lessonId] || 0) + 1;
+                });
+              });
+
+              // แปลง lessonId เป็น lesson_name
+              const analyticsPromises = Object.entries(weaknessCounts).map(async ([lessonId, count]) => {
+                try {
+                  const lessonRes = await courseAPI.getLessonById(lessonId);
+                  return {
+                    subject: lessonRes.data.topic_name || lessonId,
+                    A: count,
+                    fullMark: Math.max(...Object.values(weaknessCounts)) + 2 // สเกลให้กราฟดูสวย
+                  };
+                } catch {
+                  return { subject: lessonId, A: count, fullMark: 10 };
+                }
+              });
+
+              const resolvedAnalytics = await Promise.all(analyticsPromises);
+              // เรียงจากผิดเยอะสุดไปน้อยสุด 
+              resolvedAnalytics.sort((a, b) => b.A - a.A);
+              setWeaknessAnalytics(resolvedAnalytics.slice(0, 6)); // เอาแค่ 6 อันดับแรกให้พอดีขอบกราฟ Radar
+            }
+          } catch (err) {
+            console.error('Error fetching past exam results:', err);
+          } finally {
+            setLoadingAnalytics(false);
+          }
 
           const courseDetails = await Promise.all(
             courseIds.map(id => courseAPI.getCourseById(id).then(r => r.data).catch(() => null))
@@ -830,44 +876,120 @@ export default function StudentProfile() {
                     <p style={{ fontSize: '0.85rem' }}>ข้อสอบจะปรากฏที่นี่เมื่ออาจารย์เพิ่มข้อสอบในคอร์สที่คุณลงทะเบียน</p>
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginTop: '1rem' }}>
-                    {courseExams.map((group, gi) => (
-                      <div key={gi}>
-                        <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#0f172a', marginBottom: '0.8rem', paddingBottom: '0.5rem', borderBottom: '2px solid #e2e8f0' }}>📚 {group.courseTitle}</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                          {group.exams.map((exam) => (
-                            <div key={exam.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1rem 1.2rem', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', flexWrap: 'wrap', gap: '12px' }}>
-                              <div>
-                                <p style={{ fontWeight: '600', color: '#0f172a', marginBottom: '4px' }}>{exam.title}</p>
-                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                  <span style={{ background: '#dbeafe', color: '#1d4ed8', padding: '2px 10px', borderRadius: '20px', fontSize: '0.78rem', fontWeight: '600' }}>{exam.type}</span>
-                                  <span style={{ background: '#f1f5f9', color: '#475569', padding: '2px 10px', borderRadius: '20px', fontSize: '0.78rem' }}>คะแนนเต็ม {exam.total_score}</span>
+                  <>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginTop: '1rem' }}>
+                      {courseExams.map((group, gi) => (
+                        <div key={gi}>
+                          <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#0f172a', marginBottom: '0.8rem', paddingBottom: '0.5rem', borderBottom: '2px solid #e2e8f0' }}>📚 {group.courseTitle}</h3>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                            {group.exams.map((exam) => (
+                              <div key={exam.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1rem 1.2rem', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', flexWrap: 'wrap', gap: '12px' }}>
+                                <div>
+                                  <p style={{ fontWeight: '600', color: '#0f172a', marginBottom: '4px' }}>{exam.title}</p>
+                                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                    <span style={{ background: '#dbeafe', color: '#1d4ed8', padding: '2px 10px', borderRadius: '20px', fontSize: '0.78rem', fontWeight: '600' }}>{exam.type}</span>
+                                    <span style={{ background: '#f1f5f9', color: '#475569', padding: '2px 10px', borderRadius: '20px', fontSize: '0.78rem' }}>คะแนนเต็ม {exam.total_score}</span>
+                                  </div>
                                 </div>
+                                <button
+                                  onClick={async () => {
+                                    setLoadingExams(true);
+                                    try {
+                                      const res = await examAPI.getExamForStudent(exam.id);
+                                      setActiveExam(res.data);
+                                      setExamAnswers({});
+                                      setExamResult(null);
+                                      setExamStartTime(new Date());
+                                    } catch (err) {
+                                      console.error(err);
+                                      alert('ไม่สามารถโหลดข้อสอบได้');
+                                    } finally {
+                                      setLoadingExams(false);
+                                    }
+                                  }}
+                                  style={{ padding: '8px 20px', background: '#0A1C39', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '500', fontSize: '0.9rem', whiteSpace: 'nowrap' }}
+                                >{loadingExams ? '...' : '🖊️ เข้าทำข้อสอบ'}</button>
                               </div>
-                              <button
-                                onClick={async () => {
-                                  setLoadingExams(true);
-                                  try {
-                                    const res = await examAPI.getExamForStudent(exam.id);
-                                    setActiveExam(res.data);
-                                    setExamAnswers({});
-                                    setExamResult(null);
-                                    setExamStartTime(new Date());
-                                  } catch (err) {
-                                    console.error(err);
-                                    alert('ไม่สามารถโหลดข้อสอบได้');
-                                  } finally {
-                                    setLoadingExams(false);
-                                  }
-                                }}
-                                style={{ padding: '8px 20px', background: '#0A1C39', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '500', fontSize: '0.9rem', whiteSpace: 'nowrap' }}
-                              >{loadingExams ? '...' : '🖊️ เข้าทำข้อสอบ'}</button>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
+                      ))}
+                    </div>
+
+                    {/* การวิเคราะห์จุดอ่อน */}
+                    <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '2px solid #e2e8f0' }}>
+                      <div className="section-header" style={{ marginBottom: '1.5rem' }}>
+                        <span className="section-title-text">📊 วิเคราะห์จุดอ่อนที่ต้องทบทวนพิเศษ</span>
                       </div>
-                    ))}
-                  </div>
+                      
+                      {loadingAnalytics ? (
+                        <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>กำลังวิเคราะห์ข้อมูล...</div>
+                      ) : pastExamResults.length === 0 ? (
+                        <div style={{ background: '#f8fafc', padding: '2rem', borderRadius: '12px', textAlign: 'center', color: '#64748b' }}>
+                          ยังไม่มีประวัติการทำข้อสอบเพื่อนำมาวิเคราะห์
+                        </div>
+                      ) : weaknessAnalytics.length === 0 ? (
+                        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '2rem', borderRadius: '12px', textAlign: 'center', color: '#16a34a', fontWeight: 'bold' }}>
+                          🎉 ยอดเยี่ยม! จากประวัติการสอบที่ผ่านมา คุณยังไม่มีจุดอ่อนเกณฑ์หนักที่ระบบตรวจพบ
+                        </div>
+                      ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) minmax(300px, 1fr)', gap: '20px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '2rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' }}>
+                          
+                          {/* 1. Radar Chart ฝั่งซ้าย */}
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            <h4 style={{ fontSize: '1.05rem', fontWeight: 'bold', color: '#0f172a', marginBottom: '10px' }}>การกระจายของจุดอ่อน</h4>
+                            <div style={{ width: '100%', height: '300px' }}>
+                              <ResponsiveContainer width="100%" height="100%">
+                                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={weaknessAnalytics}>
+                                  <PolarGrid />
+                                  <PolarAngleAxis dataKey="subject" tick={{ fill: '#475569', fontSize: 13 }} />
+                                  <PolarRadiusAxis  angle={30} domain={[0, 'dataMax']} tick={false} />
+                                  <Radar name="จำนวนครั้งที่ผิด" dataKey="A" stroke="#ef4444" fill="#fca5a5" fillOpacity={0.6} />
+                                  <RechartsTooltip />
+                                </RadarChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </div>
+
+                          {/* 2. List การจัดอันดับฝั่งขวา */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                            <h4 style={{ fontSize: '1.05rem', fontWeight: 'bold', color: '#0f172a', marginBottom: '5px' }}>เรื่องที่มักจะตอบผิดบ่อย</h4>
+                            
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                              {weaknessAnalytics.map((w, index) => (
+                                <div key={index} style={{ 
+                                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                  background: index < 2 ? '#fef2f2' : '#f8fafc',
+                                  border: `1px solid ${index < 2 ? '#fecaca' : '#e2e8f0'}`,
+                                  padding: '12px 16px', borderRadius: '10px'
+                                }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <div style={{ 
+                                      width: '28px', height: '28px', borderRadius: '50%', 
+                                      background: index === 0 ? '#ef4444' : index === 1 ? '#f87171' : '#cbd5e1',
+                                      color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                      fontWeight: 'bold', fontSize: '0.9rem'
+                                    }}>
+                                      {index + 1}
+                                    </div>
+                                    <span style={{ fontWeight: '600', color: index < 2 ? '#991b1b' : '#334155' }}>
+                                      {w.subject}
+                                    </span>
+                                  </div>
+                                  <span style={{ 
+                                    background: 'white', padding: '4px 10px', borderRadius: '20px', 
+                                    fontSize: '0.85rem', fontWeight: 'bold', color: '#475569', border: '1px solid #e2e8f0'
+                                  }}>
+                                    ผิดไป {w.A} ครั้ง
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )}
               </>
             )}
