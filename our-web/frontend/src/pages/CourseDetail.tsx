@@ -584,7 +584,7 @@ const CourseDetail = () => {
                   onClick={handleWishlist}
                   title={isWishlisted ? 'นำออกจากสิ่งที่ถูกใจ' : 'บันทึกสิ่งที่ถูกใจ'}
                 >
-                  <Heart size={20} fill={isWishlisted ? '#ef4444' : 'none'} color={isWishlisted ? '#ef4444' : '#475569'} />
+                  <Heart size={20} stroke={isWishlisted ? '#ef4444' : '#475569'} fill={isWishlisted ? '#ef4444' : 'none'} strokeWidth={2} />
                 </button>
               )}
             </div>
