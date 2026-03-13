@@ -589,26 +589,37 @@ const CourseDetail = () => {
               )}
             </div>
 
-            {!isLoggedIn ? (
+            {checkingAccess ? (
+              <div style={{ textAlign: 'center', padding: '10px', color: '#64748b' }}>กำลังตรวจสอบสิทธิ์...</div>
+            ) : !isLoggedIn ? (
               <button className="cd-login-btn" onClick={() => navigate('/login')}>
                 เข้าสู่ระบบเพื่อลงทะเบียน
               </button>
             ) : (
-              <div className="cd-action-buttons">
-                <button
-                  className={`cd-cart-btn ${inCart ? 'in-cart' : ''}`}
-                  onClick={handleAddToCart}
-                  disabled={inCart}
-                >
-                  {inCart ? '✓ อยู่ในตะกร้าแล้ว' : '🛒 เพิ่มเข้าตะกร้า'}
-                </button>
-
-                <button
-                  className="cd-booking-btn"
-                  onClick={() => setShowBookingForm(true)}
-                >
-                  📅 จองการเรียน
-                </button>
+              <div className="cd-action-buttons" style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+                {!isEnrolled ? (
+                  <button
+                    className={`cd-cart-btn ${inCart ? 'in-cart' : ''}`}
+                    onClick={handleAddToCart}
+                    disabled={inCart}
+                    style={{ width: '100%' }}
+                  >
+                    {inCart ? '✓ อยู่ในตะกร้าแล้ว' : '🛒 สมัครเรียน'}
+                  </button>
+                ) : (
+                  <>
+                    <div className="cd-enrolled-badge" style={{ textAlign: 'center', padding: '10px', background: '#ecfdf5', color: '#059669', borderRadius: '8px', fontWeight: 'bold' }}>
+                      ✨ คุณสมัครคอร์สนี้แล้ว
+                    </div>
+                    <button
+                      className="cd-booking-btn"
+                      onClick={() => setShowBookingForm(true)}
+                      style={{ width: '100%' }}
+                    >
+                      📅 จองการเรียนเพิ่มเติม
+                    </button>
+                  </>
+                )}
               </div>
             )}
 
