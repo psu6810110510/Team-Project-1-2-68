@@ -2,6 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ExamService } from './modules/exams/exam.service';
 import { Course } from './entities/course.entity';
+import { ExamType } from './entities/exam.entity';
+import { QuestionType } from './entities/question.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -27,7 +29,7 @@ async function bootstrap() {
           course_id: courseId,
           title: 'แบบทดสอบตัวอย่าง: ความรู้พื้นฐานการเขียนโปรแกรม',
           description: 'แบบทดสอบนี้ใช้สำหรับทดสอบระบบ มีคำถามหลากหลายรูปแบบ',
-          type: 'PRETEST', // Explicitly use an allowed enum value
+          type: ExamType.PRETEST, // Explicitly use an allowed enum value
           total_score: 20
       });
       console.log('Created Exam:', exam.id);
@@ -36,7 +38,7 @@ async function bootstrap() {
       const q1 = await examService.createQuestion({
           exam_id: exam.id,
           question_text: 'ข้อใดคือตัวแปรที่เก็บค่าตัวเลขทศนิยมในภาษา C?',
-          type: 'MULTIPLE_CHOICE',
+          type: QuestionType.MULTIPLE_CHOICE,
           score_points: 5,
           sequence_order: 1
       });
@@ -51,7 +53,7 @@ async function bootstrap() {
       const q2 = await examService.createQuestion({
           exam_id: exam.id,
           question_text: 'HTML ย่อมาจาก HyperText Markup Language ใช่หรือไม่?',
-          type: 'TRUE_FALSE',
+          type: QuestionType.TRUE_FALSE,
           score_points: 5,
           sequence_order: 2
       });
@@ -64,7 +66,7 @@ async function bootstrap() {
       const q3 = await examService.createQuestion({
           exam_id: exam.id,
           question_text: 'เลขฐานสองของค่า 10 คืออะไร?',
-          type: 'SHORT_ANSWER',
+          type: QuestionType.SHORT_ANSWER,
           score_points: 10,
           sequence_order: 3
       });
