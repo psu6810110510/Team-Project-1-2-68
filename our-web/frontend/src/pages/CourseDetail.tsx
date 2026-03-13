@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { PlayCircle, FileText, Download, ChevronDown, ChevronUp } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import BookingForm from '../components/BookingForm';
-import { PlayCircle, FileText, Download, ChevronDown, ChevronUp } from 'lucide-react';
 import { courseAPI, type Course, type Lesson } from '../api/courseAPI';
 import paymentAPI from '../api/paymentAPI';
 import bookingAPI, { type Schedule } from '../api/bookingAPI';
@@ -585,14 +585,15 @@ const CourseDetail = () => {
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
+                    width="24"
+                    height="24"
                     viewBox="0 0 24 24"
                     fill={isWishlisted ? '#ef4444' : 'none'}
-                    stroke={isWishlisted ? '#ef4444' : '#475569'}
+                    stroke={isWishlisted ? '#ef4444' : '#64748b'}
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
+                    style={{ transition: 'all 0.2s ease',  flexShrink: 0 }}
                   >
                     <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
                   </svg>
