@@ -6,7 +6,6 @@ import { courseAPI, CourseLevel, CourseStatus, type Course } from '../api/course
 import courseLeftImage from '../assets/courseleftimage.png';
 import courseRightImage from '../assets/courserightimage.png';
 import '../styles/Courses.css';
-import { Heart } from 'lucide-react';
 
 const Courses = () => {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -345,12 +344,20 @@ const Courses = () => {
                       onClick={(e) => toggleLike(course.id, e)}
                       aria-label={likedCourses.has(course.id) ? 'Unlike course' : 'Like course'}
                     >
-                      <Heart
-                        size={20}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
                         fill={likedCourses.has(course.id) ? '#ef4444' : 'none'}
                         stroke={likedCourses.has(course.id) ? '#ef4444' : '#64748b'}
-                        strokeWidth={2}
-                      />
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        style={{ transition: 'all 0.2s ease', flexShrink: 0 }}
+                      >
+                        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                      </svg>
                     </button>
                   </div>
                   <div className="course-info">
