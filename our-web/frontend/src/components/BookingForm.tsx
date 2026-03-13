@@ -19,10 +19,11 @@ const BookingForm = ({
 }: BookingFormProps) => {
   const [learningMode, setLearningMode] = useState<LearningMode | null>(null);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
   // mapping schedule id -> stats
   const [statsMap, setStatsMap] = useState<Record<string, ScheduleStats>>({});
-  const [scheduleStats, setScheduleStats] = useState<ScheduleStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
@@ -47,6 +48,14 @@ const BookingForm = ({
           map[s.schedule_id] = s;
         });
         setStatsMap(map);
+
+        // หาเดือนเริ่มของคลาสแรกสุด (ถ้ามี)
+        if (list.length > 0) {
+          const firstDate = new Date(list[0].start_time);
+          if (!isNaN(firstDate.getTime())) {
+            setCurrentMonth(new Date(firstDate.getFullYear(), firstDate.getMonth(), 1));
+          }
+        }
       } catch (err: any) {
         setError('ไม่สามารถโหลดเวลาเรียนได้');
         console.error(err);
@@ -64,7 +73,6 @@ const BookingForm = ({
       if (!selectedSchedule) return;
       try {
         const statsResponse = await bookingAPI.getScheduleStats(selectedSchedule.id);
-        setScheduleStats(statsResponse.data);
         // store in map as well
         setStatsMap((prev) => ({ ...prev, [selectedSchedule.id]: statsResponse.data }));
       } catch (err: any) {
@@ -78,6 +86,7 @@ const BookingForm = ({
   const handleLearningModeChange = (mode: LearningMode) => {
     setLearningMode(mode);
     setSelectedSchedule(null);
+    setSelectedDate(null);
     setError(null);
   };
 
@@ -161,6 +170,108 @@ const BookingForm = ({
     });
   };
 
+  // --- Calendar Helpers ---
+  const getDaysInMonth = (year: number, month: number) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (year: number, month: number) => {
+    return new Date(year, month, 1).getDay();
+  };
+
+  const prevMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+  };
+
+  const nextMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+  };
+
+  // แมปวันที่เข้ากับลิสต์ของคลาส
+  const getSchedulesForDate = (day: number) => {
+    return schedules.filter(sch => {
+      const schDate = new Date(sch.start_time);
+      return schDate.getDate() === day &&
+             schDate.getMonth() === currentMonth.getMonth() &&
+             schDate.getFullYear() === currentMonth.getFullYear();
+    });
+  };
+
+  const renderCalendar = () => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const daysInMonth = getDaysInMonth(year, month);
+    const firstDay = getFirstDayOfMonth(year, month); // 0 (Sun) - 6 (Sat)
+    
+    const days = [];
+    const weekDays = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+
+    // หัวตาราง (จันทร์ - อาทิตย์)
+    const headerCells = weekDays.map((day, idx) => (
+      <div key={`header-${idx}`} className="calendar-header-cell">
+        {day}
+      </div>
+    ));
+
+    // ช่องว่างก่อนเริ่มวันที่ 1
+    for (let i = 0; i < firstDay; i++) {
+      days.push(<div key={`empty-${i}`} className="calendar-cell empty"></div>);
+    }
+
+    // วันที่ในเดือนนั้นๆ
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateSchedules = getSchedulesForDate(d);
+      const hasClasses = dateSchedules.length > 0;
+      
+      const isSelected = selectedDate?.getDate() === d &&
+                         selectedDate?.getMonth() === month &&
+                         selectedDate?.getFullYear() === year;
+
+      days.push(
+        <div 
+          key={d} 
+          className={`calendar-cell ${hasClasses ? 'has-class' : ''} ${isSelected ? 'selected' : ''}`}
+          onClick={() => {
+            if (hasClasses) {
+              const newSelectedDate = new Date(year, month, d);
+              setSelectedDate(newSelectedDate);
+              // reset selected schedule when viewing new date
+              setSelectedSchedule(null);
+            }
+          }}
+        >
+          <span className="day-number">{d}</span>
+          {hasClasses && <span className="class-indicator">•</span>}
+        </div>
+      );
+    }
+
+    return (
+      <div className="calendar-container">
+        <div className="calendar-nav">
+          <button onClick={prevMonth} className="cal-nav-btn">{"<"}</button>
+          <span className="cal-month-title">
+            {currentMonth.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}
+          </span>
+          <button onClick={nextMonth} className="cal-nav-btn">{">"}</button>
+        </div>
+        <div className="calendar-grid">
+          {headerCells}
+          {days}
+        </div>
+      </div>
+    );
+  };
+
+  const filteredSchedules = selectedDate 
+    ? schedules.filter(sch => {
+        const schDate = new Date(sch.start_time);
+        return schDate.getDate() === selectedDate.getDate() &&
+               schDate.getMonth() === selectedDate.getMonth() &&
+               schDate.getFullYear() === selectedDate.getFullYear();
+      })
+    : [];
+
   return (
     <div className="booking-form">
       <div className="booking-form-header">
@@ -215,11 +326,16 @@ const BookingForm = ({
             <div className="no-schedules">ไม่มีเวลาเรียนที่สามารถจองได้</div>
           ) : (
             <>
-              <div style={{ marginBottom: '12px', fontSize: '0.9rem', color: '#64748b', textAlign: 'center' }}>
-                ⏱️ เลือกเวลาเรียนที่มีที่นั่งว่าง
-              </div>
-              <div className="schedules-list">
-                {schedules.map((schedule) => {
+              {/* ส่วนแสดงปฏิทิน */}
+              {renderCalendar()}
+
+              {selectedDate && (
+                <>
+                  <div style={{ marginTop: '20px', marginBottom: '12px', fontSize: '0.95rem', color: '#1e293b', fontWeight: 'bold' }}>
+                    ตารางเรียนวันที่ {formatDate(selectedDate.toISOString())}
+                  </div>
+                  <div className="schedules-list">
+                    {filteredSchedules.map((schedule) => {
                   // use per-schedule stats if available
                   const statsForThis = statsMap[schedule.id];
                   const bookedSeats = statsForThis ? statsForThis.onsite_count : 0;
@@ -295,6 +411,8 @@ const BookingForm = ({
                   );
                 })}
               </div>
+              </>
+            )}
             </>
           )}
         </div>

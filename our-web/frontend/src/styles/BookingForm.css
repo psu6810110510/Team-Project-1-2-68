@@ -269,3 +269,116 @@
     padding: 12px;
   }
 }
+
+/* --- Calendar Styles --- */
+.calendar-container {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.calendar-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.cal-nav-btn {
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #475569;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.cal-nav-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.cal-month-title {
+  font-weight: 600;
+  color: #0f172a;
+  font-size: 1.05rem;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  text-align: center;
+}
+
+.calendar-header-cell {
+  font-weight: 600;
+  color: #64748b;
+  font-size: 0.85rem;
+  padding-bottom: 8px;
+}
+
+.calendar-cell {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #334155;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  border: 1px solid transparent;
+}
+
+.calendar-cell.empty {
+  background: transparent;
+  cursor: default;
+}
+
+.calendar-cell:not(.empty):hover {
+  background: #e2e8f0;
+}
+
+.calendar-cell.has-class {
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 500;
+  border-color: #bfdbfe;
+}
+
+.calendar-cell.has-class:hover {
+  background: #dbeafe;
+}
+
+.calendar-cell.selected {
+  background: #2563eb;
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+  transform: scale(1.05);
+}
+
+.class-indicator {
+  position: absolute;
+  bottom: 2px;
+  color: #ef4444;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.calendar-cell.selected .class-indicator {
+  color: #fca5a5;
+}
