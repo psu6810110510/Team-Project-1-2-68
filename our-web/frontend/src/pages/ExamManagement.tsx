@@ -12,7 +12,6 @@ import '../styles/LoginTheme.css';
 import '../styles/Dashboard.css';
 import logoImage from '../assets/logo.png';
 import fullLogo from '../assets/name.png';
-import Footer from '../components/Footer';
 
 export default function ExamManagement() {
   const navigate = useNavigate();
@@ -47,7 +46,7 @@ export default function ExamManagement() {
   const [examForm, setExamForm] = useState({
     title: '',
     description: '',
-    type: 'QUIZ' as 'PRETEST' | 'POSTTEST' | 'MIDTERM' | 'FINAL' | 'QUIZ',
+    type: 'QUIZ' as 'PRETEST' | 'POSTTEST' | 'MIDTERM' | 'FINAL' | 'QUIZ', // ตั้งเป็น QUIZ เสมอ
     total_score: 100
   });
 
@@ -187,7 +186,7 @@ export default function ExamManagement() {
       setExamForm({
         title: exam.title,
         description: exam.description || '',
-        type: exam.type,
+        type: 'QUIZ', // ไม่ใช้ประเภทข้อสอบแล้ว ตั้งเป็น QUIZ เสมอ
         total_score: exam.total_score
       });
     } else {
@@ -197,7 +196,7 @@ export default function ExamManagement() {
       setExamForm({
         title: '',
         description: '',
-        type: 'QUIZ',
+        type: 'QUIZ', // ไม่ใช้ประเภทข้อสอบแล้ว ตั้งเป็น QUIZ เสมอ
         total_score: 100
       });
     }
@@ -260,7 +259,7 @@ export default function ExamManagement() {
     }
   };
 
-  const handleCreateChoice = async (questionId: string) => {
+  const handleCreateChoice = async (questionId: string, shouldResetForm: boolean = true) => {
     if (!newChoice.choice_text.trim()) {
       alert('กรุณากรอกข้อความตัวเลือก');
       return;
@@ -269,19 +268,23 @@ export default function ExamManagement() {
     try {
       await examAPI.createChoice(questionId, newChoice);
       
-      // Reset form
-      setNewChoice({
-        choice_label: String.fromCharCode(newChoice.choice_label.charCodeAt(0) + 1),
-        choice_text: '',
-        is_correct: false
-      });
+      // Reset form only for MULTIPLE_CHOICE
+      if (shouldResetForm) {
+        setNewChoice({
+          choice_label: String.fromCharCode(newChoice.choice_label.charCodeAt(0) + 1),
+          choice_text: '',
+          is_correct: false
+        });
+        alert('✅ เพิ่มตัวเลือกเรียบร้อยแล้ว!');
+      }
       
       // Reload choices for this question
-      loadChoices(questionId);
-      alert('✅ เพิ่มตัวเลือกเรียบร้อยแล้ว!');
+      await loadChoices(questionId);
     } catch (error) {
       console.error('Error creating choice:', error);
-      alert('เกิดข้อผิดพลาดในการสร้างตัวเลือก');
+      if (shouldResetForm) {
+        alert('เกิดข้อผิดพลาดในการสร้างตัวเลือก');
+      }
     }
   };
 
@@ -329,41 +332,6 @@ export default function ExamManagement() {
       console.error('Error loading analytics:', error);
       alert('เกิดข้อผิดพลาดในการโหลดสถิติ');
     }
-  };
-
-  const getExamTypeLabel = (type: string) => {
-    const types: Record<string, string> = {
-      PRETEST: 'Pre-Test',
-      POSTTEST: 'Post-Test',
-      MIDTERM: 'สอบกลางภาค',
-      FINAL: 'สอบปลายภาค',
-      QUIZ: 'แบบทดสอบ'
-    };
-    return types[type] || type;
-  };
-
-  const getExamTypeBadge = (type: string) => {
-    const colors: Record<string, { bg: string; text: string }> = {
-      PRETEST: { bg: '#eff6ff', text: '#3b82f6' },
-      POSTTEST: { bg: '#f0fdf4', text: '#22c55e' },
-      MIDTERM: { bg: '#fff7ed', text: '#f97316' },
-      FINAL: { bg: '#fef2f2', text: '#ef4444' },
-      QUIZ: { bg: '#fefce8', text: '#eab308' }
-    };
-    const color = colors[type] || { bg: '#f1f5f9', text: '#64748b' };
-
-    return (
-      <span style={{
-        background: color.bg,
-        color: color.text,
-        padding: '4px 12px',
-        borderRadius: '20px',
-        fontSize: '0.8rem',
-        fontWeight: '600'
-      }}>
-        {getExamTypeLabel(type)}
-      </span>
-    );
   };
 
   return (
@@ -474,7 +442,6 @@ export default function ExamManagement() {
                         <h3 style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#0f172a', margin: 0 }}>
                           {exam.title}
                         </h3>
-                        {getExamTypeBadge(exam.type)}
                       </div>
                       {exam.description && (
                         <p style={{ color: '#64748b', fontSize: '0.95rem', margin: '0.5rem 0' }}>
@@ -655,30 +622,6 @@ export default function ExamManagement() {
                     resize: 'vertical'
                   }}
                 />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#334155' }}>
-                  ประเภทข้อสอบ *
-                </label>
-                <select
-                  value={examForm.type}
-                  onChange={(e) => setExamForm({ ...examForm, type: e.target.value as any })}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: '6px',
-                    fontSize: '0.95rem',
-                    outline: 'none'
-                  }}
-                >
-                  <option value="QUIZ">แบบทดสอบ (Quiz)</option>
-                  <option value="PRETEST">Pre-Test</option>
-                  <option value="POSTTEST">Post-Test</option>
-                  <option value="MIDTERM">สอบกลางภาค</option>
-                  <option value="FINAL">สอบปลายภาค</option>
-                </select>
               </div>
 
               <div>
@@ -891,6 +834,7 @@ export default function ExamManagement() {
                       choices={choices}
                       newChoice={newChoice}
                       setNewChoice={setNewChoice}
+                      examAPI={examAPI}
                     />
                   ))}
                 </div>
@@ -997,6 +941,7 @@ interface QuestionItemProps {
   choices: Choice[];
   newChoice: { choice_label: string; choice_text: string; is_correct: boolean };
   setNewChoice: React.Dispatch<React.SetStateAction<{ choice_label: string; choice_text: string; is_correct: boolean }>>;
+  examAPI: typeof examAPI;
 }
 
 function QuestionItem({
@@ -1008,7 +953,8 @@ function QuestionItem({
   onDeleteChoice,
   choices,
   newChoice,
-  setNewChoice
+  setNewChoice,
+  examAPI
 }: QuestionItemProps) {
   const [showChoices, setShowChoices] = useState(false);
   const [loadedQuestionId, setLoadedQuestionId] = useState<string | null>(null);
@@ -1019,6 +965,36 @@ function QuestionItem({
       setLoadedQuestionId(question.id);
     }
     setShowChoices(!showChoices);
+  };
+
+  const handleSetTrueFalseAnswer = async (isTrue: boolean) => {
+    try {
+      // ลบ choices เก่าทั้งหมดก่อน
+      for (const choice of displayedChoices) {
+        await onDeleteChoice(choice.id, question.id);
+      }
+      
+      // สร้าง choice ใหม่สำหรับ "ถูก"
+      await examAPI.createChoice(question.id, {
+        choice_label: 'T',
+        choice_text: 'ถูก',
+        is_correct: isTrue
+      });
+      
+      // สร้าง choice สำหรับ "ผิด"
+      await examAPI.createChoice(question.id, {
+        choice_label: 'F',
+        choice_text: 'ผิด',
+        is_correct: !isTrue
+      });
+      
+      // โหลด choices ใหม่
+      await onLoadChoices(question.id);
+      alert('✅ ตั้งค่าคำตอบเรียบร้อยแล้ว!');
+    } catch (error) {
+      console.error('Error setting TRUE/FALSE answer:', error);
+      alert('เกิดข้อผิดพลาดในการตั้งค่าคำตอบ');
+    }
   };
 
   const displayedChoices = loadedQuestionId === question.id ? choices : [];
@@ -1065,7 +1041,7 @@ function QuestionItem({
           <p style={{ color: '#0f172a', fontSize: '0.95rem', margin: '8px 0' }}>
             {question.question_text}
           </p>
-          {question.type === 'MULTIPLE_CHOICE' && (
+          {(question.type === 'MULTIPLE_CHOICE' || question.type === 'TRUE_FALSE') && (
             <button
               onClick={toggleChoices}
               style={{
@@ -1100,7 +1076,7 @@ function QuestionItem({
       </div>
 
       {/* Choices Section */}
-      {showChoices && question.type === 'MULTIPLE_CHOICE' && (
+      {showChoices && (question.type === 'MULTIPLE_CHOICE' || question.type === 'TRUE_FALSE') && (
         <div style={{
           marginTop: '15px',
           paddingTop: '15px',
@@ -1110,61 +1086,108 @@ function QuestionItem({
             ตัวเลือก:
           </h4>
           
-          {/* Add Choice Form */}
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-            <input
-              type="text"
-              value={newChoice.choice_label}
-              onChange={(e) => setNewChoice({ ...newChoice, choice_label: e.target.value })}
-              placeholder="A"
-              maxLength={1}
-              style={{
-                width: '50px',
-                padding: '8px',
-                border: '1px solid #cbd5e1',
-                borderRadius: '4px',
-                fontSize: '0.9rem',
-                textAlign: 'center'
-              }}
-            />
-            <input
-              type="text"
-              value={newChoice.choice_text}
-              onChange={(e) => setNewChoice({ ...newChoice, choice_text: e.target.value })}
-              placeholder="ข้อความตัวเลือก..."
-              style={{
-                flex: 1,
-                padding: '8px',
-                border: '1px solid #cbd5e1',
-                borderRadius: '4px',
-                fontSize: '0.9rem'
-              }}
-            />
-            <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+          {/* Add Choice Form for MULTIPLE_CHOICE */}
+          {question.type === 'MULTIPLE_CHOICE' && (
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
               <input
-                type="checkbox"
-                checked={newChoice.is_correct}
-                onChange={(e) => setNewChoice({ ...newChoice, is_correct: e.target.checked })}
-                style={{ width: '16px', height: '16px' }}
+                type="text"
+                value={newChoice.choice_label}
+                onChange={(e) => setNewChoice({ ...newChoice, choice_label: e.target.value })}
+                placeholder="A"
+                maxLength={1}
+                style={{
+                  width: '50px',
+                  padding: '8px',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '4px',
+                  fontSize: '0.9rem',
+                  textAlign: 'center'
+                }}
               />
-              ถูกต้อง
-            </label>
-            <button
-              onClick={() => onCreateChoice(question.id)}
-              style={{
-                background: '#22c55e',
-                color: 'white',
-                border: 'none',
-                padding: '8px 12px',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '0.85rem',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              + เพิ่ม
-            </button>
-          </div>
+              <input
+                type="text"
+                value={newChoice.choice_text}
+                onChange={(e) => setNewChoice({ ...newChoice, choice_text: e.target.value })}
+                placeholder="ข้อความตัวเลือก..."
+                style={{
+                  flex: 1,
+                  padding: '8px',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '4px',
+                  fontSize: '0.9rem'
+                }}
+              />
+              <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+                <input
+                  type="checkbox"
+                  checked={newChoice.is_correct}
+                  onChange={(e) => setNewChoice({ ...newChoice, is_correct: e.target.checked })}
+                  style={{ width: '16px', height: '16px' }}
+                />
+                ถูกต้อง
+              </label>
+              <button
+                onClick={() => onCreateChoice(question.id)}
+                style={{
+                  background: '#22c55e',
+                  color: 'white',
+                  border: 'none',
+                  padding: '8px 12px',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                + เพิ่ม
+              </button>
+            </div>
+          )}
+
+          {/* TRUE_FALSE Selection */}
+          {question.type === 'TRUE_FALSE' && (
+            <div style={{ marginBottom: '12px' }}>
+              <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '8px' }}>
+                เลือกคำตอบที่ถูกต้อง:
+              </p>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={() => handleSetTrueFalseAnswer(true)}
+                  style={{
+                    flex: 1,
+                    background: displayedChoices.find(c => c.choice_label === 'T')?.is_correct ? '#22c55e' : '#f1f5f9',
+                    color: displayedChoices.find(c => c.choice_label === 'T')?.is_correct ? 'white' : '#334155',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: '600',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  ✓ ถูก (True)
+                </button>
+                <button
+                  onClick={() => handleSetTrueFalseAnswer(false)}
+                  style={{
+                    flex: 1,
+                    background: displayedChoices.find(c => c.choice_label === 'F')?.is_correct ? '#ef4444' : '#f1f5f9',
+                    color: displayedChoices.find(c => c.choice_label === 'F')?.is_correct ? 'white' : '#334155',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: '600',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  ✗ ผิด (False)
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Choice List */}
           {displayedChoices.length === 0 ? (
