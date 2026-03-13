@@ -16,6 +16,7 @@ import { courseAPI, CourseStatus, type Course as APICourse } from '../api/course
 import { paymentAPI, type PaymentRecord } from '../api/paymentAPI';
 import bookingAPI, { BookingStatus as BStatus } from '../api/bookingAPI';
 import examAPI, { type Exam } from '../api/examAPI';
+import userAPI, { type DashboardStats } from '../api/userAPI';
 
 // ==========================================
 // Mock Data 
@@ -94,6 +95,10 @@ export default function AdminDashboard() {
   const [loadingExams, setLoadingExams] = useState(false);
   const [isExamCourseModalOpen, setIsExamCourseModalOpen] = useState(false);
 
+  // Dashboard Stats state
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
+  const [loadingStats, setLoadingStats] = useState(false);
+
   // Fetch all courses on mount
   useEffect(() => {
     const fetchAllCourses = async () => {
@@ -121,7 +126,22 @@ export default function AdminDashboard() {
       }
     };
 
+    const fetchDashboardStats = async () => {
+      setLoadingStats(true);
+      try {
+        const res = await userAPI.getDashboardStats();
+        setDashboardStats(res.data);
+      } catch (err) {
+        console.error('Error fetching dashboard stats:', err);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+
     fetchAllCourses();
+    fetchDashboardStats();
+    loadPayments(); // To calculate revenue on dashboard
+    loadBookings(); // To calculate seat quota on dashboard
   }, []);
 
   const refreshCourses = async () => {
@@ -451,64 +471,68 @@ export default function AdminDashboard() {
             {activeMenu === 'home' && (
               <>
                 {/* Stats Cards Row */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-                  {/* Card 1 */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '30px' }}>
+                  {/* Revenue Card */}
                   <div style={cardStyle}>
-                    <ArrowUp size={40} color="#22c55e" style={{ marginRight: '15px' }} />
-                    <div>
-                      <h3 style={{ fontSize: '0.9rem', color: '#64748b', margin: '0 0 5px 0' }}>รายได้รวม (เดือนนี้)</h3>
-                      <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0f172a', margin: '0 0 5px 0' }}>฿452,000</p>
-                      <p style={{ fontSize: '0.8rem', color: '#22c55e', margin: 0, fontWeight: '500' }}>+12% จากเดือนที่แล้ว</p>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '8px', fontWeight: 'bold' }}>รายรับรวม (ตลอดกาล)</p>
+                      <h2 style={{ fontSize: '1.8rem', margin: 0, color: '#0f172a', fontWeight: '800' }}>฿{totalRevenue.toLocaleString('th-TH')}</h2>
+                    </div>
+                    <div style={{ background: '#dcfce7', padding: '12px', borderRadius: '12px' }}>
+                      <ArrowUp size={24} color="#16a34a" />
                     </div>
                   </div>
 
-                  {/* Card 2 */}
+                  {/* Users Card */}
                   <div style={cardStyle}>
-                    <Users size={40} color="#0ea5e9" style={{ marginRight: '15px' }} />
-                    <div>
-                      <h3 style={{ fontSize: '0.9rem', color: '#64748b', margin: '0 0 5px 0' }}>นักเรียนทั้งหมด</h3>
-                      <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0f172a', margin: '0 0 5px 0' }}>1,250 คน</p>
-                      <p style={{ fontSize: '0.8rem', color: '#22c55e', margin: 0, fontWeight: '500' }}>+45 คน ในเดือนนี้</p>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '8px', fontWeight: 'bold' }}>นักเรียนทั้งหมด</p>
+                      <h2 style={{ fontSize: '1.8rem', margin: 0, color: '#0f172a', fontWeight: '800' }}>{totalStudents.toLocaleString('th-TH')} <span style={{ fontSize: '1rem', color: '#64748b' }}>คน</span></h2>
+                    </div>
+                    <div style={{ background: '#e0f2fe', padding: '12px', borderRadius: '12px' }}>
+                      <Users size={24} color="#0284c7" />
                     </div>
                   </div>
 
-                  {/* Card 3 */}
+                  {/* Courses Card */}
                   <div style={cardStyle}>
-                    <MonitorPlay size={40} color="#ef4444" style={{ marginRight: '15px' }} />
-                    <div>
-                      <h3 style={{ fontSize: '0.9rem', color: '#64748b', margin: '0 0 5px 0' }}>คอร์สที่เปิดสอน</h3>
-                      <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0f172a', margin: '0 0 5px 0' }}>15 คอร์ส</p>
-                      <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0 }}>( Online 10 / Onsite 5 )</p>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '8px', fontWeight: 'bold' }}>คอร์สที่เปิดสอน</p>
+                      <h2 style={{ fontSize: '1.8rem', margin: 0, color: '#0f172a', fontWeight: '800' }}>{totalPublishedCourses} <span style={{ fontSize: '1rem', color: '#64748b' }}>คอร์ส</span></h2>
+                      <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '5px' }}>
+                        ( Online {onlineCoursesCount} / Onsite {onsiteCoursesCount} / Hybrid {hybridCoursesCount} )
+                      </p>
+                    </div>
+                    <div style={{ background: '#fee2e2', padding: '12px', borderRadius: '12px' }}>
+                      <MonitorPlay size={24} color="#dc2626" />
                     </div>
                   </div>
 
-                  {/* Card 4 */}
+                  {/* Quota Card */}
                   <div style={cardStyle}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#fbbf24', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '15px' }}>
-                      <User size={24} color="#fff" />
+                    <div style={{ flex: 1 }}>
+                      <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '8px', fontWeight: 'bold' }}>ที่นั่ง Onsite (ว่าง)</p>
+                      <h2 style={{ fontSize: '1.5rem', margin: 0, color: '#ea580c', fontWeight: '800' }}>{availableOnsiteSeats}/{totalOnsiteQuota} <span style={{ fontSize: '1rem', color: '#64748b' }}>ที่นั่ง</span></h2>
                     </div>
-                    <div>
-                      <h3 style={{ fontSize: '0.9rem', color: '#64748b', margin: '0 0 5px 0' }}>ที่นั่ง Onsite (ว่าง)</h3>
-                      <p style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#ef4444', margin: '0 0 5px 0' }}>12/50 ที่นั่ง</p>
+                    <div style={{ background: '#fef3c7', padding: '12px', borderRadius: '12px' }}>
+                      <User size={24} color="#d97706" />
                     </div>
                   </div>
                 </div>
 
-
-                {/* Charts Row */}
                 <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '30px' }}>
 
                   {/* Line Chart */}
                   <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start', padding: '20px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: '20px' }}>
-                      <h3 style={{ fontSize: '1.1rem', color: '#0f172a', margin: 0 }}>ยอดสมัครเรียน</h3>
+                      <h3 style={{ fontSize: '1.1rem', color: '#0f172a', margin: 0 }}>ยอดขายรับรวม (บาท)</h3>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.9rem', color: '#64748b' }}>
-                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#3b82f6' }}></div> นักเรียนใหม่
+                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#3b82f6' }}></div> รายได้
                       </div>
                     </div>
                     <div style={{ width: '100%', height: '220px' }}>
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={enrollmentData}>
+                        <LineChart data={realRevenueData}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                           <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
                           <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
@@ -529,24 +553,21 @@ export default function AdminDashboard() {
                         <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=b6e3f4" alt="avatar" style={{ width: '60px', height: '60px' }} />
                       </div>
                       <div>
-                        <p style={{ fontSize: '1.8rem', fontWeight: 'bold', margin: 0, color: '#0f172a' }}>32 ท่าน</p>
+                        <p style={{ fontSize: '1.8rem', fontWeight: 'bold', margin: 0, color: '#0f172a' }}>{totalTeachersCount} ท่าน</p>
                       </div>
                     </div>
 
                     <div style={{ width: '100%', height: '150px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '10px' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: '#334155' }}>
-                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: COLORS[0] }}></div> Full-time : 20 ท่าน
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: '#334155' }}>
-                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: COLORS[1] }}></div> Part-time : 12 ท่าน
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: COLORS[0] }}></div> อาจารย์ทั้งหมด : {totalTeachersCount} ท่าน
                         </div>
                       </div>
                       <div style={{ width: '100px', height: '100px' }}>
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
-                            <Pie data={instructorData} innerRadius={35} outerRadius={50} paddingAngle={2} dataKey="value" stroke="none">
-                              {instructorData.map((_entry, index) => (
+                            <Pie data={realInstructorData} innerRadius={35} outerRadius={50} paddingAngle={2} dataKey="value" stroke="none">
+                              {realInstructorData.map((_entry, index) => (
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                               ))}
                             </Pie>
@@ -1269,7 +1290,7 @@ export default function AdminDashboard() {
                     <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '8px', fontWeight: 'bold' }}>🏷️ แท็ก</label>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                       {selectedCourse.tags.split(',').map((tag, idx) => (
-                        <span key={idx} style={{ background: '#dbeafe', color: '#1e40af', padding: '6px 12px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '500' }}>{tag.trim()}</span>
+                        <span key={idx} style={{ background: '#dbeafe', color: '#1e40af', padding: '6px 12px', borderRadius: '20px' }}>{tag.trim()}</span>
                       ))}
                     </div>
                   </div>
