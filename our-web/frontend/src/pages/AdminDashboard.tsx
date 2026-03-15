@@ -16,52 +16,12 @@ import { courseAPI, CourseStatus, type Course as APICourse } from '../api/course
 import { paymentAPI, type PaymentRecord } from '../api/paymentAPI';
 import bookingAPI, { BookingStatus as BStatus } from '../api/bookingAPI';
 import examAPI, { type Exam } from '../api/examAPI';
-import userAPI, { type DashboardStats } from '../api/userAPI';
+import userAPI, { type UserRecord, type DashboardStats } from '../api/userAPI';
 
 // ==========================================
-// Mock Data 
+// Constants
 // ==========================================
-const enrollmentData = [
-  { name: 'ก.ย.', students: 0 },
-  { name: 'ต.ค.', students: 50 },
-  { name: 'พ.ย.', students: 10 },
-  { name: 'ธ.ค.', students: 100 },
-  { name: 'ม.ค.', students: 10 },
-  { name: 'ก.พ.', students: 100 },
-];
-
-const instructorData = [
-  { name: 'Full-time', value: 20 },
-  { name: 'Part-time', value: 12 },
-];
 const COLORS = ['#3b82f6', '#cbd5e1'];
-
-const recentOrders = [
-  { id: '#ORD-2026-001', name: 'น.ส.ธัญชนก', course: 'Python101 (Online)', date: '10 ก.พ. 69', amount: '฿2,000', status: 'PAID' },
-  { id: '#ORD-2026-002', name: 'นายสเหมียน', course: 'Python101 (Online)', date: '10 ก.พ. 69', amount: '฿2,000', status: 'PAID' },
-  { id: '#ORD-2026-003', name: 'น.ส.สุวรรณา', course: 'Python101 (Online)', date: '10 ก.พ. 69', amount: '฿2,000', status: 'PENDING' },
-  { id: '#ORD-2026-004', name: 'น.ส.ปทุมพร', course: 'Python101 (Online)', date: '10 ก.พ. 69', amount: '฿2,000', status: 'PAID' },
-  { id: '#ORD-2026-005', name: 'น.ส.ศิรพี', course: 'Python101 (Online)', date: '10 ก.พ. 69', amount: '฿2,000', status: 'PENDING' },
-  { id: '#ORD-2026-006', name: 'นายปิตานุช', course: 'Python101 (Online)', date: '10 ก.พ. 69', amount: '฿2,000', status: 'PAID' },
-  { id: '#ORD-2026-007', name: 'น.ส.ศศิกานต์', course: 'Python101 (Online)', date: '10 ก.พ. 69', amount: '฿2,000', status: 'PENDING' },
-];
-
-const mockTeachers = [
-  { id: 'T001', name: 'อ. สมพงษ์ จันทร', email: 'sompong@b2c.com', status: 'Active', courses: 3 },
-  { id: 'T002', name: 'อ. วนิดา เรืองรอง', email: 'wanida@b2c.com', status: 'Active', courses: 2 },
-  { id: 'T003', name: 'อ. กิตติพงษ์ ใจดี', email: 'kittipong@b2c.com', status: 'Inactive', courses: 0 },
-];
-
-const mockStudents = [
-  { id: 'S001', name: 'น.ส. นภาภรณ์ สมใจ', email: 'napaporn@test.com', coursesEnrolled: 2 },
-  { id: 'S002', name: 'นาย ปฏิภาณ ธรรมดี', email: 'patipan@test.com', coursesEnrolled: 1 },
-  { id: 'S003', name: 'นาย วิทยา เก่งกาจ', email: 'vittaya@test.com', coursesEnrolled: 4 },
-];
-
-const mockExams = [
-  { id: 'EX-001', title: 'แบบทดสอบ Python พื้นฐาน', course: 'Python101', questions: 30, timeLimit: '60 นาที' },
-  { id: 'EX-002', title: 'ข้อสอบกลางภาค Java OOP', course: 'Java OOP', questions: 50, timeLimit: '90 นาที' },
-];
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -69,81 +29,43 @@ export default function AdminDashboard() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   // ==========================================
-  // Course Management State (เชื่อมกับ API)
+  // States
   // ==========================================
+  // Course
   const [adminCourses, setAdminCourses] = useState<APICourse[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Modal State
   const [selectedCourse, setSelectedCourse] = useState<APICourse | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [courseLessons, setCourseLessons] = useState<any[]>([]);
   const [loadingLessons, setLoadingLessons] = useState(false);
 
-  // Payment state
+  // Payment
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
+  const [homePayments, setHomePayments] = useState<PaymentRecord[]>([]);
   const [loadingPayments, setLoadingPayments] = useState(false);
 
-  // Booking state
+  // Users
+  const [teachers, setTeachers] = useState<UserRecord[]>([]);
+  const [students, setStudents] = useState<UserRecord[]>([]);
+
+  // Exams
+  const [exams, setExams] = useState<any[]>([]);
+  const [loadingExams, setLoadingExams] = useState(false);
+  const [isExamCourseModalOpen, setIsExamCourseModalOpen] = useState(false);
+
+  // Bookings
   const [bookings, setBookings] = useState<any[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [selectedBookingDetails, setSelectedBookingDetails] = useState<any>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
 
-  // Exam state
-  const [adminExams, setAdminExams] = useState<any[]>([]);
-  const [loadingExams, setLoadingExams] = useState(false);
-  const [isExamCourseModalOpen, setIsExamCourseModalOpen] = useState(false);
-
-  // Dashboard Stats state
+  // Dashboard Stats
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
 
-  // Fetch all courses on mount
-  useEffect(() => {
-    const fetchAllCourses = async () => {
-      try {
-        // Fetch courses from all statuses for admin
-        const [requested, drafting, pending, published] = await Promise.all([
-          courseAPI.getCoursesByStatus(CourseStatus.REQUEST_CREATE),
-          courseAPI.getCoursesByStatus(CourseStatus.DRAFTING),
-          courseAPI.getCoursesByStatus(CourseStatus.PENDING_REVIEW),
-          courseAPI.getCoursesByStatus(CourseStatus.PUBLISHED),
-        ]);
-
-        const allCourses = [
-          ...requested.data.data,
-          ...drafting.data.data,
-          ...pending.data.data,
-          ...published.data.data,
-        ];
-
-        setAdminCourses(allCourses);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching courses:', error);
-        setLoading(false);
-      }
-    };
-
-    const fetchDashboardStats = async () => {
-      setLoadingStats(true);
-      try {
-        const res = await userAPI.getDashboardStats();
-        setDashboardStats(res.data);
-      } catch (err) {
-        console.error('Error fetching dashboard stats:', err);
-      } finally {
-        setLoadingStats(false);
-      }
-    };
-
-    fetchAllCourses();
-    fetchDashboardStats();
-    loadPayments(); // To calculate revenue on dashboard
-    loadBookings(); // To calculate seat quota on dashboard
-  }, []);
-
+  // ==========================================
+  // Fetch Functions
+  // ==========================================
   const refreshCourses = async () => {
     try {
       const [requested, drafting, pending, published] = await Promise.all([
@@ -159,7 +81,6 @@ export default function AdminDashboard() {
         ...pending.data.data,
         ...published.data.data,
       ];
-
       setAdminCourses(allCourses);
     } catch (error) {
       console.error('Error refreshing courses:', error);
@@ -171,6 +92,7 @@ export default function AdminDashboard() {
     try {
       const res = await paymentAPI.getAllPayments();
       setPayments(res.data.data);
+      setHomePayments(res.data.data || []);
     } catch (error) {
       console.error('Error loading payments:', error);
     } finally {
@@ -194,7 +116,7 @@ export default function AdminDashboard() {
     setLoadingExams(true);
     try {
       const res = await examAPI.getAllExams();
-      setAdminExams(res.data.data);
+      setExams(res.data.data);
     } catch (error) {
       console.error('Error loading exams:', error);
     } finally {
@@ -202,12 +124,52 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchDashboardStats = async () => {
+    setLoadingStats(true);
+    try {
+      const res = await userAPI.getDashboardStats();
+      setDashboardStats(res.data);
+    } catch (err) {
+      console.error('Error fetching dashboard stats:', err);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
+  // Run on mount
+  useEffect(() => {
+    const initData = async () => {
+      setLoading(true);
+      await Promise.all([
+        refreshCourses(),
+        loadPayments(),
+        loadBookings(),
+        fetchDashboardStats()
+      ]);
+      try {
+        const [teachersRes, studentsRes] = await Promise.all([
+          userAPI.getUsersByRole('TEACHER'),
+          userAPI.getUsersByRole('STUDENT'),
+        ]);
+        setTeachers(teachersRes.data.data);
+        setStudents(studentsRes.data.data);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+      setLoading(false);
+    };
+    initData();
+  }, []);
+
+  // ==========================================
+  // Handlers
+  // ==========================================
   const handleDeleteExam = async (id: string, title: string) => {
     if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบข้อสอบ "${title}"?\nหากลบแล้วจะไม่สามารถกู้คืนได้`)) {
       try {
         await examAPI.deleteExam(id);
         alert('ลบข้อสอบสำเร็จ');
-        loadExams(); // Refresh list after delete
+        loadExams();
       } catch (error) {
         console.error('Error deleting exam:', error);
         alert('เกิดข้อผิดพลาดในการลบข้อสอบ');
@@ -244,7 +206,6 @@ export default function AdminDashboard() {
         await courseAPI.approvePublish(id);
         alert('อนุมัติการขายคอร์สเรียบร้อยแล้ว! คอร์สจะปรากฏในหน้ารวมคอร์ส');
       }
-
       await refreshCourses();
     } catch (error: any) {
       console.error('Error approving course:', error);
@@ -255,7 +216,6 @@ export default function AdminDashboard() {
   const handleRejectCourse = async (id: string, currentStatus: CourseStatus) => {
     const reason = prompt('กรุณาระบุเหตุผลในการปฏิเสธ:');
     if (!reason) return;
-
     try {
       if (currentStatus === CourseStatus.REQUEST_CREATE) {
         await courseAPI.rejectCreateRequest(id, reason);
@@ -264,7 +224,6 @@ export default function AdminDashboard() {
         await courseAPI.rejectPublish(id, reason);
         alert('ส่งคอร์สกลับไปแก้ไขแล้ว');
       }
-
       setIsModalOpen(false);
       setSelectedCourse(null);
       await refreshCourses();
@@ -277,19 +236,9 @@ export default function AdminDashboard() {
   const openCourseDetailModal = async (course: APICourse) => {
     setSelectedCourse(course);
     setIsModalOpen(true);
-
-    // Load lessons for this course
     setLoadingLessons(true);
     try {
       const response = await courseAPI.getLessonsByCourse(course.id);
-      console.log('📚 Loaded lessons:', response.data.data);
-      response.data.data?.forEach((lesson, index) => {
-        console.log(`  Lesson ${index + 1}:`, {
-          topic: lesson.topic_name,
-          video_url: lesson.video_url,
-          pdf_url: lesson.pdf_url
-        });
-      });
       setCourseLessons(response.data.data || []);
     } catch (error) {
       console.error('Error loading lessons:', error);
@@ -300,16 +249,11 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteCourse = async (id: string, title: string, status: CourseStatus) => {
-    // ถ้าเป็นคอร์สที่เปิดขายแล้ว ไม่อนุญาตให้ลบ
     if (status === CourseStatus.PUBLISHED) {
       alert('ไม่สามารถลบคอร์สที่เปิดขายแล้ว\nกรุณาใช้ปุ่ม "ปิดการใช้งาน" แทน');
       return;
     }
-
-    const confirmDelete = window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบคอร์ส "${title}"?\n\nการลบคอร์สจะลบข้อมูลทั้งหมดรวมถึงบทเรียน แบบทดสอบ และข้อมูลนักเรียนที่ลงทะเบียน`);
-
-    if (!confirmDelete) return;
-
+    if (!window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบคอร์ส "${title}"?\n\nการลบคอร์สจะลบข้อมูลทั้งหมดรวมถึงบทเรียน แบบทดสอบ และข้อมูลนักเรียนที่ลงทะเบียน`)) return;
     try {
       await courseAPI.deleteCourse(id);
       alert('ลบคอร์สเรียบร้อยแล้ว');
@@ -322,10 +266,7 @@ export default function AdminDashboard() {
 
   const handleToggleCourseActive = async (id: string, title: string, currentActive: boolean) => {
     const action = currentActive ? 'ปิดการใช้งาน' : 'เปิดการใช้งาน';
-    const confirmToggle = window.confirm(`คุณต้องการ${action}คอร์ส "${title}" หรือไม่?\n\n${currentActive ? 'คอร์สจะไม่แสดงในหน้ารวมคอร์สอีกต่อไป' : 'คอร์สจะกลับมาแสดงในหน้ารวมคอร์สอีกครั้ง'}`);
-
-    if (!confirmToggle) return;
-
+    if (!window.confirm(`คุณต้องการ${action}คอร์ส "${title}" หรือไม่?\n\n${currentActive ? 'คอร์สจะไม่แสดงในหน้ารวมคอร์สอีกต่อไป' : 'คอร์สจะกลับมาแสดงในหน้ารวมคอร์สอีกครั้ง'}`)) return;
     try {
       await courseAPI.updateCourseDetails(id, { is_active: !currentActive });
       alert(`${action}คอร์สเรียบร้อยแล้ว`);
@@ -360,38 +301,34 @@ export default function AdminDashboard() {
   };
 
   const renderBadge = (status: string) => {
-    if (status === 'PAID') return <span style={{ background: '#dcfce7', color: '#16a34a', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>ชำระแล้ว</span>;
-    if (status === 'PENDING') return <span style={{ background: '#fef08a', color: '#ca8a04', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>รอตรวจสอบ</span>;
+    if (status === 'CONFIRMED' || status === 'PAID') return <span style={{ background: '#dcfce7', color: '#16a34a', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>ชำระแล้ว</span>;
+    if (status === 'PAYMENT_SUBMITTED' || status === 'PENDING') return <span style={{ background: '#fef08a', color: '#ca8a04', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>รอตรวจสอบ</span>;
     return null;
   };
 
   // ==========================================
-  // Computed Stats for Home Dashboard ( teemmate missing vars )
+  // Computed Stats for Home Dashboard
   // ==========================================
-  const totalRevenue = payments
-    .filter(p => p.status === 'CONFIRMED')
-    .reduce((sum, p) => sum + Number(p.total_amount), 0);
-
-  const totalStudents = dashboardStats?.totalStudents || 0;
-  const totalTeachersCount = dashboardStats?.totalTeachers || 0;
-
-  const publishedCourses = adminCourses.filter(c => c.status === CourseStatus.PUBLISHED);
-  const totalPublishedCourses = publishedCourses.length;
-  const onlineCoursesCount = publishedCourses.filter(c => c.is_online).length;
-  const onsiteCoursesCount = publishedCourses.filter(c => c.is_onsite).length;
-  const hybridCoursesCount = publishedCourses.filter((c: any) => c.is_hybrid).length;
-
-  const availableOnsiteSeats = 0; 
-  const totalOnsiteQuota = 0; 
+  const confirmedPayments = homePayments.filter(p => p.status === 'CONFIRMED');
+  const totalRevenueVal = confirmedPayments.reduce((sum, p) => sum + Number(p.total_amount), 0);
+  const totalStudentsVal = dashboardStats?.totalStudents || students.length || 0;
+  const totalTeachersCountVal = dashboardStats?.totalTeachers || teachers.length || 0;
+  const publishedCoursesList = adminCourses.filter(c => c.status === CourseStatus.PUBLISHED);
+  const totalPublishedCourses = publishedCoursesList.length;
+  const onlineCoursesCount = publishedCoursesList.filter(c => c.is_online).length;
+  const onsiteCoursesCount = publishedCoursesList.filter(c => c.is_onsite).length;
+  const hybridCoursesCount = publishedCoursesList.filter((c: any) => c.is_hybrid).length;
+  const recentPaymentsList = [...homePayments].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 7);
 
   const realRevenueData = [
     { name: 'ม.ค.', students: 0 },
     { name: 'ก.พ.', students: 0 },
-    { name: 'มี.ค.', students: totalRevenue }
+    { name: 'มี.ค.', students: totalRevenueVal }
   ];
 
   const realInstructorData = [
-    { name: 'อาจารย์', value: totalTeachersCount }
+    { name: 'Active', value: teachers.filter(t => t.is_active).length },
+    { name: 'Inactive', value: teachers.filter(t => !t.is_active).length }
   ];
 
   return (
@@ -412,15 +349,12 @@ export default function AdminDashboard() {
           {/* Navigation Links */}
           <nav style={{ flex: 1, padding: '20px 0' }}>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-
               <li onClick={() => setActiveMenu('home')} style={{ ...sidebarItemStyle, background: activeMenu === 'home' ? '#2c5282' : 'transparent', borderLeft: activeMenu === 'home' ? '4px solid #60a5fa' : '4px solid transparent' }}>
                 <Home size={20} /> หน้าหลัก
               </li>
-
               <li onClick={() => setActiveMenu('courses')} style={{ ...sidebarItemStyle, background: activeMenu === 'courses' ? '#2c5282' : 'transparent', borderLeft: activeMenu === 'courses' ? '4px solid #60a5fa' : '4px solid transparent' }}>
                 <BookOpen size={20} /> จัดการคอร์สเรียน
               </li>
-
               <li style={{ padding: 0 }}>
                 <div onClick={() => setIsUserMenuOpen(!isUserMenuOpen)} style={{ ...sidebarItemStyle, cursor: 'pointer' }}>
                   <Users size={20} /> จัดการผู้ใช้งาน
@@ -433,27 +367,22 @@ export default function AdminDashboard() {
                   </ul>
                 )}
               </li>
-
               <li onClick={() => { setActiveMenu('exams'); loadExams(); }} style={{ ...sidebarItemStyle, background: activeMenu === 'exams' ? '#2c5282' : 'transparent', borderLeft: activeMenu === 'exams' ? '4px solid #60a5fa' : '4px solid transparent' }}>
                 <FileText size={20} /> คลังข้อสอบ
               </li>
-
               <li onClick={() => { setActiveMenu('bookings'); loadBookings(); }} style={{ ...sidebarItemStyle, background: activeMenu === 'bookings' ? '#2c5282' : 'transparent', borderLeft: activeMenu === 'bookings' ? '4px solid #60a5fa' : '4px solid transparent' }}>
                 <BookOpen size={20} /> รายการจองออฟไลน์
               </li>
-
               <li onClick={() => { setActiveMenu('finance'); loadPayments(); }} style={{ ...sidebarItemStyle, background: activeMenu === 'finance' ? '#2c5282' : 'transparent', borderLeft: activeMenu === 'finance' ? '4px solid #60a5fa' : '4px solid transparent' }}>
                 <CreditCard size={20} /> การเงินและคำสั่งซื้อ
               </li>
-
               <li onClick={() => setActiveMenu('settings')} style={{ ...sidebarItemStyle, background: activeMenu === 'settings' ? '#2c5282' : 'transparent', borderLeft: activeMenu === 'settings' ? '4px solid #60a5fa' : '4px solid transparent', marginTop: '20px' }}>
                 <Settings size={20} /> ตั้งค่าระบบ
               </li>
-
             </ul>
           </nav>
 
-          {/* Logout Button at Bottom */}
+          {/* Logout Button */}
           <div style={{ padding: '20px', borderTop: '1px solid #1e293b' }}>
             <button onClick={handleLogout} style={{ width: '100%', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
               <LogOut size={18} /> ออกจากระบบ
@@ -463,19 +392,16 @@ export default function AdminDashboard() {
 
 
         {/* ==========================================
-          MAIN CONTENT AREA 
-          ========================================== */}
+            MAIN CONTENT AREA 
+            ========================================== */}
         <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
 
           {/* Top Navbar */}
           <header style={{ height: '70px', backgroundColor: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '0 30px', color: 'white', gap: '20px' }}>
-            {/* Search */}
             <div style={{ position: 'relative' }}>
               <Search size={18} color="#94a3b8" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
               <input type="text" placeholder="ค้นหา..." style={{ background: 'transparent', border: '1px solid #334155', borderRadius: '20px', padding: '8px 15px 8px 35px', color: 'white', outline: 'none', width: '250px' }} />
             </div>
-
-            {/* Admin Profile */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
               <div style={{ width: '35px', height: '35px', borderRadius: '50%', backgroundColor: '#cbd5e1', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                 <User size={20} color="#475569" />
@@ -483,7 +409,6 @@ export default function AdminDashboard() {
               <span style={{ fontSize: '0.9rem' }}>Admin</span>
             </div>
           </header>
-
 
           {/* Dashboard Content */}
           <div style={{ padding: '30px', overflowY: 'auto', background: '#f1f5f9', flex: 1 }}>
@@ -495,8 +420,8 @@ export default function AdminDashboard() {
             </div>
 
             {/* ==========================================
-              HOME MENU (Dashboard)
-              ========================================== */}
+                HOME MENU (Dashboard)
+                ========================================== */}
             {activeMenu === 'home' && (
               <>
                 {/* Stats Cards Row */}
@@ -505,7 +430,8 @@ export default function AdminDashboard() {
                   <div style={cardStyle}>
                     <div style={{ flex: 1 }}>
                       <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '8px', fontWeight: 'bold' }}>รายรับรวม (ตลอดกาล)</p>
-                      <h2 style={{ fontSize: '1.8rem', margin: 0, color: '#0f172a', fontWeight: '800' }}>฿{totalRevenue.toLocaleString('th-TH')}</h2>
+                      <h2 style={{ fontSize: '1.8rem', margin: 0, color: '#0f172a', fontWeight: '800' }}>฿{totalRevenueVal.toLocaleString('th-TH')}</h2>
+                      <p style={{ fontSize: '0.8rem', color: '#22c55e', margin: 0, fontWeight: '500', marginTop: '5px' }}>{confirmedPayments.length} รายการที่ยืนยัน</p>
                     </div>
                     <div style={{ background: '#dcfce7', padding: '12px', borderRadius: '12px' }}>
                       <ArrowUp size={24} color="#16a34a" />
@@ -516,7 +442,8 @@ export default function AdminDashboard() {
                   <div style={cardStyle}>
                     <div style={{ flex: 1 }}>
                       <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '8px', fontWeight: 'bold' }}>นักเรียนทั้งหมด</p>
-                      <h2 style={{ fontSize: '1.8rem', margin: 0, color: '#0f172a', fontWeight: '800' }}>{totalStudents.toLocaleString('th-TH')} <span style={{ fontSize: '1rem', color: '#64748b' }}>คน</span></h2>
+                      <h2 style={{ fontSize: '1.8rem', margin: 0, color: '#0f172a', fontWeight: '800' }}>{totalStudentsVal.toLocaleString('th-TH')} <span style={{ fontSize: '1rem', color: '#64748b' }}>คน</span></h2>
+                      <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0, marginTop: '5px' }}>จากฐานข้อมูล</p>
                     </div>
                     <div style={{ background: '#e0f2fe', padding: '12px', borderRadius: '12px' }}>
                       <Users size={24} color="#0284c7" />
@@ -537,11 +464,12 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  {/* Quota Card */}
+                  {/* Teacher Card */}
                   <div style={cardStyle}>
                     <div style={{ flex: 1 }}>
-                      <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '8px', fontWeight: 'bold' }}>ที่นั่ง Onsite (ว่าง)</p>
-                      <h2 style={{ fontSize: '1.5rem', margin: 0, color: '#ea580c', fontWeight: '800' }}>{availableOnsiteSeats}/{totalOnsiteQuota} <span style={{ fontSize: '1rem', color: '#64748b' }}>ที่นั่ง</span></h2>
+                      <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '8px', fontWeight: 'bold' }}>อาจารย์ทั้งหมด</p>
+                      <h2 style={{ fontSize: '1.8rem', margin: 0, color: '#0f172a', fontWeight: '800' }}>{totalTeachersCountVal} <span style={{ fontSize: '1rem', color: '#64748b' }}>ท่าน</span></h2>
+                      <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '5px' }}>Active {teachers.filter(t => t.is_active).length} ท่าน</p>
                     </div>
                     <div style={{ background: '#fef3c7', padding: '12px', borderRadius: '12px' }}>
                       <User size={24} color="#d97706" />
@@ -550,47 +478,65 @@ export default function AdminDashboard() {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '30px' }}>
-
-                  {/* Line Chart */}
+                  {/* Summary */}
                   <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start', padding: '20px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: '20px' }}>
-                      <h3 style={{ fontSize: '1.1rem', color: '#0f172a', margin: 0 }}>ยอดขายรับรวม (บาท)</h3>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.9rem', color: '#64748b' }}>
-                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#3b82f6' }}></div> รายได้
+                      <h3 style={{ fontSize: '1.1rem', color: '#0f172a', margin: 0 }}>สรุปคอร์สตามสถานะ</h3>
+                    </div>
+                    <div style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '15px' }}>
+                      <div style={{ background: '#fef3c7', padding: '15px', borderRadius: '10px', textAlign: 'center' }}>
+                        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0, color: '#a16207' }}>{adminCourses.filter(c => c.status === CourseStatus.REQUEST_CREATE).length}</p>
+                        <p style={{ fontSize: '0.8rem', color: '#a16207', margin: '5px 0 0 0' }}>รอสร้าง</p>
+                      </div>
+                      <div style={{ background: '#e0e7ff', padding: '15px', borderRadius: '10px', textAlign: 'center' }}>
+                        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0, color: '#4338ca' }}>{adminCourses.filter(c => c.status === CourseStatus.DRAFTING).length}</p>
+                        <p style={{ fontSize: '0.8rem', color: '#4338ca', margin: '5px 0 0 0' }}>กำลังร่าง</p>
+                      </div>
+                      <div style={{ background: '#fed7aa', padding: '15px', borderRadius: '10px', textAlign: 'center' }}>
+                        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0, color: '#c2410c' }}>{adminCourses.filter(c => c.status === CourseStatus.PENDING_REVIEW).length}</p>
+                        <p style={{ fontSize: '0.8rem', color: '#c2410c', margin: '5px 0 0 0' }}>รอตรวจ</p>
+                      </div>
+                      <div style={{ background: '#dcfce7', padding: '15px', borderRadius: '10px', textAlign: 'center' }}>
+                        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0, color: '#15803d' }}>{publishedCoursesList.length}</p>
+                        <p style={{ fontSize: '0.8rem', color: '#15803d', margin: '5px 0 0 0' }}>เปิดขาย</p>
                       </div>
                     </div>
-                    <div style={{ width: '100%', height: '220px' }}>
-                      {/* @ts-ignore */}
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={realRevenueData}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                          <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                          <RechartsTooltip />
-                          <Line type="monotone" dataKey="students" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                        </LineChart>
-                      </ResponsiveContainer>
+                    <div style={{ marginTop: '20px', width: '100%' }}>
+                      <h3 style={{ fontSize: '1.1rem', color: '#0f172a', margin: '0 0 10px 0' }}>ยอดรับรวม (บาท)</h3>
+                      <div style={{ width: '100%', height: '220px' }}>
+                        {/* @ts-ignore */}
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={realRevenueData}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                            <RechartsTooltip />
+                            <Line type="monotone" dataKey="students" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Donut Chart */}
+                  {/* Teacher summary */}
                   <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start', padding: '20px' }}>
                     <h3 style={{ fontSize: '1.1rem', color: '#0f172a', margin: '0 0 20px 0' }}>อาจารย์ผู้สอน</h3>
-
                     <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '15px' }}>
-                      {/* Avatar icon representation */}
                       <div style={{ background: '#fef08a', padding: '10px', borderRadius: '12px' }}>
-                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=b6e3f4" alt="avatar" style={{ width: '60px', height: '60px' }} />
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=b6e3f4" alt="avatar" style={{ width: '60px', height: '60px', borderRadius: '50%' }} />
                       </div>
                       <div>
-                        <p style={{ fontSize: '1.8rem', fontWeight: 'bold', margin: 0, color: '#0f172a' }}>{totalTeachersCount} ท่าน</p>
+                        <p style={{ fontSize: '1.8rem', fontWeight: 'bold', margin: 0, color: '#0f172a' }}>{totalTeachersCountVal} <span style={{ fontSize: '1rem', color: '#64748b' }}>ท่าน</span></p>
                       </div>
                     </div>
 
-                    <div style={{ width: '100%', height: '150px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '10px' }}>
+                    <div style={{ width: '100%', marginTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: '#334155' }}>
-                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: COLORS[0] }}></div> อาจารย์ทั้งหมด : {totalTeachersCount} ท่าน
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: COLORS[0] }}></div> Active : {teachers.filter(t => t.is_active).length} ท่าน
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: '#334155' }}>
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: COLORS[1] }}></div> Inactive : {teachers.filter(t => !t.is_active).length} ท่าน
                         </div>
                       </div>
                       <div style={{ width: '100px', height: '100px' }}>
@@ -607,18 +553,17 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   </div>
-
                 </div>
-
 
                 {/* Table Section */}
                 <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start', padding: '25px' }}>
                   <h3 style={{ fontSize: '1.2rem', color: '#0f172a', margin: '0 0 20px 0', fontWeight: 'bold' }}>รายการซื้อล่าสุด</h3>
-
+                  {recentPaymentsList.length === 0 ? (
+                    <p style={{ color: '#94a3b8', textAlign: 'center', padding: '20px 0', width: '100%' }}>ยังไม่มีรายการซื้อ</p>
+                  ) : (
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                     <thead>
                       <tr style={{ color: '#64748b', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0' }}>
-                        <th style={{ padding: '12px 0', fontWeight: '500' }}>รหัสสั่งซื้อ</th>
                         <th style={{ padding: '12px 0', fontWeight: '500' }}>ชื่อ</th>
                         <th style={{ padding: '12px 0', fontWeight: '500' }}>คอร์ส</th>
                         <th style={{ padding: '12px 0', fontWeight: '500' }}>วันที่</th>
@@ -627,21 +572,22 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {recentOrders.map((order, idx) => (
-                        <tr key={idx} style={{ borderBottom: idx !== recentOrders.length - 1 ? '1px solid #f1f5f9' : 'none', color: '#334155', fontSize: '0.9rem' }}>
-                          <td style={{ padding: '12px 0' }}>{order.id}</td>
-                          <td style={{ padding: '12px 0' }}>{order.name}</td>
-                          <td style={{ padding: '12px 0' }}>{order.course}</td>
-                          <td style={{ padding: '12px 0' }}>{order.date}</td>
-                          <td style={{ padding: '12px 0', fontWeight: '500' }}>{order.amount}</td>
-                          <td style={{ padding: '12px 0' }}>{renderBadge(order.status)}</td>
+                      {recentPaymentsList.map((p, idx) => (
+                        <tr key={p.id} style={{ borderBottom: idx !== recentPaymentsList.length - 1 ? '1px solid #f1f5f9' : 'none', color: '#334155', fontSize: '0.9rem' }}>
+                          <td style={{ padding: '12px 0' }}>{p.user_name || p.user_email || '-'}</td>
+                          <td style={{ padding: '12px 0' }}>{p.course_titles?.join(', ') || '-'}</td>
+                          <td style={{ padding: '12px 0' }}>{new Date(p.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}</td>
+                          <td style={{ padding: '12px 0', fontWeight: '500' }}>฿{Number(p.total_amount).toLocaleString()}</td>
+                          <td style={{ padding: '12px 0' }}>{renderBadge(p.status)}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                  )}
                 </div>
               </>
             )}
+
 
             {/* ==========================================
               COURSES MENU (คำขอสร้างคอร์ส / อนุมัติขาย)
@@ -760,14 +706,7 @@ export default function AdminDashboard() {
                                 <div style={{ flex: 1 }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
                                     <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a' }}>{course.title}</h4>
-                                    <span style={{
-                                      fontSize: '0.75rem',
-                                      padding: '2px 8px',
-                                      borderRadius: '12px',
-                                      background: '#e0e7ff',
-                                      color: '#4338ca',
-                                      fontWeight: 'bold'
-                                    }}>
+                                    <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '12px', background: '#e0e7ff', color: '#4338ca', fontWeight: 'bold' }}>
                                       📝 ร่าง
                                     </span>
                                   </div>
@@ -823,14 +762,7 @@ export default function AdminDashboard() {
                                 <div style={{ flex: 1 }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
                                     <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a' }}>{course.title}</h4>
-                                    <span style={{
-                                      fontSize: '0.75rem',
-                                      padding: '2px 8px',
-                                      borderRadius: '12px',
-                                      background: '#dcfce7',
-                                      color: '#15803d',
-                                      fontWeight: 'bold'
-                                    }}>
+                                    <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '12px', background: '#dcfce7', color: '#15803d', fontWeight: 'bold' }}>
                                       🌐 เปิดขาย
                                     </span>
                                   </div>
@@ -851,14 +783,8 @@ export default function AdminDashboard() {
                                   <button
                                     onClick={() => handleToggleCourseActive(course.id, course.title, course.is_active)}
                                     style={{
-                                      background: course.is_active ? '#f59e0b' : '#10b981',
-                                      color: 'white',
-                                      border: 'none',
-                                      padding: '8px 20px',
-                                      borderRadius: '6px',
-                                      cursor: 'pointer',
-                                      fontWeight: 'bold',
-                                      fontSize: '0.9rem'
+                                      background: course.is_active ? '#f59e0b' : '#10b981', color: 'white', border: 'none', padding: '8px 20px',
+                                      borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem'
                                     }}
                                   >
                                     {course.is_active ? '⏸️ ปิดการใช้งาน' : '▶️ เปิดการใช้งาน'}
@@ -880,57 +806,69 @@ export default function AdminDashboard() {
               ========================================== */}
             {activeMenu === 'teachers' && (
               <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start', padding: '25px', width: '100%' }}>
-                <h2 style={{ fontSize: '1.5rem', color: '#0f172a', marginBottom: '20px', fontWeight: 'bold' }}>รายชื่ออาจารย์ทั้งหมด</h2>
+                <h2 style={{ fontSize: '1.5rem', color: '#0f172a', marginBottom: '20px', fontWeight: 'bold' }}>รายชื่ออาจารย์ทั้งหมด ({teachers.length} ท่าน)</h2>
+                {teachers.length === 0 ? (
+                  <p style={{ color: '#94a3b8', textAlign: 'center', padding: '20px 0', width: '100%' }}>ยังไม่มีอาจารย์ในระบบ</p>
+                ) : (
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                   <thead>
                     <tr style={{ color: '#64748b', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0' }}>
-                      <th style={{ padding: '12px 0', fontWeight: '500' }}>รหัสประจำตัว</th>
                       <th style={{ padding: '12px 0', fontWeight: '500' }}>ชื่อ-นามสกุล</th>
                       <th style={{ padding: '12px 0', fontWeight: '500' }}>อีเมล</th>
-                      <th style={{ padding: '12px 0', fontWeight: '500' }}>จำนวนคอร์สที่สอน</th>
+                      <th style={{ padding: '12px 0', fontWeight: '500' }}>เบอร์โทร</th>
                       <th style={{ padding: '12px 0', fontWeight: '500' }}>สถานะ</th>
+                      <th style={{ padding: '12px 0', fontWeight: '500' }}>วันที่สมัคร</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {mockTeachers.map((t, idx) => (
-                      <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
-                        <td style={{ padding: '12px 0' }}>{t.id}</td>
-                        <td style={{ padding: '12px 0' }}>{t.name}</td>
+                    {teachers.map((t) => (
+                      <tr key={t.id} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
+                        <td style={{ padding: '12px 0' }}>{t.full_name || '-'}</td>
                         <td style={{ padding: '12px 0' }}>{t.email}</td>
-                        <td style={{ padding: '12px 0' }}>{t.courses} คอร์ส</td>
+                        <td style={{ padding: '12px 0' }}>{t.phone || '-'}</td>
                         <td style={{ padding: '12px 0' }}>
-                          <span style={{ color: t.status === 'Active' ? '#16a34a' : '#ef4444', fontWeight: 'bold' }}>{t.status}</span>
+                          <span style={{ color: t.is_active ? '#16a34a' : '#ef4444', fontWeight: 'bold' }}>{t.is_active ? 'Active' : 'Inactive'}</span>
                         </td>
+                        <td style={{ padding: '12px 0' }}>{new Date(t.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+                )}
               </div>
             )}
 
             {activeMenu === 'students' && (
               <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start', padding: '25px', width: '100%' }}>
-                <h2 style={{ fontSize: '1.5rem', color: '#0f172a', marginBottom: '20px', fontWeight: 'bold' }}>รายชื่อนักเรียนทั้งหมด</h2>
+                <h2 style={{ fontSize: '1.5rem', color: '#0f172a', marginBottom: '20px', fontWeight: 'bold' }}>รายชื่อนักเรียนทั้งหมด ({students.length} คน)</h2>
+                {students.length === 0 ? (
+                  <p style={{ color: '#94a3b8', textAlign: 'center', padding: '20px 0', width: '100%' }}>ยังไม่มีนักเรียนในระบบ</p>
+                ) : (
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                   <thead>
                     <tr style={{ color: '#64748b', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0' }}>
-                      <th style={{ padding: '12px 0', fontWeight: '500' }}>รหัสประจำตัว</th>
                       <th style={{ padding: '12px 0', fontWeight: '500' }}>ชื่อ-นามสกุล</th>
                       <th style={{ padding: '12px 0', fontWeight: '500' }}>อีเมล</th>
-                      <th style={{ padding: '12px 0', fontWeight: '500' }}>จำนวนคอร์สที่ลงเรียน</th>
+                      <th style={{ padding: '12px 0', fontWeight: '500' }}>เบอร์โทร</th>
+                      <th style={{ padding: '12px 0', fontWeight: '500' }}>สถานะ</th>
+                      <th style={{ padding: '12px 0', fontWeight: '500' }}>วันที่สมัคร</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {mockStudents.map((s, idx) => (
-                      <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
-                        <td style={{ padding: '12px 0' }}>{s.id}</td>
-                        <td style={{ padding: '12px 0' }}>{s.name}</td>
+                    {students.map((s) => (
+                      <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
+                        <td style={{ padding: '12px 0' }}>{s.full_name || '-'}</td>
                         <td style={{ padding: '12px 0' }}>{s.email}</td>
-                        <td style={{ padding: '12px 0' }}>{s.coursesEnrolled} คอร์ส</td>
+                        <td style={{ padding: '12px 0' }}>{s.phone || '-'}</td>
+                        <td style={{ padding: '12px 0' }}>
+                          <span style={{ color: s.is_active ? '#16a34a' : '#ef4444', fontWeight: 'bold' }}>{s.is_active ? 'Active' : 'Inactive'}</span>
+                        </td>
+                        <td style={{ padding: '12px 0' }}>{new Date(s.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+                )}
               </div>
             )}
 
@@ -940,7 +878,7 @@ export default function AdminDashboard() {
             {activeMenu === 'exams' && (
               <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start', padding: '25px', width: '100%' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: '20px' }}>
-                  <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: 0, fontWeight: 'bold' }}>คลังข้อสอบส่วนกลาง</h2>
+                  <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: 0, fontWeight: 'bold' }}>คลังข้อสอบส่วนกลาง ({exams.length} ชุด)</h2>
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <button
                       onClick={loadExams}
@@ -956,64 +894,61 @@ export default function AdminDashboard() {
                     </button>
                   </div>
                 </div>
-
                 {loadingExams ? (
                   <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b', width: '100%' }}>
                     <div style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>⏳</div>
-                    <div>กำลังโหลดข้อมูลข้อสอบ...</div>
+                    <div>กำลังโหลดข้อมูล...</div>
                   </div>
-                ) : adminExams.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8', width: '100%' }}>
-                    ยังไม่มีข้อสอบในระบบ
-                  </div>
+                ) : exams.length === 0 ? (
+                  <p style={{ color: '#94a3b8', textAlign: 'center', padding: '20px 0', width: '100%' }}>ยังไม่มีข้อสอบในระบบ</p>
                 ) : (
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                    <thead>
-                      <tr style={{ color: '#64748b', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0' }}>
-                        <th style={{ padding: '12px 10px', fontWeight: '500' }}>วันที่สร้าง</th>
-                        <th style={{ padding: '12px 10px', fontWeight: '500' }}>ชื่อชุดข้อสอบ</th>
-                        <th style={{ padding: '12px 10px', fontWeight: '500' }}>คอร์สที่เกี่ยวข้อง</th>
-                        <th style={{ padding: '12px 10px', fontWeight: '500' }}>ประเภท</th>
-                        <th style={{ padding: '12px 10px', fontWeight: '500' }}>คะแนนเต็ม</th>
-                        <th style={{ padding: '12px 10px', fontWeight: '500', textAlign: 'right' }}>การจัดการ</th>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ color: '#64748b', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0' }}>
+                      <th style={{ padding: '12px 10px', fontWeight: '500' }}>วันที่สร้าง</th>
+                      <th style={{ padding: '12px 10px', fontWeight: '500' }}>ชื่อชุดข้อสอบ</th>
+                      <th style={{ padding: '12px 10px', fontWeight: '500' }}>คอร์สที่เกี่ยวข้อง</th>
+                      <th style={{ padding: '12px 10px', fontWeight: '500' }}>ประเภท</th>
+                      <th style={{ padding: '12px 10px', fontWeight: '500' }}>คะแนนเต็ม</th>
+                      <th style={{ padding: '12px 10px', fontWeight: '500', textAlign: 'right' }}>การจัดการ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {exams.map((e: any) => (
+                      <tr key={e.id} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
+                        <td style={{ padding: '12px 10px' }}>{new Date(e.created_at).toLocaleDateString('th-TH')}</td>
+                        <td style={{ padding: '12px 10px', fontWeight: 'bold' }}>{e.title}</td>
+                        <td style={{ padding: '12px 10px' }}>{e.course_title || e.course_name}</td>
+                        <td style={{ padding: '12px 10px' }}>
+                          <span style={{
+                            background: e.type === 'PRETEST' ? '#fef08a' : e.type === 'POSTTEST' ? '#bbf7d0' : '#e0e7ff',
+                            color: e.type === 'PRETEST' ? '#ca8a04' : e.type === 'POSTTEST' ? '#16a34a' : '#4338ca',
+                            padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold'
+                          }}>
+                            {e.type}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px 10px' }}>{e.total_score} คะแนน</td>
+                        <td style={{ padding: '12px 10px', textAlign: 'right' }}>
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                            <button
+                              onClick={() => navigate(`/exam-management/${e.course_id}`)}
+                              style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
+                            >
+                              จัดการ
+                            </button>
+                            <button
+                              onClick={() => handleDeleteExam(e.id, e.title)}
+                              style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
+                            >
+                              ลบ
+                            </button>
+                          </div>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {adminExams.map((e) => (
-                        <tr key={e.id} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
-                          <td style={{ padding: '12px 10px' }}>{new Date(e.created_at).toLocaleDateString('th-TH')}</td>
-                          <td style={{ padding: '12px 10px', fontWeight: 'bold' }}>{e.title}</td>
-                          <td style={{ padding: '12px 10px' }}>{e.course_name}</td>
-                          <td style={{ padding: '12px 10px' }}>
-                            <span style={{
-                              background: e.type === 'PRETEST' ? '#fef08a' : e.type === 'POSTTEST' ? '#bbf7d0' : '#e0e7ff',
-                              color: e.type === 'PRETEST' ? '#ca8a04' : e.type === 'POSTTEST' ? '#16a34a' : '#4338ca',
-                              padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold'
-                            }}>
-                              {e.type}
-                            </span>
-                          </td>
-                          <td style={{ padding: '12px 10px' }}>{e.total_score} คะแนน</td>
-                          <td style={{ padding: '12px 10px', textAlign: 'right' }}>
-                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                              <button
-                                onClick={() => navigate(`/exam-management/${e.course_id}`)}
-                                style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
-                              >
-                                จัดการ
-                              </button>
-                              <button
-                                onClick={() => handleDeleteExam(e.id, e.title)}
-                                style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
-                              >
-                                ลบ
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                    ))}
+                  </tbody>
+                </table>
                 )}
               </div>
             )}
@@ -1190,7 +1125,7 @@ export default function AdminDashboard() {
                               {b.status === BStatus.PENDING && (
                                 <button
                                   onClick={async () => {
-                                    if (confirm('ยืนยันอนุญาตการจองคอร์สนี้?')) {
+                                    if (window.confirm('ยืนยันอนุญาตการจองคอร์สนี้?')) {
                                       try {
                                         await bookingAPI.confirmBooking(b.id);
                                         loadBookings();
@@ -1207,7 +1142,7 @@ export default function AdminDashboard() {
                               {(b.status === BStatus.PENDING || b.status === BStatus.CONFIRMED) && (
                                 <button
                                   onClick={async () => {
-                                    if (confirm('ยืนยันยกเลิกการจองนี้?')) {
+                                    if (window.confirm('ยืนยันยกเลิกการจองนี้?')) {
                                       try {
                                         await bookingAPI.cancelBooking(b.id);
                                         loadBookings();
@@ -1447,28 +1382,11 @@ export default function AdminDashboard() {
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    padding: '8px 12px',
-                                    background: '#dbeafe',
-                                    color: '#1e40af',
-                                    borderRadius: '6px',
-                                    fontSize: '0.85rem',
-                                    fontWeight: '500',
-                                    textDecoration: 'none',
-                                    border: '1px solid #93c5fd',
-                                    transition: 'all 0.2s'
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    e.currentTarget.style.background = '#bfdbfe';
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = '#dbeafe';
+                                    display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', background: '#dbeafe',
+                                    color: '#1e40af', borderRadius: '6px', fontSize: '0.85rem', fontWeight: '500', textDecoration: 'none', border: '1px solid #93c5fd'
                                   }}
                                 >
-                                  <Video size={16} />
-                                  <span>📹 วีดีโอ</span>
+                                  <Video size={16} /><span>📹 วีดีโอ</span>
                                 </a>
                               )}
 
@@ -1478,75 +1396,29 @@ export default function AdminDashboard() {
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    padding: '8px 12px',
-                                    background: '#fef3c7',
-                                    color: '#92400e',
-                                    borderRadius: '6px',
-                                    fontSize: '0.85rem',
-                                    fontWeight: '500',
-                                    textDecoration: 'none',
-                                    border: '1px solid #fde68a',
-                                    transition: 'all 0.2s'
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    e.currentTarget.style.background = '#fde68a';
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = '#fef3c7';
+                                    display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', background: '#fef3c7',
+                                    color: '#92400e', borderRadius: '6px', fontSize: '0.85rem', fontWeight: '500', textDecoration: 'none', border: '1px solid #fde68a'
                                   }}
                                 >
-                                  <File size={16} />
-                                  <span>📑 PDF</span>
+                                  <File size={16} /><span>📑 PDF</span>
                                 </a>
                               )}
 
-                              {/* แสดงสถานะไฟล์ที่ไม่มี */}
                               {(!lesson.video_url || !lesson.video_url.trim()) && (
-                                <div style={{
-                                  fontSize: '0.85rem',
-                                  color: '#ef4444',
-                                  padding: '8px 12px',
-                                  background: '#fee2e2',
-                                  borderRadius: '6px',
-                                  border: '1px solid #fca5a5',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '4px'
-                                }}>
+                                <div style={{ fontSize: '0.85rem', color: '#ef4444', padding: '8px 12px', background: '#fee2e2', borderRadius: '6px', border: '1px solid #fca5a5', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                   ❌ ไม่มีวีดีโอ
                                 </div>
                               )}
 
                               {(!lesson.pdf_url || !lesson.pdf_url.trim()) && (
-                                <div style={{
-                                  fontSize: '0.85rem',
-                                  color: '#f59e0b',
-                                  padding: '8px 12px',
-                                  background: '#fef3c7',
-                                  borderRadius: '6px',
-                                  border: '1px solid #fcd34d',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '4px'
-                                }}>
+                                <div style={{ fontSize: '0.85rem', color: '#f59e0b', padding: '8px 12px', background: '#fef3c7', borderRadius: '6px', border: '1px solid #fcd34d', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                   ⚠️ ไม่มี PDF
                                 </div>
                               )}
                             </div>
 
                             {lesson.content && (
-                              <div style={{
-                                marginTop: '10px',
-                                padding: '10px',
-                                background: '#f8fafc',
-                                borderRadius: '6px',
-                                fontSize: '0.85rem',
-                                color: '#475569',
-                                lineHeight: '1.5'
-                              }}>
+                              <div style={{ marginTop: '10px', padding: '10px', background: '#f8fafc', borderRadius: '6px', fontSize: '0.85rem', color: '#475569', lineHeight: '1.5' }}>
                                 {lesson.content}
                               </div>
                             )}
@@ -1610,8 +1482,6 @@ export default function AdminDashboard() {
               <button
                 onClick={() => { setIsBookingModalOpen(false); setSelectedBookingDetails(null); }}
                 style={{ background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', color: 'white', padding: '8px', borderRadius: '8px', display: 'flex', transition: 'background 0.2s' }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
               >
                 ✕
               </button>

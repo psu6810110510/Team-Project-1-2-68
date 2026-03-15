@@ -121,11 +121,32 @@ export class ExamService {
     });
   }
 
-  async getAllExams(): Promise<Exam[]> {
-    return this.examRepo.find({
+  // ✅ แก้ไข: ยุบรวม getAllExams() ที่ซ้ำซ้อนกันให้เหลือตัวเดียวที่สมบูรณ์
+  async getAllExams(): Promise<any[]> {
+    // ใช้ relations เพื่อดึงข้อมูล Course มาด้วยเลยใน Query เดียว (มีประสิทธิภาพกว่า)
+    const exams = await this.examRepo.find({
       relations: ['course'],
       order: { created_at: 'DESC' },
     });
+
+    const results = await Promise.all(
+      exams.map(async (exam) => {
+        const questionCount = await this.questionRepo.count({ where: { exam_id: exam.id } });
+        return {
+          id: exam.id,
+          title: exam.title,
+          type: exam.type,
+          total_score: exam.total_score,
+          course_id: exam.course_id,
+          course: exam.course, // ส่งข้อมูล Course ไปให้ Controller ด้วย
+          course_title: exam.course?.title || 'ไม่ระบุ',
+          question_count: questionCount,
+          created_at: exam.created_at,
+        };
+      }),
+    );
+
+    return results;
   }
 
   async updateExam(id: string, dto: UpdateExamDto): Promise<Exam> {

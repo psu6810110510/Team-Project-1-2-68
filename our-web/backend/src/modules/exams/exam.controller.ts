@@ -29,6 +29,7 @@ export class ExamController {
   async getAllExams() {
     const exams = await this.examService.getAllExams();
     return {
+      // ✅ แก้ไข: ลบ data: exams ที่ซ้ำกันออก
       data: exams.map((e) => ({
         id: e.id,
         title: e.title,
@@ -81,7 +82,7 @@ export class ExamController {
     };
   }
 
-  // Questions endpoints
+  // ---------- Questions endpoints ----------
   @Post(':examId/questions')
   async createQuestion(
     @Param('examId') examId: string,
@@ -151,7 +152,7 @@ export class ExamController {
     };
   }
 
-  // Choices endpoints
+  // ---------- Choices endpoints ----------
   @Post('question/:questionId/choices')
   async createChoice(
     @Param('questionId') questionId: string,

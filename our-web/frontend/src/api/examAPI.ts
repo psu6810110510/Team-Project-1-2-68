@@ -100,6 +100,12 @@ export const examAPI = {
     apiClient.get(`/exams/${id}`),
 
   /**
+   * ดูข้อสอบทั้งหมดในระบบ (สำหรับ Admin)
+   */
+  getAllExams: () =>
+    apiClient.get('/exams'),
+
+  /**
    * ดูข้อสอบทั้งหมดในคอร์ส
    */
   getExamsByCourse: (courseId: string) =>
