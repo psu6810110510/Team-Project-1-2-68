@@ -338,11 +338,26 @@ export default function AdminDashboard() {
   const hybridCoursesCount = publishedCoursesList.filter((c: any) => c.is_hybrid).length;
   const recentPaymentsList = [...homePayments].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 7);
 
-  const realRevenueData = [
-    { name: 'ม.ค.', students: 0 },
-    { name: 'ก.พ.', students: 0 },
-    { name: 'มี.ค.', students: totalRevenueVal }
-  ];
+  // Generate last 6 months data dynamically
+  const getLast6MonthsRevenueData = () => {
+    const data = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthStr = d.toLocaleDateString('th-TH', { month: 'short' });
+      const yearStr = d.toLocaleDateString('th-TH', { year: '2-digit' });
+      
+      const revenue = confirmedPayments.filter(p => {
+        const pDate = new Date(p.created_at);
+        return pDate.getMonth() === d.getMonth() && pDate.getFullYear() === d.getFullYear();
+      }).reduce((sum, p) => sum + Number(p.total_amount), 0);
+
+      data.push({ name: `${monthStr} ${yearStr}`, revenue });
+    }
+    return data;
+  };
+
+  const realRevenueData = getLast6MonthsRevenueData();
 
   const realInstructorData = [
     { name: 'Active', value: teachers.filter(t => t.is_active).length },
@@ -532,7 +547,7 @@ export default function AdminDashboard() {
                             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
                             <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
                             <RechartsTooltip />
-                            <Line type="monotone" dataKey="students" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                            <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
                           </LineChart>
                         </ResponsiveContainer>
                       </div>
