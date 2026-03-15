@@ -114,6 +114,20 @@ export class UserService {
     return this.profileRepo.findOne({ where: { user_id: userId } });
   }
 
+  async getDashboardStats() {
+    const totalStudents = await this.userRepo.count({
+      where: { role: UserRole.STUDENT },
+    });
+    const totalTeachers = await this.userRepo.count({
+      where: { role: UserRole.TEACHER },
+    });
+    
+    return {
+      totalStudents,
+      totalTeachers
+    };
+  }
+
   // Favorite courses methods
   async getUserFavorites(userId: string) {
     const user = await this.userRepo.findOne({

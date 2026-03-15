@@ -29,7 +29,16 @@ export class ExamController {
   async getAllExams() {
     const exams = await this.examService.getAllExams();
     return {
-      data: exams,
+      // ✅ แก้ไข: ลบ data: exams ที่ซ้ำกันออก
+      data: exams.map((e) => ({
+        id: e.id,
+        title: e.title,
+        type: e.type,
+        total_score: e.total_score,
+        created_at: e.created_at,
+        course_name: e.course?.title || 'Unknown Course',
+        course_id: e.course_id,
+      })),
       total: exams.length,
     };
   }
@@ -73,7 +82,7 @@ export class ExamController {
     };
   }
 
-  // Questions endpoints
+  // ---------- Questions endpoints ----------
   @Post(':examId/questions')
   async createQuestion(
     @Param('examId') examId: string,
@@ -143,7 +152,7 @@ export class ExamController {
     };
   }
 
-  // Choices endpoints
+  // ---------- Choices endpoints ----------
   @Post('question/:questionId/choices')
   async createChoice(
     @Param('questionId') questionId: string,
@@ -210,6 +219,7 @@ export class ExamController {
       total_questions: result.total_questions,
       correct_answers: result.correct_answers,
       wrong_answers: result.wrong_answers,
+      weak_points_log: result.weak_points_log ? JSON.parse(result.weak_points_log) : [],
       message: 'Exam submitted successfully',
     };
   }
@@ -218,5 +228,12 @@ export class ExamController {
   async getStudentResults(@Param('userId') userId: string) {
     const results = await this.examService.getStudentResults(userId);
     return { data: results, total: results.length };
+  }
+
+  // ---------- ANALYTICS endpoints ----------
+
+  @Get(':examId/analytics')
+  async getExamAnalytics(@Param('examId') examId: string) {
+    return this.examService.getExamAnalytics(examId);
   }
 }

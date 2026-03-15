@@ -137,6 +137,13 @@ export class BookingService {
     });
   }
 
+  async getAllBookings(): Promise<Booking[]> {
+    return this.bookingRepo.find({
+      relations: ['user', 'schedule', 'schedule.course'],
+      order: { created_at: 'DESC' },
+    });
+  }
+
   async getBookingsBySchedule(scheduleId: string): Promise<Booking[]> {
     // Verify schedule exists
     const schedule = await this.scheduleRepo.findOne({
@@ -189,10 +196,20 @@ export class BookingService {
     });
     if (!schedule) throw new NotFoundException('Schedule not found');
 
-    const total = await this.bookingRepo.count({ where: { schedule_id: scheduleId } });
-    const confirmed = await this.bookingRepo.count({ where: { schedule_id: scheduleId, status: BookingStatus.CONFIRMED } });
-    const onsite = await this.bookingRepo.count({ where: { schedule_id: scheduleId, learning_mode: LearningMode.ONSITE } });
-    const online = await this.bookingRepo.count({ where: { schedule_id: scheduleId, learning_mode: LearningMode.ONLINE } });
+    const validStatuses = [BookingStatus.CONFIRMED, BookingStatus.PENDING];
+    
+    const total = await this.bookingRepo.count({ 
+      where: { schedule_id: scheduleId, status: In(validStatuses) } 
+    });
+    const confirmed = await this.bookingRepo.count({ 
+      where: { schedule_id: scheduleId, status: BookingStatus.CONFIRMED } 
+    });
+    const onsite = await this.bookingRepo.count({ 
+      where: { schedule_id: scheduleId, learning_mode: LearningMode.ONSITE, status: In(validStatuses) } 
+    });
+    const online = await this.bookingRepo.count({ 
+      where: { schedule_id: scheduleId, learning_mode: LearningMode.ONLINE, status: In(validStatuses) } 
+    });
 
     // 🌟 ดึงข้อมูล Quota ทั้งหมดของ Schedule นี้
     const quotas = await this.seatQuotaRepo.find({ where: { schedule_id: scheduleId } });
@@ -201,16 +218,17 @@ export class BookingService {
     // กำหนดลิมิตของ Onsite (ใช้ Quota ถ้ามี ถ้าไม่มีใช้ max_onsite_seats)
     const effectiveOnsiteLimit = onsiteQuota ? onsiteQuota.quota : (schedule.max_onsite_seats || null);
 
+    // ส่งค่าตามรูปแบบ ScheduleStats ที่ frontend คาดหวัง
     return {
-      total,
-      confirmed,
-      pending: total - confirmed,
-      onsite,
-      online,
-      // คำนวณที่นั่ง ONSITE ที่เหลือ (ถ้ามีการตั้งลิมิตไว้)
-      available_onsite_seats: effectiveOnsiteLimit !== null 
-        ? Math.max(0, effectiveOnsiteLimit - onsite) 
-        : null, 
+      schedule_id: scheduleId,
+      online_count: online,
+      onsite_count: onsite,
+      hybrid_count: total - online - onsite,
+      // มีการคำนวณ "ที่นั่งว่าง" ด้วยเพื่อแสดงให้ผู้ใช้เห็น
+      available_seats:
+        effectiveOnsiteLimit !== null
+          ? Math.max(0, effectiveOnsiteLimit - onsite)
+          : null,
     };
   }
 }

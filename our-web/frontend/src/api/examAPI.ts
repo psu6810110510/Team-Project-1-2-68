@@ -88,6 +88,12 @@ export const examAPI = {
     apiClient.post('/exams', data),
 
   /**
+   * ดูข้อสอบทั้งหมดสำหรับผู้ดูแลระบบ
+   */
+  getAllExams: () =>
+    apiClient.get('/exams'),
+
+  /**
    * ดูข้อสอบพร้อมคำถามและตัวเลือกทั้งหมด
    */
   getExam: (id: string) =>
@@ -192,6 +198,13 @@ export const examAPI = {
    */
   getStudentResults: (userId: string) =>
     apiClient.get(`/exams/student/results/${userId}`),
+
+  // ---------- ANALYTICS endpoints ----------
+  /**
+   * ดูสถิติการสอบและจุดอ่อนของหัวข้อ (สำหรับแอดมิน/ผู้สอน)
+   */
+  getExamAnalytics: (examId: string) =>
+    apiClient.get(`/exams/${examId}/analytics`),
 };
 
 export default examAPI;

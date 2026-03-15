@@ -19,8 +19,11 @@ const BookingForm = ({
 }: BookingFormProps) => {
   const [learningMode, setLearningMode] = useState<LearningMode | null>(null);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
-  const [scheduleStats, setScheduleStats] = useState<ScheduleStats | null>(null);
+  // mapping schedule id -> stats
+  const [statsMap, setStatsMap] = useState<Record<string, ScheduleStats>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
@@ -32,7 +35,27 @@ const BookingForm = ({
       try {
         setLoading(true);
         const response = await bookingAPI.getSchedulesByCourse(courseId);
-        setSchedules(response.data.data || []);
+        const list = response.data.data || [];
+        setSchedules(list);
+
+        // prefetch stats for each schedule so we can show availability immediately
+        const statsPromises = list.map((sch) =>
+          bookingAPI.getScheduleStats(sch.id).then((res) => res.data)
+        );
+        const allStats = await Promise.all(statsPromises);
+        const map: Record<string, ScheduleStats> = {};
+        allStats.forEach((s) => {
+          map[s.schedule_id] = s;
+        });
+        setStatsMap(map);
+
+        // หาเดือนเริ่มของคลาสแรกสุด (ถ้ามี)
+        if (list.length > 0) {
+          const firstDate = new Date(list[0].start_time);
+          if (!isNaN(firstDate.getTime())) {
+            setCurrentMonth(new Date(firstDate.getFullYear(), firstDate.getMonth(), 1));
+          }
+        }
       } catch (err: any) {
         setError('ไม่สามารถโหลดเวลาเรียนได้');
         console.error(err);
@@ -50,7 +73,8 @@ const BookingForm = ({
       if (!selectedSchedule) return;
       try {
         const statsResponse = await bookingAPI.getScheduleStats(selectedSchedule.id);
-        setScheduleStats(statsResponse.data);
+        // store in map as well
+        setStatsMap((prev) => ({ ...prev, [selectedSchedule.id]: statsResponse.data }));
       } catch (err: any) {
         console.error('Error fetching schedule stats:', err);
       }
@@ -62,6 +86,7 @@ const BookingForm = ({
   const handleLearningModeChange = (mode: LearningMode) => {
     setLearningMode(mode);
     setSelectedSchedule(null);
+    setSelectedDate(null);
     setError(null);
   };
 
@@ -145,11 +170,107 @@ const BookingForm = ({
     });
   };
 
-  const getAvailableSeats = () => {
-    if (!selectedSchedule || !scheduleStats) return 0;
-    if (!selectedSchedule.max_onsite_seats) return 999;
-    return Math.max(0, selectedSchedule.max_onsite_seats - scheduleStats.onsite_count);
+  // --- Calendar Helpers ---
+  const getDaysInMonth = (year: number, month: number) => {
+    return new Date(year, month + 1, 0).getDate();
   };
+
+  const getFirstDayOfMonth = (year: number, month: number) => {
+    return new Date(year, month, 1).getDay();
+  };
+
+  const prevMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+  };
+
+  const nextMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+  };
+
+  // แมปวันที่เข้ากับลิสต์ของคลาส
+  const getSchedulesForDate = (day: number) => {
+    return schedules.filter(sch => {
+      const schDate = new Date(sch.start_time);
+      return schDate.getDate() === day &&
+             schDate.getMonth() === currentMonth.getMonth() &&
+             schDate.getFullYear() === currentMonth.getFullYear();
+    });
+  };
+
+  const renderCalendar = () => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const daysInMonth = getDaysInMonth(year, month);
+    const firstDay = getFirstDayOfMonth(year, month); // 0 (Sun) - 6 (Sat)
+    
+    const days = [];
+    const weekDays = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+
+    // หัวตาราง (จันทร์ - อาทิตย์)
+    const headerCells = weekDays.map((day, idx) => (
+      <div key={`header-${idx}`} className="calendar-header-cell">
+        {day}
+      </div>
+    ));
+
+    // ช่องว่างก่อนเริ่มวันที่ 1
+    for (let i = 0; i < firstDay; i++) {
+      days.push(<div key={`empty-${i}`} className="calendar-cell empty"></div>);
+    }
+
+    // วันที่ในเดือนนั้นๆ
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateSchedules = getSchedulesForDate(d);
+      const hasClasses = dateSchedules.length > 0;
+      
+      const isSelected = selectedDate?.getDate() === d &&
+                         selectedDate?.getMonth() === month &&
+                         selectedDate?.getFullYear() === year;
+
+      days.push(
+        <div 
+          key={d} 
+          className={`calendar-cell ${hasClasses ? 'has-class' : ''} ${isSelected ? 'selected' : ''}`}
+          onClick={() => {
+            if (hasClasses) {
+              const newSelectedDate = new Date(year, month, d);
+              setSelectedDate(newSelectedDate);
+              // reset selected schedule when viewing new date
+              setSelectedSchedule(null);
+            }
+          }}
+        >
+          <span className="day-number">{d}</span>
+          {hasClasses && <span className="class-indicator">•</span>}
+        </div>
+      );
+    }
+
+    return (
+      <div className="calendar-container">
+        <div className="calendar-nav">
+          <button onClick={prevMonth} className="cal-nav-btn">{"<"}</button>
+          <span className="cal-month-title">
+            {currentMonth.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}
+          </span>
+          <button onClick={nextMonth} className="cal-nav-btn">{">"}</button>
+        </div>
+        <div className="calendar-grid">
+          {headerCells}
+          {days}
+        </div>
+      </div>
+    );
+  };
+
+  const filteredSchedules = selectedDate 
+    ? schedules.filter(sch => {
+        const schDate = new Date(sch.start_time);
+        return schDate.getDate() === selectedDate.getDate() &&
+               schDate.getMonth() === selectedDate.getMonth() &&
+               schDate.getFullYear() === selectedDate.getFullYear();
+      })
+    : [];
 
   return (
     <div className="booking-form">
@@ -198,57 +319,101 @@ const BookingForm = ({
       {/* Schedule Selection for ONSITE */}
       {learningMode === LearningMode.ONSITE && (
         <div className="booking-section">
-          <label className="section-label">เลือกเวลาเรียน</label>
+          <label className="section-label">📅 เลือกเวลาเรียน (ออนไซต์)</label>
           {loading ? (
             <div className="loading">กำลังโหลดเวลาเรียน...</div>
           ) : schedules.length === 0 ? (
             <div className="no-schedules">ไม่มีเวลาเรียนที่สามารถจองได้</div>
           ) : (
-            <div className="schedules-list">
-              {schedules.map((schedule) => {
-                const seats = getAvailableSeats();
-                return (
-                  <div
-                    key={schedule.id}
-                    className={`schedule-item ${
-                      selectedSchedule?.id === schedule.id ? 'selected' : ''
-                    }`}
-                    onClick={() => {
-                      if (seats > 0 || !schedule.max_onsite_seats) {
-                        setSelectedSchedule(schedule);
-                      }
-                    }}
-                  >
-                    <div className="schedule-info">
-                      <div className="schedule-date">
-                        📅 {formatDate(schedule.start_time)}
-                      </div>
-                      <div className="schedule-time">
-                        🕐 {new Date(schedule.start_time).toLocaleTimeString('th-TH', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}{' '}
-                        -{' '}
-                        {new Date(schedule.end_time).toLocaleTimeString('th-TH', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </div>
-                      {schedule.room_location && (
-                        <div className="schedule-location">
-                          📍 {schedule.room_location}
-                        </div>
-                      )}
-                      {schedule.max_onsite_seats && (
-                        <div className={`schedule-seats ${seats === 0 ? 'full' : ''}`}>
-                          {'🪑 ' + seats + ' seats available'}
-                        </div>
-                      )}
-                    </div>
+            <>
+              {/* ส่วนแสดงปฏิทิน */}
+              {renderCalendar()}
+
+              {selectedDate && (
+                <>
+                  <div style={{ marginTop: '20px', marginBottom: '12px', fontSize: '0.95rem', color: '#1e293b', fontWeight: 'bold' }}>
+                    ตารางเรียนวันที่ {formatDate(selectedDate.toISOString())}
                   </div>
-                );
-              })}
-            </div>
+                  <div className="schedules-list">
+                    {filteredSchedules.map((schedule) => {
+                  // use per-schedule stats if available
+                  const statsForThis = statsMap[schedule.id];
+                  const bookedSeats = statsForThis ? statsForThis.onsite_count : 0;
+                  const totalSeats = schedule.max_onsite_seats || 999;
+                  const availableSeats = Math.max(0, totalSeats - bookedSeats);
+                  const isFull = totalSeats > 0 && availableSeats === 0;
+                  
+                  return (
+                    <div
+                      key={schedule.id}
+                      className={`schedule-item ${
+                        selectedSchedule?.id === schedule.id ? 'selected' : ''
+                      } ${isFull ? 'disabled' : ''}`}
+                      onClick={() => {
+                        if (!isFull) {
+                          setSelectedSchedule(schedule);
+                        }
+                      }}
+                      style={{
+                        opacity: isFull ? 0.5 : 1,
+                        cursor: isFull ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      <div className="schedule-info">
+                        <div className="schedule-date">
+                          📅 {formatDate(schedule.start_time)}
+                        </div>
+                        <div className="schedule-time">
+                          🕐 {new Date(schedule.start_time).toLocaleTimeString('th-TH', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}{' '}
+                          -{' '}
+                          {new Date(schedule.end_time).toLocaleTimeString('th-TH', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </div>
+                        {schedule.room_location && (
+                          <div className="schedule-location">
+                            📍 {schedule.room_location}
+                          </div>
+                        )}
+                        
+                        {/* Seat Information */}
+                        <div style={{
+                          marginTop: '8px',
+                          padding: '8px 10px',
+                          backgroundColor: isFull ? '#fee2e2' : '#ecfdf5',
+                          borderRadius: '6px',
+                          fontSize: '0.9rem',
+                          fontWeight: '500',
+                          color: isFull ? '#991b1b' : '#065f46',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center'
+                        }}>
+                          <div>
+                            {isFull ? (
+                              <>❌ เต็มแล้ว</>
+                            ) : availableSeats < 5 ? (
+                              <>⚠️ เหลือเพียง {availableSeats} ที่</>
+                            ) : (
+                              <>✅ ว่าง {availableSeats} ที่</>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '0.85rem', opacity: 0.8 }}>
+                            {availableSeats}/{totalSeats}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              </>
+            )}
+            </>
           )}
         </div>
       )}

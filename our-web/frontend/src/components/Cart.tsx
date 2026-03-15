@@ -5,6 +5,7 @@ import Footer from './Footer';
 import '../styles/Cart.css';
 import qrImage from "../assets/QR.png";
 import { paymentAPI } from '../api/paymentAPI';
+import bookingAPI, { LearningMode } from '../api/bookingAPI';
 
 interface CartItem {
   id: string;
@@ -14,6 +15,8 @@ interface CartItem {
   thumbnail_url?: string;
   is_online?: boolean;
   is_onsite?: boolean;
+  selectedType?: 'online' | 'onsite';
+  schedule_id?: string;
 }
 
 type ModalStep = 'qr' | 'success';
@@ -92,6 +95,29 @@ export default function Cart() {
 
     try {
       setSubmitting(true);
+      
+      // 1. Create bookings (reserve seats) for onsite courses
+      // We do this before creating payment to ensure seats are available
+      for (const item of itemsToCheckout) {
+        if ((item.selectedType === 'onsite' || (!item.is_online && item.is_onsite)) && item.schedule_id) {
+          try {
+            await bookingAPI.createBooking({
+              user_id: user.id,
+              schedule_id: item.schedule_id,
+              learning_mode: LearningMode.ONSITE,
+              notes: 'จองผ่านระบบตะกร้าสินค้า (รอตรวจสอบชำระเงิน)',
+            });
+          } catch (err: any) {
+            console.error('Failed to create booking for', item.title, err);
+            const msg = err.response?.data?.message || 'รอบเวลาเรียนนี้อาจจะเต็ม หรือคุณได้จองไปแล้ว';
+            alert(`ไม่สามารถจองคอร์ส ${item.title} ได้: ${msg}`);
+            setSubmitting(false);
+            return; // Stop checkout process entirely if one fails
+          }
+        }
+      }
+
+      // 2. Create Payment Record
       const res = await paymentAPI.createPayment({
         user_id: user.id,
         user_name: user.full_name || user.email,

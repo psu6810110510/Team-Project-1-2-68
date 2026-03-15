@@ -17,6 +17,12 @@ export interface UsersResponse {
   offset: number;
 }
 
+export interface DashboardStats {
+  totalStudents: number;
+  totalTeachers: number;
+}
+
+// ✅ รวมทุก API ไว้ใน userAPI ก้อนเดียว
 export const userAPI = {
   getAllUsers: (limit = 100, offset = 0) =>
     apiClient.get<UsersResponse>(`/users?limit=${limit}&offset=${offset}`),
@@ -26,6 +32,9 @@ export const userAPI = {
 
   getUserById: (id: string) =>
     apiClient.get(`/users/${id}`),
+
+  getDashboardStats: () =>
+    apiClient.get<DashboardStats>('/users/dashboard/stats'),
 };
 
 export default userAPI;

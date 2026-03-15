@@ -27,7 +27,7 @@ export class Schedule {
   end_time: Date;
 
   @Column({ type: 'integer', nullable: true })
-  max_onsite_seats: number;
+  max_onsite_seats: number | null;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   room_location: string;

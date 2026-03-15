@@ -62,6 +62,10 @@ export const bookingAPI = {
   getBooking: (id: string) =>
     apiClient.get<Booking>(`/bookings/${id}`),
 
+  // Get all bookings (Admin)
+  getAllBookings: () =>
+    apiClient.get<{ data: any[]; total: number }>('/bookings'),
+
   // Get all bookings for a user
   getBookingsByUser: (userId: string) =>
     apiClient.get<{ data: Booking[]; total: number; user_id: string }>(`/bookings/user/${userId}`),

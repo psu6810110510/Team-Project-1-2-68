@@ -33,19 +33,6 @@ const AppDataSource = new DataSource({
   synchronize: false,
 });
 
-// Helper function to get next occurrence of a day (0 = Sunday, 1 = Monday, etc.)
-function getNextDay(from: Date, dayOfWeek: number): Date {
-  const result = new Date(from);
-  const current = result.getDay();
-  const daysAhead = dayOfWeek - current;
-  if (daysAhead <= 0) {
-    result.setDate(result.getDate() + daysAhead + 7);
-  } else {
-    result.setDate(result.getDate() + daysAhead);
-  }
-  return result;
-}
-
 async function seed() {
   try {
     await AppDataSource.initialize();
@@ -244,72 +231,103 @@ async function seed() {
       }
       console.log('✅ สร้างคอร์ส 5 รายการสำเร็จ');
 
-      // สร้าง Schedules สำหรับคอร์สที่เป็น Onsite
+      // ============================================
+      // 5. สร้าง Schedule ตัวอย่างสำหรับคอร์สที่เป็น onsite
+      // ============================================
       const scheduleRepository = AppDataSource.getRepository(Schedule);
-      
-      // ดึงคอร์ส NestJS ที่สร้างขึ้น
-      const nestjsCourse = await courseRepository.findOne({
-        where: { title: 'NestJS Backend Development' },
-      });
-      if (nestjsCourse) {
-        const today = new Date();
-        // สร้าง schedules สำหรับ Monday, Wednesday, Friday
-        const schedules = [
-          { day: 'Monday', dayOffset: getNextDay(today, 1) }, // Monday
-          { day: 'Wednesday', dayOffset: getNextDay(today, 3) }, // Wednesday  
-          { day: 'Friday', dayOffset: getNextDay(today, 5) }, // Friday
-        ];
+      // Clear existing schedules first to avoid duplicates
+      await scheduleRepository.query('DELETE FROM schedules');
 
-        for (const schedule of schedules) {
-          const startTime = new Date(schedule.dayOffset);
-          startTime.setHours(9, 0, 0, 0);
-          
-          const endTime = new Date(schedule.dayOffset);
-          endTime.setHours(12, 0, 0, 0);
+      // helper to create a Date for next week given weekday and time
+      const nextDate = (weekday: number, time: string) => {
+        const now = new Date();
+        const date = new Date(now);
+        // set to next occurrence of given weekday (0=Sunday)
+        const diff = (weekday + 7 - date.getDay()) % 7 || 7;
+        date.setDate(date.getDate() + diff);
+        const [h, m] = time.split(':').map((v) => parseInt(v, 10));
+        date.setHours(h, m, 0, 0);
+        return date;
+      };
 
-          const scheduleEntry = scheduleRepository.create({
-            course_id: nestjsCourse.id,
-            start_time: startTime,
-            end_time: endTime,
-            max_onsite_seats: 30,
-            room_location: 'Room 301, Building A',
+      // fetch onsite courses and seed a few schedules
+      const onsiteCourses = await courseRepository.find({ where: { is_onsite: true } });
+      for (const course of onsiteCourses) {
+        // create 3 upcoming schedules spaced one week apart
+        for (let i = 0; i < 3; i++) {
+          // pick first available day from course.onsite_days or default to Tuesday
+          const dayName = (course.onsite_days && course.onsite_days[0]) || 'Tuesday';
+          const dayMap: Record<string, number> = {
+            sunday: 0,
+            monday: 1,
+            tuesday: 2,
+            wednesday: 3,
+            thursday: 4,
+            friday: 5,
+            saturday: 6,
+          };
+          const weekday = dayMap[dayName.toLowerCase()] ?? 2;
+          const start = nextDate(weekday, course.onsite_time_start || '09:00');
+          const end = new Date(start);
+          const [endH, endM] = (course.onsite_time_end || '12:00').split(':').map(Number);
+          end.setHours(endH, endM, 0, 0);
+
+          const schedule = scheduleRepository.create({
+            course_id: course.id,
+            start_time: start,
+            end_time: end,
+            // repository.create accepts undefined for optional fields, so
+            // prefer undefined when there is no seat value instead of null
+            max_onsite_seats: course.onsite_seats ?? undefined,
+            room_location: 'อาคารเรียน 101',
           });
-          await scheduleRepository.save(scheduleEntry);
+          await scheduleRepository.save(schedule);
         }
-        console.log('✅ สร้าง Schedules สำหรับ NestJS Course');
       }
+      console.log('✅ สร้าง Schedule ตัวอย่างสำหรับคอร์ส onsite เสร็จ');
 
-      // ดึงคอร์ส Full Stack ที่สร้างขึ้น
-      const fullStackCourse = await courseRepository.findOne({
-        where: { title: 'Full Stack Web Development' },
-      });
-      if (fullStackCourse) {
-        const today = new Date();
-        // สร้าง schedules สำหรับ Tuesday, Thursday
-        const schedules = [
-          { day: 'Tuesday', dayOffset: getNextDay(today, 2) }, // Tuesday
-          { day: 'Thursday', dayOffset: getNextDay(today, 4) }, // Thursday
-        ];
+    // ดึงคอร์ส Full Stack ที่สร้างขึ้น
+    const fullStackCourse = await courseRepository.findOne({
+      where: { title: 'Full Stack Web Development' },
+    });
+    if (fullStackCourse) {
+      // Helper function to get next date for a specific weekday
+      const getNextDate = (weekday: number) => {
+        const now = new Date();
+        const date = new Date(now);
+        const diff = (weekday + 7 - date.getDay()) % 7 || 7;
+        date.setDate(date.getDate() + diff);
+        return date;
+      };
 
-        for (const schedule of schedules) {
-          const startTime = new Date(schedule.dayOffset);
-          startTime.setHours(14, 0, 0, 0);
-          
-          const endTime = new Date(schedule.dayOffset);
-          endTime.setHours(17, 0, 0, 0);
+      // สร้าง schedules สำหรับ Tuesday (2), Thursday (4)
+      const schedules = [
+        { day: 'Tuesday', weekday: 2 },
+        { day: 'Thursday', weekday: 4 },
+      ];
 
-          const scheduleEntry = scheduleRepository.create({
-            course_id: fullStackCourse.id,
-            start_time: startTime,
-            end_time: endTime,
-            max_onsite_seats: 25,
-            room_location: 'Room 202, Building B',
-          });
-          await scheduleRepository.save(scheduleEntry);
-        }
-        console.log('✅ สร้าง Schedules สำหรับ Full Stack Course');
+      for (const schedule of schedules) {
+        const dayDate = getNextDate(schedule.weekday);
+        
+        const startTime = new Date(dayDate);
+        startTime.setHours(14, 0, 0, 0);
+        
+        const endTime = new Date(dayDate);
+        endTime.setHours(17, 0, 0, 0);
+
+        const scheduleEntry = scheduleRepository.create({
+          course_id: fullStackCourse.id,
+          start_time: startTime,
+          end_time: endTime,
+          max_onsite_seats: 25,
+          room_location: 'Room 202, Building B',
+        });
+        await scheduleRepository.save(scheduleEntry);
       }
-    
+      console.log('✅ สร้าง Schedules สำหรับ Full Stack Course');
+    }
+
+    console.log('\n🎉 Seed เสร็จสมบูรณ์!\n');
     console.log('📝 บัญชีที่สร้างขึ้น:');
     console.log('┌─────────────────────────────────────────────────────┐');
     console.log('│ Role      │ Email                    │ Password      │');

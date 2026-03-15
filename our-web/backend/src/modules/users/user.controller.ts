@@ -18,6 +18,12 @@ export class UserController {
     };
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('dashboard/stats')
+  async getDashboardStats() {
+    return await this.userService.getDashboardStats();
+  }
+
   @Get()
   async getAllUsers(
     @Query('limit') limit = 100,

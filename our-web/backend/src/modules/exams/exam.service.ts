@@ -121,21 +121,25 @@ export class ExamService {
     });
   }
 
+  // ✅ แก้ไข: ยุบรวม getAllExams() ที่ซ้ำซ้อนกันให้เหลือตัวเดียวที่สมบูรณ์
   async getAllExams(): Promise<any[]> {
+    // ใช้ relations เพื่อดึงข้อมูล Course มาด้วยเลยใน Query เดียว (มีประสิทธิภาพกว่า)
     const exams = await this.examRepo.find({
+      relations: ['course'],
       order: { created_at: 'DESC' },
     });
 
     const results = await Promise.all(
       exams.map(async (exam) => {
-        const course = await this.courseRepo.findOne({ where: { id: exam.course_id } });
         const questionCount = await this.questionRepo.count({ where: { exam_id: exam.id } });
         return {
           id: exam.id,
           title: exam.title,
           type: exam.type,
           total_score: exam.total_score,
-          course_title: course?.title || 'ไม่ระบุ',
+          course_id: exam.course_id,
+          course: exam.course, // ส่งข้อมูล Course ไปให้ Controller ด้วย
+          course_title: exam.course?.title || 'ไม่ระบุ',
           question_count: questionCount,
           created_at: exam.created_at,
         };
@@ -297,16 +301,29 @@ export class ExamService {
     let correct = 0;
     let wrong = 0;
     let earnedScore = 0;
+    const weakLessonIds = new Set<string>();
 
     for (const q of questions) {
       const answer = dto.answers.find((a) => a.question_id === q.id);
-      if (!answer) continue;
+      if (!answer) {
+        // If not answered, consider it wrong and track weak lesson
+        wrong++;
+        if (q.lesson_id) {
+          weakLessonIds.add(q.lesson_id);
+        }
+        continue;
+      }
+
       const choice = await this.choiceRepo.findOne({ where: { id: answer.choice_id, question_id: q.id } });
       if (choice?.is_correct) {
         correct++;
         earnedScore += q.score_points || 1;
       } else {
         wrong++;
+        // Track the lesson_id if answered wrong
+        if (q.lesson_id) {
+          weakLessonIds.add(q.lesson_id);
+        }
       }
     }
 
@@ -321,6 +338,7 @@ export class ExamService {
       correct_answers: correct,
       wrong_answers: wrong,
       time_spent_seconds: dto.time_spent_seconds,
+      weak_points_log: JSON.stringify(Array.from(weakLessonIds)),
       started_at: new Date(),
       completed_at: new Date(),
     });
@@ -360,6 +378,45 @@ export class ExamService {
       type: exam.type,
       total_score: exam.total_score,
       questions: questionsWithChoices,
+    };
+  }
+
+  // ---------- ANALYTICS ----------
+  async getExamAnalytics(examId: string) {
+    const results = await this.examResultRepo.find({
+      where: { exam_id: examId },
+    });
+
+    const lessonWrongCounts: Record<string, number> = {};
+    let totalAttempts = results.length;
+    let totalScoreAll = 0;
+
+    for (const result of results) {
+      totalScoreAll += result.total_score;
+      if (result.weak_points_log) {
+        try {
+          const weakLessons: string[] = JSON.parse(result.weak_points_log);
+          for (const lessonId of weakLessons) {
+            if (!lessonWrongCounts[lessonId]) {
+              lessonWrongCounts[lessonId] = 0;
+            }
+            lessonWrongCounts[lessonId]++;
+          }
+        } catch (e) {
+          // ignore parse error simply
+        }
+      }
+    }
+
+    const weakLessonsRanking = Object.entries(lessonWrongCounts)
+      .map(([lesson_id, wrong_count]) => ({ lesson_id, wrong_count }))
+      .sort((a, b) => b.wrong_count - a.wrong_count);
+
+    return {
+      exam_id: examId,
+      total_attempts: totalAttempts,
+      average_score: totalAttempts > 0 ? totalScoreAll / totalAttempts : 0,
+      weak_lessons_ranking: weakLessonsRanking,
     };
   }
 }
