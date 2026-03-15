@@ -70,14 +70,8 @@ export class Course {
   @Column({ type: 'int', nullable: true })
   onsite_seats: number;
 
-  @Column({ type: 'simple-array', nullable: true })
-  onsite_days: string[];
-
-  @Column({ type: 'time', nullable: true })
-  onsite_time_start: string;
-
-  @Column({ type: 'time', nullable: true })
-  onsite_time_end: string;
+  @Column({ type: 'jsonb', nullable: true })
+  onsite_schedule: Array<{ day: string; time_start: string; time_end: string }>;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   onsite_duration: string;

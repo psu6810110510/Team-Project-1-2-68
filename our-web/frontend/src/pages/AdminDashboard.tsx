@@ -1320,16 +1320,14 @@ export default function AdminDashboard() {
                           <div style={{ fontWeight: 'bold', color: '#0f172a' }}>{selectedCourse.onsite_seats} คน</div>
                         </div>
                       )}
-                      {selectedCourse.onsite_days && selectedCourse.onsite_days.length > 0 && (
-                        <div>
-                          <label style={{ fontSize: '0.8rem', color: '#78716c' }}>วันเรียน</label>
-                          <div style={{ fontWeight: 'bold', color: '#0f172a' }}>{selectedCourse.onsite_days.join(', ')}</div>
-                        </div>
-                      )}
-                      {selectedCourse.onsite_time_start && selectedCourse.onsite_time_end && (
-                        <div>
-                          <label style={{ fontSize: '0.8rem', color: '#78716c' }}>เวลาเรียน</label>
-                          <div style={{ fontWeight: 'bold', color: '#0f172a' }}>{selectedCourse.onsite_time_start} - {selectedCourse.onsite_time_end}</div>
+                      {selectedCourse.onsite_schedule && selectedCourse.onsite_schedule.length > 0 && (
+                        <div style={{ gridColumn: '1 / -1' }}>
+                          <label style={{ fontSize: '0.8rem', color: '#78716c' }}>วันและเวลาเรียนแต่ละสัปดาห์</label>
+                          <div style={{ fontWeight: 'bold', color: '#0f172a' }}>
+                            {selectedCourse.onsite_schedule.map((s: {day: string; time_start: string; time_end: string}, idx: number) => (
+                              <div key={idx}>• {s.day}: {s.time_start.slice(0, 5)} - {s.time_end.slice(0, 5)} น.</div>
+                            ))}
+                          </div>
                         </div>
                       )}
                       {selectedCourse.onsite_duration && (

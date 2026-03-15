@@ -174,9 +174,11 @@ async function seed() {
           tags: 'nestjs,backend,nodejs',
           is_onsite: true,
           onsite_seats: 30,
-          onsite_days: ['Monday', 'Wednesday', 'Friday'],
-          onsite_time_start: '09:00',
-          onsite_time_end: '12:00',
+          onsite_schedule: [
+            { day: 'Monday', time_start: '09:00', time_end: '12:00' },
+            { day: 'Wednesday', time_start: '09:00', time_end: '12:00' },
+            { day: 'Friday', time_start: '09:00', time_end: '12:00' }
+          ],
           onsite_duration: '6 weeks',
           is_online: true,
           online_expiry: '60 days',
@@ -213,9 +215,10 @@ async function seed() {
           tags: 'fullstack,react,nodejs,backend',
           is_onsite: true,
           onsite_seats: 25,
-          onsite_days: ['Tuesday', 'Thursday'],
-          onsite_time_start: '14:00',
-          onsite_time_end: '17:00',
+          onsite_schedule: [
+            { day: 'Tuesday', time_start: '14:00', time_end: '17:00' },
+            { day: 'Thursday', time_start: '14:00', time_end: '17:00' }
+          ],
           onsite_duration: '8 weeks',
           is_online: true,
           online_expiry: '365 days',
@@ -255,8 +258,8 @@ async function seed() {
       for (const course of onsiteCourses) {
         // create 3 upcoming schedules spaced one week apart
         for (let i = 0; i < 3; i++) {
-          // pick first available day from course.onsite_days or default to Tuesday
-          const dayName = (course.onsite_days && course.onsite_days[0]) || 'Tuesday';
+          // pick first available day from course.onsite_schedule or default to Tuesday
+          const dayName = (course.onsite_schedule && course.onsite_schedule[0]?.day) || 'Tuesday';
           const dayMap: Record<string, number> = {
             sunday: 0,
             monday: 1,
@@ -267,9 +270,12 @@ async function seed() {
             saturday: 6,
           };
           const weekday = dayMap[dayName.toLowerCase()] ?? 2;
-          const start = nextDate(weekday, course.onsite_time_start || '09:00');
+          const timeStart = (course.onsite_schedule && course.onsite_schedule[0]?.time_start) || '09:00';
+          const timeEnd = (course.onsite_schedule && course.onsite_schedule[0]?.time_end) || '12:00';
+          
+          const start = nextDate(weekday, timeStart);
           const end = new Date(start);
-          const [endH, endM] = (course.onsite_time_end || '12:00').split(':').map(Number);
+          const [endH, endM] = timeEnd.split(':').map(Number);
           end.setHours(endH, endM, 0, 0);
 
           const schedule = scheduleRepository.create({
