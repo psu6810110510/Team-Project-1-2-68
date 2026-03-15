@@ -615,6 +615,29 @@
   background: #dbeafe;
 }
 
+.calendar-cell.has-available-seats {
+  background: #dcfce7; /* Light green */
+  color: #166534;
+  font-weight: 500;
+  border-color: #bbf7d0;
+}
+
+.calendar-cell.has-available-seats:hover {
+  background: #bbf7d0;
+}
+
+.calendar-cell.fully-booked {
+  background: #fee2e2; /* Light red */
+  color: #991b1b;
+  font-weight: 500;
+  border-color: #fecaca;
+  opacity: 0.8;
+}
+
+.calendar-cell.fully-booked:hover {
+  background: #fecaca;
+}
+
 .calendar-cell.selected {
   background: #2563eb;
   color: white;
