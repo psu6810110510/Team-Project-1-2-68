@@ -704,11 +704,17 @@ export default function StudentProfile() {
                 <div className="section-header" style={{ marginTop: '3rem' }}>
                   <span className="section-title-text">สถิติการเรียนรู้</span>
                 </div>
-                <div className="stats-grid">
-                  <div className="stat-box"><CheckSquare size={32} color="#64748b" style={{ margin: '0 auto' }} /><div className="stat-number">{actualStats.lessonsCount}</div><div className="stat-label">บทเรียนที่ผ่านแล้ว</div></div>
-                  <div className="stat-box"><Calendar size={32} color="#64748b" style={{ margin: '0 auto' }} /><div className="stat-number">{realMyCourses.length}</div><div className="stat-label">คอร์สที่เรียน</div></div>
-                  <div className="stat-box"><Award size={32} color="#64748b" style={{ margin: '0 auto' }} /><div className="stat-number">{actualStats.certificatesCount}</div><div className="stat-label">ใบประกาศ</div></div>
-                </div>
+                {actualStats.lessonsCount === 0 && realMyCourses.length === 0 && actualStats.certificatesCount === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '2rem', background: '#f8fafc', borderRadius: '12px', color: '#64748b', border: '1px dashed #cbd5e1' }}>
+                    ไม่มีข้อมูลเพียงพอ
+                  </div>
+                ) : (
+                  <div className="stats-grid">
+                    <div className="stat-box"><CheckSquare size={32} color="#64748b" style={{ margin: '0 auto' }} /><div className="stat-number">{actualStats.lessonsCount || 0}</div><div className="stat-label">บทเรียนที่ผ่านแล้ว</div></div>
+                    <div className="stat-box"><Calendar size={32} color="#64748b" style={{ margin: '0 auto' }} /><div className="stat-number">{realMyCourses.length || 0}</div><div className="stat-label">คอร์สที่เรียน</div></div>
+                    <div className="stat-box"><Award size={32} color="#64748b" style={{ margin: '0 auto' }} /><div className="stat-number">{actualStats.certificatesCount || 0}</div><div className="stat-label">ใบประกาศ</div></div>
+                  </div>
+                )}
               </>
             )}
 
