@@ -5,6 +5,12 @@ import { ScheduleService } from './schedule.service';
 export class ScheduleController {
   constructor(private scheduleService: ScheduleService) {}
 
+  @Get()
+  async getAllSchedules() {
+    const schedules = await this.scheduleService.getAllSchedules();
+    return { data: schedules };
+  }
+
   @Get('course/:courseId')
   async getByCourse(@Param('courseId') courseId: string) {
     const schedules = await this.scheduleService.getSchedulesByCourse(courseId);

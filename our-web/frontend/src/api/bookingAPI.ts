@@ -94,6 +94,10 @@ export const bookingAPI = {
   // Get available schedules for a course
   getSchedulesByCourse: (courseId: string) =>
     apiClient.get<{ data: Schedule[] }>(`/schedules/course/${courseId}`),
+
+  // Get all schedules (Admin)
+  getAllSchedules: () =>
+    apiClient.get<{ data: Schedule[] }>('/schedules'),
 };
 
 export default bookingAPI;

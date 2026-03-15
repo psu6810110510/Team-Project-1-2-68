@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Search, User, Settings, CreditCard, BookOpen, FileText, Home, Users,
-  ArrowUp, MonitorPlay, LogOut, ChevronLeft, Video, File
+  ArrowUp, MonitorPlay, LogOut, ChevronLeft, Video, File, Calendar, Clock, MapPin
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -59,6 +59,10 @@ export default function AdminDashboard() {
   const [selectedBookingDetails, setSelectedBookingDetails] = useState<any>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
 
+  // Schedules (Calendar)
+  const [allSchedules, setAllSchedules] = useState<any[]>([]);
+  const [loadingSchedules, setLoadingSchedules] = useState(false);
+
   // Dashboard Stats
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
@@ -112,6 +116,18 @@ export default function AdminDashboard() {
     }
   };
 
+  const loadSchedules = async () => {
+    setLoadingSchedules(true);
+    try {
+      const res = await bookingAPI.getAllSchedules();
+      setAllSchedules(res.data.data);
+    } catch (error) {
+      console.error('Error loading schedules:', error);
+    } finally {
+      setLoadingSchedules(false);
+    }
+  };
+
   const loadExams = async () => {
     setLoadingExams(true);
     try {
@@ -144,7 +160,8 @@ export default function AdminDashboard() {
         refreshCourses(),
         loadPayments(),
         loadBookings(),
-        fetchDashboardStats()
+        fetchDashboardStats(),
+        loadSchedules()
       ]);
       try {
         const [teachersRes, studentsRes] = await Promise.all([
@@ -373,6 +390,9 @@ export default function AdminDashboard() {
               <li onClick={() => { setActiveMenu('bookings'); loadBookings(); }} style={{ ...sidebarItemStyle, background: activeMenu === 'bookings' ? '#2c5282' : 'transparent', borderLeft: activeMenu === 'bookings' ? '4px solid #60a5fa' : '4px solid transparent' }}>
                 <BookOpen size={20} /> รายการจองออฟไลน์
               </li>
+              <li onClick={() => { setActiveMenu('calendar'); loadSchedules(); }} style={{ ...sidebarItemStyle, background: activeMenu === 'calendar' ? '#2c5282' : 'transparent', borderLeft: activeMenu === 'calendar' ? '4px solid #60a5fa' : '4px solid transparent' }}>
+                <Calendar size={20} /> ปฏิทินรอบเรียน
+              </li>
               <li onClick={() => { setActiveMenu('finance'); loadPayments(); }} style={{ ...sidebarItemStyle, background: activeMenu === 'finance' ? '#2c5282' : 'transparent', borderLeft: activeMenu === 'finance' ? '4px solid #60a5fa' : '4px solid transparent' }}>
                 <CreditCard size={20} /> การเงินและคำสั่งซื้อ
               </li>
@@ -588,6 +608,97 @@ export default function AdminDashboard() {
               </>
             )}
 
+            {/* ==========================================
+                CALENDAR MENU (Global Schedule)
+                ========================================== */}
+            {activeMenu === 'calendar' && (
+              <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start', padding: '30px', width: '100%', minHeight: '500px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: '30px', alignItems: 'center' }}>
+                  <h3 style={{ fontSize: '1.6rem', color: '#0f172a', margin: 0, fontWeight: '800', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ background: '#e0f2fe', padding: '10px', borderRadius: '12px', display: 'flex' }}>
+                      <Calendar size={28} color="#0284c7" />
+                    </div>
+                    ปฏิทินรอบเรียนทั้งหมด
+                  </h3>
+                  <div style={{ display: 'flex', gap: '15px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: '#64748b', background: '#f8fafc', padding: '6px 15px', borderRadius: '20px', border: '1px solid #e2e8f0' }}>
+                      <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#d97706' }}></span> Onsite
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: '#64748b', background: '#f8fafc', padding: '6px 15px', borderRadius: '20px', border: '1px solid #e2e8f0' }}>
+                      <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#2563eb' }}></span> Online
+                    </div>
+                  </div>
+                </div>
+                
+                {loadingSchedules ? (
+                  <div style={{ padding: '60px', textAlign: 'center', width: '100%', color: '#64748b', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+                    <div className="loader" style={{ width: '40px', height: '40px', border: '4px solid #f3f3f3', borderTop: '4px solid #3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                    <span>กำลังโหลดข้อมูลปฏิทิน...</span>
+                  </div>
+                ) : allSchedules.length === 0 ? (
+                  <div style={{ padding: '60px', textAlign: 'center', width: '100%', color: '#94a3b8', background: '#f8fafc', borderRadius: '16px', border: '2px dashed #e2e8f0' }}>
+                    <Calendar size={48} style={{ margin: '0 auto 15px auto', opacity: 0.5 }} />
+                    <p style={{ fontSize: '1.1rem', margin: 0 }}>ไม่มีรอบเรียนในระบบ</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '25px', width: '100%' }}>
+                    {allSchedules.map((schedule, idx) => {
+                      const startDate = new Date(schedule.start_time);
+                      const endDate = new Date(schedule.end_time);
+                      const dayStr = startDate.toLocaleDateString('th-TH', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+                      const timeStr = `${startDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} - ${endDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}`;
+                      const isOnsite = schedule.course?.learning_mode === 'ONSITE' || schedule.course?.is_onsite || schedule.room_location;
+                      
+                      return (
+                        <div key={schedule.id || idx} style={{ 
+                          background: 'white', 
+                          borderRadius: '20px', 
+                          padding: '25px', 
+                          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025)', 
+                          border: '1px solid #f1f5f9', 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          gap: '15px', 
+                          transition: 'all 0.3s ease', 
+                          cursor: 'pointer',
+                          position: 'relative',
+                          overflow: 'hidden'
+                        }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025)'; }}>
+                          
+                          <div style={{ position: 'absolute', top: 0, left: 0, width: '6px', height: '100%', background: isOnsite ? '#f59e0b' : '#3b82f6' }}></div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ background: isOnsite ? '#fffbeb' : '#eff6ff', color: isOnsite ? '#b45309' : '#1d4ed8', padding: '8px 14px', borderRadius: '10px', fontWeight: 'bold', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <Calendar size={16} />
+                              {dayStr}
+                            </div>
+                            <span style={{ background: isOnsite ? '#fef3c7' : '#dbeafe', color: isOnsite ? '#d97706' : '#2563eb', padding: '6px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                              {isOnsite ? 'Onsite' : 'Online'}
+                            </span>
+                          </div>
+                          
+                          <div style={{ flex: 1 }}>
+                            <h4 style={{ margin: '0 0 15px 0', fontSize: '1.2rem', color: '#0f172a', fontWeight: '800', lineHeight: '1.4' }}>{schedule.course?.title || 'ไม่มีชื่อคอร์ส'}</h4>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#475569', fontSize: '0.95rem', background: '#f8fafc', padding: '10px', borderRadius: '10px' }}>
+                                <Clock size={18} color="#64748b" />
+                                <span style={{ fontWeight: '500' }}>{timeStr}</span>
+                              </div>
+                              {schedule.room_location && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#475569', fontSize: '0.95rem', background: '#f8fafc', padding: '10px', borderRadius: '10px' }}>
+                                  <MapPin size={18} color="#ef4444" />
+                                  <span style={{ fontWeight: '500' }}>{schedule.room_location}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* ==========================================
               COURSES MENU (คำขอสร้างคอร์ส / อนุมัติขาย)
