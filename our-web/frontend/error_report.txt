@@ -2,6 +2,47 @@
   There are types at 'd:/Team-Project-1-2-68/our-web/frontend/node_modules/react-router/dist/development/dom-export.d.mts', but this result could not be resolved under your current 'moduleResolution' setting. Consider updating to 'node16', 'nodenext', or 'bundler'.
 [index.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
 [instrumentation--6Pioq_G.d.ts] Error at line 413, char 5: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+[Area.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[Bar.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[Brush.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[CartesianAxis.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[CartesianGrid.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[ErrorBar.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[Line.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[ReferenceArea.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[ReferenceDot.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[ReferenceLine.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[Scatter.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[generateCategoricalChart.d.ts] Error at line 1, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[Sankey.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[SunburstChart.d.ts] Error at line 1, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[Treemap.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[Customized.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[DefaultLegendContent.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[DefaultTooltipContent.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[Label.d.ts] Error at line 1, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[LabelList.d.ts] Error at line 1, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[Legend.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[ResponsiveContainer.d.ts] Error at line 1, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[Text.d.ts] Error at line 1, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[Tooltip.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[Layer.d.ts] Error at line 1, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[Surface.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[Funnel.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[Pie.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[PolarAngleAxis.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[PolarGrid.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[PolarRadiusAxis.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[Radar.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[RadialBar.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[Cross.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[Polygon.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[Rectangle.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[Sector.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[Symbols.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[Trapezoid.d.ts] Error at line 4, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[BarUtils.d.ts] Error at line 1, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+[examAPI.ts] Error at line 105, char 3: An object literal cannot have multiple properties with the same name.
 [App.tsx] Error at line 25, char 6: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
 [App.tsx] Error at line 26, char 8: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
 [App.tsx] Error at line 27, char 10: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
@@ -400,8 +441,6 @@
 [StudentProfile.tsx] Error at line 2, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
 [StudentProfile.tsx] Error at line 16, char 17: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
 [StudentProfile.tsx] Error at line 16, char 29: Property 'env' does not exist on type 'ImportMeta'.
-[StudentProfile.tsx] Error at line 978, char 32: Type '{ width: "100%"; height: "100%"; }' is not assignable to type 'Props & RefAttributes<HTMLDivElement>'.
-  Property 'children' is missing in type '{ width: "100%"; height: "100%"; }' but required in type 'Props'.
 [TeacherProfile.tsx] Error at line 1, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
 [main.tsx] Error at line 4, char 17: An import path can only end with a '.tsx' extension when 'allowImportingTsExtensions' is enabled.
 [main.tsx] Error at line 7, char 4: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
@@ -674,11 +713,29 @@
 [ExamManagement.tsx] Error at line 2, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
 [ExamManagement.tsx] Error at line 13, char 23: Cannot find module '../assets/logo.png' or its corresponding type declarations.
 [ExamManagement.tsx] Error at line 14, char 22: Cannot find module '../assets/name.png' or its corresponding type declarations.
-[ExamManagement.tsx] Error at line 827, char 23: Type '{ key: string; question: Question; index: number; onDelete: (questionId: string) => Promise<void>; onLoadChoices: (questionId: string) => Promise<void>; onCreateChoice: (questionId: string, shouldResetForm?: boolean) => Promise<...>; ... 4 more ...; examAPI: { ...; }; }' is not assignable to type 'QuestionItemProps'.
-  Property 'key' does not exist on type 'QuestionItemProps'.
 [TeacherDashboard.tsx] Error at line 2, char 8: Module '"d:/Team-Project-1-2-68/our-web/frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
 [TeacherDashboard.tsx] Error at line 18, char 17: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
 [TeacherDashboard.tsx] Error at line 18, char 29: Property 'env' does not exist on type 'ImportMeta'.
 [TeacherDashboard.tsx] Error at line 291, char 66: Type 'Set<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
-[TeacherDashboard.tsx] Error at line 522, char 68: Type 'Set<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
-Total errors found: 680
+[TeacherDashboard.tsx] Error at line 537, char 68: Type 'Set<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+[TeacherDashboard.tsx] Error at line 1611, char 44: Object literal may only specify known properties, and 'position' does not exist in type 'ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal'.
+[TeacherDashboard.tsx] Error at line 1616, char 40: Type '(e: any) => void' is not assignable to type 'ReactNode'.
+[TeacherDashboard.tsx] Error at line 1617, char 44: Object literal may only specify known properties, and 'position' does not exist in type 'ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal'.
+[TeacherDashboard.tsx] Error at line 1618, char 30: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+[TeacherDashboard.tsx] Error at line 1619, char 44: Object literal may only specify known properties, and 'position' does not exist in type 'ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal'.
+[TeacherDashboard.tsx] Error at line 1623, char 44: Object literal may only specify known properties, and 'position' does not exist in type 'ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal'.
+[TeacherDashboard.tsx] Error at line 1626, char 40: Type '(e: any) => void' is not assignable to type 'ReactNode'.
+[TeacherDashboard.tsx] Error at line 1627, char 44: Object literal may only specify known properties, and 'position' does not exist in type 'ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal'.
+[TeacherDashboard.tsx] Error at line 1628, char 30: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+[TeacherDashboard.tsx] Error at line 1629, char 44: Object literal may only specify known properties, and 'position' does not exist in type 'ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal'.
+[TeacherDashboard.tsx] Error at line 1761, char 44: Object literal may only specify known properties, and 'position' does not exist in type 'ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal'.
+[TeacherDashboard.tsx] Error at line 1766, char 40: Type '(e: any) => void' is not assignable to type 'ReactNode'.
+[TeacherDashboard.tsx] Error at line 1767, char 44: Object literal may only specify known properties, and 'position' does not exist in type 'ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal'.
+[TeacherDashboard.tsx] Error at line 1768, char 30: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+[TeacherDashboard.tsx] Error at line 1769, char 44: Object literal may only specify known properties, and 'position' does not exist in type 'ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal'.
+[TeacherDashboard.tsx] Error at line 1773, char 44: Object literal may only specify known properties, and 'position' does not exist in type 'ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal'.
+[TeacherDashboard.tsx] Error at line 1776, char 40: Type '(e: any) => void' is not assignable to type 'ReactNode'.
+[TeacherDashboard.tsx] Error at line 1777, char 44: Object literal may only specify known properties, and 'position' does not exist in type 'ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal'.
+[TeacherDashboard.tsx] Error at line 1778, char 30: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+[TeacherDashboard.tsx] Error at line 1779, char 44: Object literal may only specify known properties, and 'position' does not exist in type 'ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal'.
+Total errors found: 739
