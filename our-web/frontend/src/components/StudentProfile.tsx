@@ -195,11 +195,7 @@ export default function StudentProfile() {
                           completedUniqueTitles.add(subTitle);
                         }
                       });
-<<<<<<< HEAD
-                      
                       totalCompletedLessonsCount += completedUniqueTitles.size;
-=======
->>>>>>> 296d3e0da42e292410972ab49d614132544f87d2
 
                       progressPercent = totalUnique > 0 ? Math.floor((completedUniqueTitles.size / totalUnique) * 100) : 0;
                     }
