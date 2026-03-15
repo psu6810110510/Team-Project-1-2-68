@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import '../styles/LoginTheme.css';
 import '../styles/ProfileTheme.css';
-import { User, BookOpen, Heart, LogOut, Edit3, Camera, ChevronLeft, FileText, MonitorPlay, CheckSquare, Clock, Calendar, Award, X } from 'lucide-react';
+import { User, BookOpen, Heart, LogOut, Edit3, Camera, ChevronLeft, FileText, MonitorPlay, CheckSquare, Clock, Calendar, Award, X, Eye, EyeOff } from 'lucide-react';
 import Footer from './Footer';
 import { paymentAPI, type PaymentRecord } from '../api/paymentAPI';
 import { courseAPI, type Course as APICourse } from '../api/courseAPI';
@@ -20,6 +20,7 @@ export default function StudentProfile() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // --- 1. State ข้อมูลผู้ใช้ ---
+  const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const [userData, setUserData] = useState({
     firstName: 'กำลังโหลด...',
     lastName: '',
@@ -33,6 +34,8 @@ export default function StudentProfile() {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [oldPassword, setOldPassword] = useState('');
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   // --- 2. Real course data from confirmed payments ---
   const [realMyCourses, setRealMyCourses] = useState<Array<{
@@ -47,17 +50,19 @@ export default function StudentProfile() {
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [favoriteCourses, setFavoriteCourses] = useState<APICourse[]>([]);
   const [loadingFavorites, setLoadingFavorites] = useState(true);
-  
+
   // --- exam state ---
   const [courseExams, setCourseExams] = useState<Array<{ courseTitle: string; exams: Array<{ id: string; title: string; type: string; total_score: number }> }>>([]);
   const [loadingExams, setLoadingExams] = useState(false);
   const [activeExam, setActiveExam] = useState<null | {
     id: string; title: string; type: string; total_score: number; course_id?: string;
-    questions: Array<{ id: string; question_text: string; score_points: number; sequence_order?: number;
-      choices: Array<{ id: string; choice_label: string; choice_text: string }> }>;
+    questions: Array<{
+      id: string; question_text: string; score_points: number; sequence_order?: number;
+      choices: Array<{ id: string; choice_label: string; choice_text: string }>
+    }>;
   }>(null);
   const [examAnswers, setExamAnswers] = useState<Record<string, string>>({});
-  const [examResult, setExamResult] = useState<null | { 
+  const [examResult, setExamResult] = useState<null | {
     total_score: number; percentage: number; correct_answers: number; total_questions: number;
     weak_points_log?: string[];
     weak_lessons?: Array<{ id: string; name: string }>;
@@ -109,7 +114,7 @@ export default function StudentProfile() {
             const rawResults = resultsRes.data.data || [];
             if (rawResults.length > 0) {
               setPastExamResults(rawResults);
-              
+
               // ประมวลผลจุดอ่อน
               const weaknessCounts: Record<string, number> = {};
               rawResults.forEach((res: any) => {
@@ -158,7 +163,7 @@ export default function StudentProfile() {
               .map(async id => {
                 const c = courseMap[id];
                 const payment = confirmedPayments.find(p => p.course_ids.includes(id));
-                
+
                 // Fetch lessons to count total unique lessons
                 let progressPercent = 0;
                 try {
@@ -171,9 +176,9 @@ export default function StudentProfile() {
                       const subTitle = parts.length > 1 ? parts.slice(1).join(' - ') : l.topic_name;
                       uniqueLessonTitles.add(subTitle);
                     });
-                    
+
                     const totalUnique = uniqueLessonTitles.size;
-                    
+
                     const savedProgress = localStorage.getItem(`progress_${userObj.id}_${id}`);
                     if (savedProgress) {
                       const completedIds = JSON.parse(savedProgress);
@@ -186,7 +191,7 @@ export default function StudentProfile() {
                           completedUniqueTitles.add(subTitle);
                         }
                       });
-                      
+
                       progressPercent = totalUnique > 0 ? Math.floor((completedUniqueTitles.size / totalUnique) * 100) : 0;
                     }
                   }
@@ -205,14 +210,14 @@ export default function StudentProfile() {
                   } else if (expiryStr.includes('year') || expiryStr.includes('ปี')) {
                     expiryDays = (parseInt(expiryStr) || 0) * 365;
                   }
-                  
+
                   if (expiryDays > 0) {
                     const paymentDate = new Date(payment.created_at);
                     const expiryDate = new Date(paymentDate.getTime() + expiryDays * 24 * 60 * 60 * 1000);
                     const now = new Date();
                     const diffTime = expiryDate.getTime() - now.getTime();
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    
+
                     if (diffDays > 0) {
                       formattedExpiry = `ใช้งานได้อีก ${diffDays} วัน`;
                     } else {
@@ -243,7 +248,7 @@ export default function StudentProfile() {
           // กรองพวกรอตรวจสอบ (PAYMENT_SUBMITTED)
           const pendingPayments = allPayments.filter(p => p.status === 'PAYMENT_SUBMITTED');
           const pendingCourseIds = Array.from(new Set(pendingPayments.flatMap(p => p.course_ids)));
-          
+
           const pendingCourseDetails = await Promise.all(
             pendingCourseIds.map(id => courseAPI.getCourseById(id).then(r => r.data).catch(() => null))
           );
@@ -497,7 +502,7 @@ export default function StudentProfile() {
         <div className="profile-container">
           <aside className="profile-sidebar">
             <div style={{ position: 'relative', display: 'inline-block', marginBottom: '1rem' }}>
-              <img src={userData.image} alt="Profile" className="sidebar-avatar" style={{ objectFit: 'cover' }} />
+              <img src={userData.image} alt="Profile" className="sidebar-avatar" style={{ objectFit: 'cover', cursor: 'pointer' }} onClick={() => setExpandedImage(userData.image)} />
               <div
                 onClick={handleCameraClick}
                 style={{
@@ -606,8 +611,8 @@ export default function StudentProfile() {
                                   <span>ยอดเงิน: ฿{course.amount.toLocaleString()}</span>
                                 </div>
                               </div>
-                              <div style={{ 
-                                background: '#fef3c7', color: '#d97706', padding: '6px 14px', 
+                              <div style={{
+                                background: '#fef3c7', color: '#d97706', padding: '6px 14px',
                                 borderRadius: '20px', fontSize: '0.82rem', fontWeight: 'bold',
                                 display: 'flex', alignItems: 'center', gap: '6px'
                               }}>
@@ -759,10 +764,10 @@ export default function StudentProfile() {
                     {favoriteCourses.map((course) => (
                       <div key={course.id} className="fav-card" onClick={() => navigate(`/courses/${course.id}`)} style={{ cursor: 'pointer' }}>
                         <div className="fav-card-heart"><Heart size={18} fill="#ef4444" color="#ef4444" /></div>
-                        <img 
-                          src={course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=300&q=80'} 
-                          alt={course.title} 
-                          className="fav-card-img" 
+                        <img
+                          src={course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=300&q=80'}
+                          alt={course.title}
+                          className="fav-card-img"
                         />
                         <h3 className="fav-card-title">{course.title}</h3>
                         <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.5rem' }}>
@@ -798,7 +803,7 @@ export default function StudentProfile() {
                           <h3 style={{ fontSize: '1.8rem', fontWeight: 'bold', color: examResult.percentage >= 60 ? '#16a34a' : '#dc2626', marginBottom: '0.5rem' }}>{examResult.percentage.toFixed(1)}%</h3>
                           <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>คะแนน {examResult.total_score} / {activeExam.total_score} &nbsp;|&nbsp; ถูก {examResult.correct_answers} / {examResult.total_questions} ข้อ</p>
                           <p style={{ fontSize: '1.1rem', color: examResult.percentage >= 60 ? '#15803d' : '#b91c1c', fontWeight: '600', marginBottom: '2rem' }}>{examResult.percentage >= 60 ? 'ผ่านเกณฑ์ ✅' : 'ไม่ผ่านเกณฑ์ ❌ (ต้องได้ 60% ขึ้นไป)'}</p>
-                          
+
                           {/* 💡 แสดงการวิเคราะห์จุดอ่อน (Weak Points) */}
                           {examResult.weak_lessons && examResult.weak_lessons.length > 0 && (
                             <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', textAlign: 'left' }}>
@@ -808,15 +813,15 @@ export default function StudentProfile() {
                               <p style={{ fontSize: '0.9rem', color: '#b45309', marginBottom: '1rem' }}>มีบางหัวข้อที่คุณอาจยังไม่ค่อยเข้าใจ ลองกลับไปทบทวนบทเรียนเหล่านี้ดูนะ:</p>
                               <ul style={{ listStyleType: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                 {examResult.weak_lessons.map((lesson, idx) => (
-                                  <li key={idx} style={{ 
-                                    background: 'white', padding: '10px 14px', borderRadius: '8px', border: '1px solid #fde68a', 
+                                  <li key={idx} style={{
+                                    background: 'white', padding: '10px 14px', borderRadius: '8px', border: '1px solid #fde68a',
                                     fontSize: '0.95rem', color: '#78350f', fontWeight: '500', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px'
                                   }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                       <span style={{ color: '#f59e0b', fontSize: '1.2rem' }}>•</span>
                                       {lesson.name}
                                     </div>
-                                    <button 
+                                    <button
                                       onClick={() => navigate(`/courses/${activeExam.course_id}`)}
                                       style={{ padding: '6px 12px', background: '#fef3c7', color: '#b45309', border: '1px solid #fcd34d', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer', transition: 'background 0.2s' }}
                                       onMouseEnter={(e) => e.currentTarget.style.background = '#fde68a'}
@@ -863,9 +868,9 @@ export default function StudentProfile() {
                                 try {
                                   const answers = Object.entries(examAnswers).map(([question_id, choice_id]) => ({ question_id, choice_id }));
                                   const res = await examAPI.submitExam(activeExam.id, { user_id: userObj.id, answers, time_spent_seconds: spent });
-                                  
+
                                   const resultData = res.data;
-                                  
+
                                   // ดึงชื่อบทเรียน (Topic Name) ถ้ามี lesson_id ที่ผิด
                                   if (resultData.weak_points_log && resultData.weak_points_log.length > 0) {
                                     try {
@@ -952,7 +957,7 @@ export default function StudentProfile() {
                       <div className="section-header" style={{ marginBottom: '1.5rem' }}>
                         <span className="section-title-text">📊 วิเคราะห์จุดอ่อนที่ต้องทบทวนพิเศษ</span>
                       </div>
-                      
+
                       {loadingAnalytics ? (
                         <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>กำลังวิเคราะห์ข้อมูล...</div>
                       ) : pastExamResults.length === 0 ? (
@@ -965,7 +970,7 @@ export default function StudentProfile() {
                         </div>
                       ) : (
                         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) minmax(300px, 1fr)', gap: '20px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '2rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' }}>
-                          
+
                           {/* 1. Radar Chart ฝั่งซ้าย */}
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                             <h4 style={{ fontSize: '1.05rem', fontWeight: 'bold', color: '#0f172a', marginBottom: '10px' }}>การกระจายของจุดอ่อน</h4>
@@ -974,7 +979,7 @@ export default function StudentProfile() {
                                 <RadarChart cx="50%" cy="50%" outerRadius="80%" data={weaknessAnalytics}>
                                   <PolarGrid />
                                   <PolarAngleAxis dataKey="subject" tick={{ fill: '#475569', fontSize: 13 }} />
-                                  <PolarRadiusAxis  angle={30} domain={[0, 'dataMax']} tick={false} />
+                                  <PolarRadiusAxis angle={30} domain={[0, 'dataMax']} tick={false} />
                                   <Radar name="จำนวนครั้งที่ผิด" dataKey="A" stroke="#ef4444" fill="#fca5a5" fillOpacity={0.6} />
                                   <RechartsTooltip />
                                 </RadarChart>
@@ -985,18 +990,18 @@ export default function StudentProfile() {
                           {/* 2. List การจัดอันดับฝั่งขวา */}
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                             <h4 style={{ fontSize: '1.05rem', fontWeight: 'bold', color: '#0f172a', marginBottom: '5px' }}>เรื่องที่มักจะตอบผิดบ่อย</h4>
-                            
+
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                               {weaknessAnalytics.map((w, index) => (
-                                <div key={index} style={{ 
+                                <div key={index} style={{
                                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                   background: index < 2 ? '#fef2f2' : '#f8fafc',
                                   border: `1px solid ${index < 2 ? '#fecaca' : '#e2e8f0'}`,
                                   padding: '12px 16px', borderRadius: '10px'
                                 }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    <div style={{ 
-                                      width: '28px', height: '28px', borderRadius: '50%', 
+                                    <div style={{
+                                      width: '28px', height: '28px', borderRadius: '50%',
                                       background: index === 0 ? '#ef4444' : index === 1 ? '#f87171' : '#cbd5e1',
                                       color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
                                       fontWeight: 'bold', fontSize: '0.9rem'
@@ -1007,8 +1012,8 @@ export default function StudentProfile() {
                                       {w.subject}
                                     </span>
                                   </div>
-                                  <span style={{ 
-                                    background: 'white', padding: '4px 10px', borderRadius: '20px', 
+                                  <span style={{
+                                    background: 'white', padding: '4px 10px', borderRadius: '20px',
                                     fontSize: '0.85rem', fontWeight: 'bold', color: '#475569', border: '1px solid #e2e8f0'
                                   }}>
                                     ผิดไป {w.A} ครั้ง
@@ -1143,6 +1148,28 @@ export default function StudentProfile() {
       {/* ✅ เรียกใช้ Component Footer ชิ้นเดียว เพื่อไม่ให้ซ้อนกัน */}
       <Footer />
 
+      {/* --- Modal Popup สำหรับดูรูปโปรไฟล์ขนาดเต็ม --- */}
+      {expandedImage && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 9999,
+          display: 'flex', justifyContent: 'center', alignItems: 'center'
+        }} onClick={() => setExpandedImage(null)}>
+          <button style={{
+            position: 'absolute', top: '20px', right: '30px', background: 'none',
+            border: 'none', color: 'white', cursor: 'pointer', padding: '10px'
+          }} onClick={() => setExpandedImage(null)}>
+            <X size={40} />
+          </button>
+          <img
+            src={expandedImage}
+            alt="Expanded Profile"
+            style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'cover', borderRadius: '50%', aspectRatio: '1/1' }}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
       {/* --- Modal Popup สำหรับแก้ไขข้อมูล --- */}
       {editingField && (
         <div style={{
@@ -1158,11 +1185,23 @@ export default function StudentProfile() {
             <button onClick={closeModal} style={{ position: 'absolute', top: '15px', right: '15px', background: 'none', border: 'none', cursor: 'pointer', padding: '5px', display: 'flex' }}><X size={20} color="#94a3b8" /></button>
             <h3 style={{ marginBottom: '1.2rem', textAlign: 'center', fontSize: '1.1rem', color: '#0f172a', fontWeight: 'bold' }}>{getModalTitle()}</h3>
             {editingField === 'password' && (
-              <input type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} placeholder="กรอกรหัสผ่านเดิม..."
-                style={{ width: '100%', padding: '10px 15px', borderRadius: '6px', border: '1px solid #cbd5e1', marginBottom: '1rem', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box', backgroundColor: '#ffffff', color: '#334155' }} />
+              <div style={{ position: 'relative', marginBottom: '1rem' }}>
+                <input type={showOldPassword ? 'text' : 'password'} value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} placeholder="กรอกรหัสผ่านเดิม..."
+                  style={{ width: '100%', padding: '10px 40px 10px 15px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box', backgroundColor: '#ffffff', color: '#334155' }} />
+                <button type="button" onClick={() => setShowOldPassword(!showOldPassword)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: '0', display: 'flex', color: '#94a3b8' }}>
+                  {showOldPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             )}
-            <input type={editingField === 'password' ? 'password' : 'text'} value={editValue} onChange={(e) => setEditValue(e.target.value)} placeholder={editingField === 'password' ? "กรอกรหัสผ่านใหม่..." : `กรอก${getModalTitle().replace('เปลี่ยน', '')}...`}
-              style={{ width: '100%', padding: '10px 15px', borderRadius: '6px', border: '1px solid #cbd5e1', marginBottom: '1.5rem', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box', backgroundColor: '#ffffff', color: '#334155' }} />
+            <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
+              <input type={editingField === 'password' && !showNewPassword ? 'password' : 'text'} value={editValue} onChange={(e) => setEditValue(e.target.value)} placeholder={editingField === 'password' ? "กรอกรหัสผ่านใหม่..." : `กรอก${getModalTitle().replace('เปลี่ยน', '')}...`}
+                style={{ width: '100%', padding: '10px 40px 10px 15px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box', backgroundColor: '#ffffff', color: '#334155' }} />
+              {editingField === 'password' && (
+                <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: '0', display: 'flex', color: '#94a3b8' }}>
+                  {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              )}
+            </div>
             <button onClick={handleSaveEdit} style={{ width: '100%', padding: '10px', fontSize: '1rem', backgroundColor: '#0284c7', color: '#ffffff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '500' }}>บันทึก</button>
           </div>
         </div>

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { GraduationCap, Award, BookOpen, Mail, Phone } from 'lucide-react';
+import { GraduationCap, Award, BookOpen, Mail, Phone, X } from 'lucide-react';
 import Header from './Header';
 import Footer from './Footer';
 import '../styles/TeacherProfile.css';
@@ -21,7 +20,7 @@ interface Teacher {
 const TeacherProfile: React.FC = () => {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
   // Mock data สำหรับ demo (ถ้า API ยังไม่พร้อม)
   const mockTeachers: Teacher[] = [
@@ -113,6 +112,8 @@ const TeacherProfile: React.FC = () => {
                       src={teacher.profileImage} 
                       alt={`${teacher.name}'s profile`}
                       className="teacher-avatar"
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => setExpandedImage(teacher.profileImage!)}
                     />
                   ) : (
                     <div className="teacher-avatar-placeholder">
@@ -196,6 +197,28 @@ const TeacherProfile: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* --- Modal Popup สำหรับดูรูปโปรไฟล์ขนาดเต็ม --- */}
+      {expandedImage && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 9999,
+          display: 'flex', justifyContent: 'center', alignItems: 'center'
+        }} onClick={() => setExpandedImage(null)}>
+          <button style={{
+            position: 'absolute', top: '20px', right: '30px', background: 'none',
+            border: 'none', color: 'white', cursor: 'pointer', padding: '10px'
+          }} onClick={() => setExpandedImage(null)}>
+            <X size={40} />
+          </button>
+          <img 
+            src={expandedImage} 
+            alt="Expanded Profile" 
+            style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'cover', borderRadius: '50%', aspectRatio: '1/1' }} 
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
 
       <Footer />
     </div>

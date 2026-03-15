@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 // import { authAPI } from '../api/authAPI'; // ถ้าไม่ได้ใช้ ลบออกได้ครับ
 import '../styles/LoginTheme.css'; 
-import { Search, ShoppingCart, Menu, User} from 'lucide-react';
+import { Search, ShoppingCart, Menu, User, Eye, EyeOff } from 'lucide-react';
 import logoImage from '../assets/logo.png';
 import fullLogo from '../assets/name.png';
 import Footer from './Footer';
@@ -20,6 +20,8 @@ export default function Register() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -138,11 +140,17 @@ export default function Register() {
             </div>
 
             <div style={{ display: 'flex', gap: '10px' }}>
-              <div className="form-group" style={{ flex: 1 }}>
-                <input name="password" value={formData.password} type="password" placeholder="รหัสผ่าน" className="form-input" onChange={handleChange} required />
+              <div className="form-group" style={{ flex: 1, position: 'relative' }}>
+                <input name="password" value={formData.password} type={showPassword ? 'text' : 'password'} placeholder="รหัสผ่าน" className="form-input" onChange={handleChange} required style={{ paddingRight: '40px' }} />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '15px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: '0', display: 'flex', color: '#94a3b8' }}>
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
-              <div className="form-group" style={{ flex: 1 }}>
-                <input name="confirmPassword" value={formData.confirmPassword} type="password" placeholder="ยืนยันรหัสผ่าน" className="form-input" onChange={handleChange} required />
+              <div className="form-group" style={{ flex: 1, position: 'relative' }}>
+                <input name="confirmPassword" value={formData.confirmPassword} type={showConfirmPassword ? 'text' : 'password'} placeholder="ยืนยันรหัสผ่าน" className="form-input" onChange={handleChange} required style={{ paddingRight: '40px' }} />
+                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} style={{ position: 'absolute', right: '15px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: '0', display: 'flex', color: '#94a3b8' }}>
+                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
             </div>
 
