@@ -19,16 +19,24 @@ export class UserController {
   }
 
   @Get()
-  async getAllUsers(@Query('limit') limit = 10, @Query('offset') offset = 0) {
+  async getAllUsers(
+    @Query('limit') limit = 100,
+    @Query('offset') offset = 0,
+    @Query('role') role?: string,
+  ) {
     const [users, total] = await this.userService.getAllUsers(
       Number(limit),
       Number(offset),
+      role,
     );
     return {
       data: users.map((u) => ({
         id: u.id,
         email: u.email,
+        full_name: u.full_name,
         role: u.role,
+        is_active: u.is_active,
+        phone: u.phone,
         created_at: u.created_at,
       })),
       total,

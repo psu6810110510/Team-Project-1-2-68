@@ -14,51 +14,13 @@ import '../styles/LoginTheme.css';
 import Footer from '../components/Footer';
 import { courseAPI, CourseStatus, type Course as APICourse } from '../api/courseAPI';
 import { paymentAPI, type PaymentRecord } from '../api/paymentAPI';
+import { userAPI, type UserRecord } from '../api/userAPI';
+import { examAPI } from '../api/examAPI';
 
 // ==========================================
-// Mock Data 
+// Constants
 // ==========================================
-const enrollmentData = [
-  { name: 'ก.ย.', students: 0 },
-  { name: 'ต.ค.', students: 50 },
-  { name: 'พ.ย.', students: 10 },
-  { name: 'ธ.ค.', students: 100 },
-  { name: 'ม.ค.', students: 10 },
-  { name: 'ก.พ.', students: 100 },
-];
-
-const instructorData = [
-  { name: 'Full-time', value: 20 },
-  { name: 'Part-time', value: 12 },
-];
 const COLORS = ['#3b82f6', '#cbd5e1'];
-
-const recentOrders = [
-  { id: '#ORD-2026-001', name: 'น.ส.ธัญชนก', course: 'Python101 (Online)', date: '10 ก.พ. 69', amount: '฿2,000', status: 'PAID' },
-  { id: '#ORD-2026-002', name: 'นายสเหมียน', course: 'Python101 (Online)', date: '10 ก.พ. 69', amount: '฿2,000', status: 'PAID' },
-  { id: '#ORD-2026-003', name: 'น.ส.สุวรรณา', course: 'Python101 (Online)', date: '10 ก.พ. 69', amount: '฿2,000', status: 'PENDING' },
-  { id: '#ORD-2026-004', name: 'น.ส.ปทุมพร', course: 'Python101 (Online)', date: '10 ก.พ. 69', amount: '฿2,000', status: 'PAID' },
-  { id: '#ORD-2026-005', name: 'น.ส.ศิรพี', course: 'Python101 (Online)', date: '10 ก.พ. 69', amount: '฿2,000', status: 'PENDING' },
-  { id: '#ORD-2026-006', name: 'นายปิตานุช', course: 'Python101 (Online)', date: '10 ก.พ. 69', amount: '฿2,000', status: 'PAID' },
-  { id: '#ORD-2026-007', name: 'น.ส.ศศิกานต์', course: 'Python101 (Online)', date: '10 ก.พ. 69', amount: '฿2,000', status: 'PENDING' },
-];
-
-const mockTeachers = [
-  { id: 'T001', name: 'อ. สมพงษ์ จันทร', email: 'sompong@b2c.com', status: 'Active', courses: 3 },
-  { id: 'T002', name: 'อ. วนิดา เรืองรอง', email: 'wanida@b2c.com', status: 'Active', courses: 2 },
-  { id: 'T003', name: 'อ. กิตติพงษ์ ใจดี', email: 'kittipong@b2c.com', status: 'Inactive', courses: 0 },
-];
-
-const mockStudents = [
-  { id: 'S001', name: 'น.ส. นภาภรณ์ สมใจ', email: 'napaporn@test.com', coursesEnrolled: 2 },
-  { id: 'S002', name: 'นาย ปฏิภาณ ธรรมดี', email: 'patipan@test.com', coursesEnrolled: 1 },
-  { id: 'S003', name: 'นาย วิทยา เก่งกาจ', email: 'vittaya@test.com', coursesEnrolled: 4 },
-];
-
-const mockExams = [
-  { id: 'EX-001', title: 'แบบทดสอบ Python พื้นฐาน', course: 'Python101', questions: 30, timeLimit: '60 นาที' },
-  { id: 'EX-002', title: 'ข้อสอบกลางภาค Java OOP', course: 'Java OOP', questions: 50, timeLimit: '90 นาที' },
-];
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -81,9 +43,22 @@ export default function AdminDashboard() {
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [loadingPayments, setLoadingPayments] = useState(false);
 
-  // Fetch all courses on mount
+  // Users state (Teachers & Students)
+  const [teachers, setTeachers] = useState<UserRecord[]>([]);
+  const [students, setStudents] = useState<UserRecord[]>([]);
+  const [loadingTeachers, setLoadingTeachers] = useState(false);
+  const [loadingStudents, setLoadingStudents] = useState(false);
+
+  // Exams state
+  const [exams, setExams] = useState<any[]>([]);
+  const [loadingExams, setLoadingExams] = useState(false);
+
+  // Home stats state
+  const [homePayments, setHomePayments] = useState<PaymentRecord[]>([]);
+
+  // Fetch all data on mount
   useEffect(() => {
-    const fetchAllCourses = async () => {
+    const fetchAllData = async () => {
       try {
         // Fetch courses from all statuses for admin
         const [requested, drafting, pending, published] = await Promise.all([
@@ -106,9 +81,23 @@ export default function AdminDashboard() {
         console.error('Error fetching courses:', error);
         setLoading(false);
       }
+
+      // Fetch teachers, students, payments for homepage
+      try {
+        const [teachersRes, studentsRes, paymentsRes] = await Promise.all([
+          userAPI.getUsersByRole('TEACHER'),
+          userAPI.getUsersByRole('STUDENT'),
+          paymentAPI.getAllPayments(),
+        ]);
+        setTeachers(teachersRes.data.data);
+        setStudents(studentsRes.data.data);
+        setHomePayments(paymentsRes.data.data || []);
+      } catch (error) {
+        console.error('Error fetching users/payments:', error);
+      }
     };
 
-    fetchAllCourses();
+    fetchAllData();
   }, []);
 
   const refreshCourses = async () => {
@@ -394,7 +383,16 @@ export default function AdminDashboard() {
             {/* ==========================================
               HOME MENU (Dashboard)
               ========================================== */}
-            {activeMenu === 'home' && (
+            {activeMenu === 'home' && (() => {
+              const confirmedPayments = homePayments.filter(p => p.status === 'CONFIRMED');
+              const totalRevenue = confirmedPayments.reduce((sum, p) => sum + Number(p.total_amount), 0);
+              const publishedCourses = adminCourses.filter(c => c.status === CourseStatus.PUBLISHED);
+              const onlineCourses = publishedCourses.filter(c => c.is_online);
+              const onsiteCourses = publishedCourses.filter(c => c.is_onsite);
+              const recentPayments = [...homePayments]
+                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                .slice(0, 7);
+              return (
               <>
                 {/* Stats Cards Row */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '30px' }}>
@@ -402,9 +400,9 @@ export default function AdminDashboard() {
                   <div style={cardStyle}>
                     <ArrowUp size={40} color="#22c55e" style={{ marginRight: '15px' }} />
                     <div>
-                      <h3 style={{ fontSize: '0.9rem', color: '#64748b', margin: '0 0 5px 0' }}>รายได้รวม (เดือนนี้)</h3>
-                      <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0f172a', margin: '0 0 5px 0' }}>฿452,000</p>
-                      <p style={{ fontSize: '0.8rem', color: '#22c55e', margin: 0, fontWeight: '500' }}>+12% จากเดือนที่แล้ว</p>
+                      <h3 style={{ fontSize: '0.9rem', color: '#64748b', margin: '0 0 5px 0' }}>รายได้รวม (ยืนยันแล้ว)</h3>
+                      <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0f172a', margin: '0 0 5px 0' }}>฿{totalRevenue.toLocaleString()}</p>
+                      <p style={{ fontSize: '0.8rem', color: '#22c55e', margin: 0, fontWeight: '500' }}>{confirmedPayments.length} รายการ</p>
                     </div>
                   </div>
 
@@ -413,8 +411,8 @@ export default function AdminDashboard() {
                     <Users size={40} color="#0ea5e9" style={{ marginRight: '15px' }} />
                     <div>
                       <h3 style={{ fontSize: '0.9rem', color: '#64748b', margin: '0 0 5px 0' }}>นักเรียนทั้งหมด</h3>
-                      <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0f172a', margin: '0 0 5px 0' }}>1,250 คน</p>
-                      <p style={{ fontSize: '0.8rem', color: '#22c55e', margin: 0, fontWeight: '500' }}>+45 คน ในเดือนนี้</p>
+                      <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0f172a', margin: '0 0 5px 0' }}>{students.length} คน</p>
+                      <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0 }}>จากฐานข้อมูล</p>
                     </div>
                   </div>
 
@@ -423,8 +421,8 @@ export default function AdminDashboard() {
                     <MonitorPlay size={40} color="#ef4444" style={{ marginRight: '15px' }} />
                     <div>
                       <h3 style={{ fontSize: '0.9rem', color: '#64748b', margin: '0 0 5px 0' }}>คอร์สที่เปิดสอน</h3>
-                      <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0f172a', margin: '0 0 5px 0' }}>15 คอร์ส</p>
-                      <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0 }}>( Online 10 / Onsite 5 )</p>
+                      <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0f172a', margin: '0 0 5px 0' }}>{publishedCourses.length} คอร์ส</p>
+                      <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0 }}>( Online {onlineCourses.length} / Onsite {onsiteCourses.length} )</p>
                     </div>
                   </div>
 
@@ -434,8 +432,8 @@ export default function AdminDashboard() {
                       <User size={24} color="#fff" />
                     </div>
                     <div>
-                      <h3 style={{ fontSize: '0.9rem', color: '#64748b', margin: '0 0 5px 0' }}>ที่นั่ง Onsite (ว่าง)</h3>
-                      <p style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#ef4444', margin: '0 0 5px 0' }}>12/50 ที่นั่ง</p>
+                      <h3 style={{ fontSize: '0.9rem', color: '#64748b', margin: '0 0 5px 0' }}>อาจารย์ทั้งหมด</h3>
+                      <p style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#1e3a5f', margin: '0 0 5px 0' }}>{teachers.length} ท่าน</p>
                     </div>
                   </div>
                 </div>
@@ -444,60 +442,52 @@ export default function AdminDashboard() {
                 {/* Charts Row */}
                 <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '30px' }}>
 
-                  {/* Line Chart */}
+                  {/* Summary */}
                   <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start', padding: '20px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: '20px' }}>
-                      <h3 style={{ fontSize: '1.1rem', color: '#0f172a', margin: 0 }}>ยอดสมัครเรียน</h3>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.9rem', color: '#64748b' }}>
-                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#3b82f6' }}></div> นักเรียนใหม่
-                      </div>
+                      <h3 style={{ fontSize: '1.1rem', color: '#0f172a', margin: 0 }}>สรุปคอร์สตามสถานะ</h3>
                     </div>
-                    <div style={{ width: '100%', height: '220px' }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={enrollmentData}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                          <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                          <RechartsTooltip />
-                          <Line type="monotone" dataKey="students" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                        </LineChart>
-                      </ResponsiveContainer>
+                    <div style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                      <div style={{ background: '#fef3c7', padding: '15px', borderRadius: '10px', textAlign: 'center' }}>
+                        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0, color: '#a16207' }}>{adminCourses.filter(c => c.status === CourseStatus.REQUEST_CREATE).length}</p>
+                        <p style={{ fontSize: '0.8rem', color: '#a16207', margin: '5px 0 0 0' }}>รอสร้าง</p>
+                      </div>
+                      <div style={{ background: '#e0e7ff', padding: '15px', borderRadius: '10px', textAlign: 'center' }}>
+                        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0, color: '#4338ca' }}>{adminCourses.filter(c => c.status === CourseStatus.DRAFTING).length}</p>
+                        <p style={{ fontSize: '0.8rem', color: '#4338ca', margin: '5px 0 0 0' }}>กำลังร่าง</p>
+                      </div>
+                      <div style={{ background: '#fed7aa', padding: '15px', borderRadius: '10px', textAlign: 'center' }}>
+                        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0, color: '#c2410c' }}>{adminCourses.filter(c => c.status === CourseStatus.PENDING_REVIEW).length}</p>
+                        <p style={{ fontSize: '0.8rem', color: '#c2410c', margin: '5px 0 0 0' }}>รอตรวจ</p>
+                      </div>
+                      <div style={{ background: '#dcfce7', padding: '15px', borderRadius: '10px', textAlign: 'center' }}>
+                        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0, color: '#15803d' }}>{publishedCourses.length}</p>
+                        <p style={{ fontSize: '0.8rem', color: '#15803d', margin: '5px 0 0 0' }}>เปิดขาย</p>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Donut Chart */}
+                  {/* Teacher summary */}
                   <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start', padding: '20px' }}>
                     <h3 style={{ fontSize: '1.1rem', color: '#0f172a', margin: '0 0 20px 0' }}>อาจารย์ผู้สอน</h3>
 
                     <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '15px' }}>
-                      {/* Avatar icon representation */}
                       <div style={{ background: '#fef08a', padding: '10px', borderRadius: '12px' }}>
                         <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=b6e3f4" alt="avatar" style={{ width: '60px', height: '60px' }} />
                       </div>
                       <div>
-                        <p style={{ fontSize: '1.8rem', fontWeight: 'bold', margin: 0, color: '#0f172a' }}>32 ท่าน</p>
+                        <p style={{ fontSize: '1.8rem', fontWeight: 'bold', margin: 0, color: '#0f172a' }}>{teachers.length} ท่าน</p>
                       </div>
                     </div>
 
-                    <div style={{ width: '100%', height: '150px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '10px' }}>
+                    <div style={{ width: '100%', marginTop: '15px' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: '#334155' }}>
-                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: COLORS[0] }}></div> Full-time : 20 ท่าน
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: COLORS[0] }}></div> Active : {teachers.filter(t => t.is_active).length} ท่าน
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: '#334155' }}>
-                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: COLORS[1] }}></div> Part-time : 12 ท่าน
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: COLORS[1] }}></div> Inactive : {teachers.filter(t => !t.is_active).length} ท่าน
                         </div>
-                      </div>
-                      <div style={{ width: '100px', height: '100px' }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie data={instructorData} innerRadius={35} outerRadius={50} paddingAngle={2} dataKey="value" stroke="none">
-                              {instructorData.map((_entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                              ))}
-                            </Pie>
-                          </PieChart>
-                        </ResponsiveContainer>
                       </div>
                     </div>
                   </div>
@@ -509,10 +499,12 @@ export default function AdminDashboard() {
                 <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start', padding: '25px' }}>
                   <h3 style={{ fontSize: '1.2rem', color: '#0f172a', margin: '0 0 20px 0', fontWeight: 'bold' }}>รายการซื้อล่าสุด</h3>
 
+                  {recentPayments.length === 0 ? (
+                    <p style={{ color: '#94a3b8', textAlign: 'center', padding: '20px 0', width: '100%' }}>ยังไม่มีรายการซื้อ</p>
+                  ) : (
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                     <thead>
                       <tr style={{ color: '#64748b', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0' }}>
-                        <th style={{ padding: '12px 0', fontWeight: '500' }}>รหัสสั่งซื้อ</th>
                         <th style={{ padding: '12px 0', fontWeight: '500' }}>ชื่อ</th>
                         <th style={{ padding: '12px 0', fontWeight: '500' }}>คอร์ส</th>
                         <th style={{ padding: '12px 0', fontWeight: '500' }}>วันที่</th>
@@ -521,21 +513,23 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {recentOrders.map((order, idx) => (
-                        <tr key={idx} style={{ borderBottom: idx !== recentOrders.length - 1 ? '1px solid #f1f5f9' : 'none', color: '#334155', fontSize: '0.9rem' }}>
-                          <td style={{ padding: '12px 0' }}>{order.id}</td>
-                          <td style={{ padding: '12px 0' }}>{order.name}</td>
-                          <td style={{ padding: '12px 0' }}>{order.course}</td>
-                          <td style={{ padding: '12px 0' }}>{order.date}</td>
-                          <td style={{ padding: '12px 0', fontWeight: '500' }}>{order.amount}</td>
-                          <td style={{ padding: '12px 0' }}>{renderBadge(order.status)}</td>
+                      {recentPayments.map((p, idx) => (
+                        <tr key={p.id} style={{ borderBottom: idx !== recentPayments.length - 1 ? '1px solid #f1f5f9' : 'none', color: '#334155', fontSize: '0.9rem' }}>
+                          <td style={{ padding: '12px 0' }}>{p.user_name || p.user_email || '-'}</td>
+                          <td style={{ padding: '12px 0' }}>{p.course_titles?.join(', ') || '-'}</td>
+                          <td style={{ padding: '12px 0' }}>{new Date(p.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}</td>
+                          <td style={{ padding: '12px 0', fontWeight: '500' }}>฿{Number(p.total_amount).toLocaleString()}</td>
+                          <td style={{ padding: '12px 0' }}>{renderBadge(p.status === 'CONFIRMED' ? 'PAID' : p.status === 'PAYMENT_SUBMITTED' ? 'PENDING' : p.status)}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                  )}
                 </div>
               </>
-            )}
+              );
+            })()}
+
 
             {/* ==========================================
               COURSES MENU (คำขอสร้างคอร์ส / อนุมัติขาย)
@@ -774,93 +768,128 @@ export default function AdminDashboard() {
               ========================================== */}
             {activeMenu === 'teachers' && (
               <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start', padding: '25px', width: '100%' }}>
-                <h2 style={{ fontSize: '1.5rem', color: '#0f172a', marginBottom: '20px', fontWeight: 'bold' }}>รายชื่ออาจารย์ทั้งหมด</h2>
+                <h2 style={{ fontSize: '1.5rem', color: '#0f172a', marginBottom: '20px', fontWeight: 'bold' }}>รายชื่ออาจารย์ทั้งหมด ({teachers.length} ท่าน)</h2>
+                {teachers.length === 0 ? (
+                  <p style={{ color: '#94a3b8', textAlign: 'center', padding: '20px 0', width: '100%' }}>ยังไม่มีอาจารย์ในระบบ</p>
+                ) : (
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                   <thead>
                     <tr style={{ color: '#64748b', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0' }}>
-                      <th style={{ padding: '12px 0', fontWeight: '500' }}>รหัสประจำตัว</th>
                       <th style={{ padding: '12px 0', fontWeight: '500' }}>ชื่อ-นามสกุล</th>
                       <th style={{ padding: '12px 0', fontWeight: '500' }}>อีเมล</th>
-                      <th style={{ padding: '12px 0', fontWeight: '500' }}>จำนวนคอร์สที่สอน</th>
+                      <th style={{ padding: '12px 0', fontWeight: '500' }}>เบอร์โทร</th>
                       <th style={{ padding: '12px 0', fontWeight: '500' }}>สถานะ</th>
+                      <th style={{ padding: '12px 0', fontWeight: '500' }}>วันที่สมัคร</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {mockTeachers.map((t, idx) => (
-                      <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
-                        <td style={{ padding: '12px 0' }}>{t.id}</td>
-                        <td style={{ padding: '12px 0' }}>{t.name}</td>
+                    {teachers.map((t, idx) => (
+                      <tr key={t.id} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
+                        <td style={{ padding: '12px 0' }}>{t.full_name || '-'}</td>
                         <td style={{ padding: '12px 0' }}>{t.email}</td>
-                        <td style={{ padding: '12px 0' }}>{t.courses} คอร์ส</td>
+                        <td style={{ padding: '12px 0' }}>{t.phone || '-'}</td>
                         <td style={{ padding: '12px 0' }}>
-                          <span style={{ color: t.status === 'Active' ? '#16a34a' : '#ef4444', fontWeight: 'bold' }}>{t.status}</span>
+                          <span style={{ color: t.is_active ? '#16a34a' : '#ef4444', fontWeight: 'bold' }}>{t.is_active ? 'Active' : 'Inactive'}</span>
                         </td>
+                        <td style={{ padding: '12px 0' }}>{new Date(t.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+                )}
               </div>
             )}
 
             {activeMenu === 'students' && (
               <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start', padding: '25px', width: '100%' }}>
-                <h2 style={{ fontSize: '1.5rem', color: '#0f172a', marginBottom: '20px', fontWeight: 'bold' }}>รายชื่อนักเรียนทั้งหมด</h2>
+                <h2 style={{ fontSize: '1.5rem', color: '#0f172a', marginBottom: '20px', fontWeight: 'bold' }}>รายชื่อนักเรียนทั้งหมด ({students.length} คน)</h2>
+                {students.length === 0 ? (
+                  <p style={{ color: '#94a3b8', textAlign: 'center', padding: '20px 0', width: '100%' }}>ยังไม่มีนักเรียนในระบบ</p>
+                ) : (
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                   <thead>
                     <tr style={{ color: '#64748b', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0' }}>
-                      <th style={{ padding: '12px 0', fontWeight: '500' }}>รหัสประจำตัว</th>
                       <th style={{ padding: '12px 0', fontWeight: '500' }}>ชื่อ-นามสกุล</th>
                       <th style={{ padding: '12px 0', fontWeight: '500' }}>อีเมล</th>
-                      <th style={{ padding: '12px 0', fontWeight: '500' }}>จำนวนคอร์สที่ลงเรียน</th>
+                      <th style={{ padding: '12px 0', fontWeight: '500' }}>เบอร์โทร</th>
+                      <th style={{ padding: '12px 0', fontWeight: '500' }}>สถานะ</th>
+                      <th style={{ padding: '12px 0', fontWeight: '500' }}>วันที่สมัคร</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {mockStudents.map((s, idx) => (
-                      <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
-                        <td style={{ padding: '12px 0' }}>{s.id}</td>
-                        <td style={{ padding: '12px 0' }}>{s.name}</td>
+                    {students.map((s) => (
+                      <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
+                        <td style={{ padding: '12px 0' }}>{s.full_name || '-'}</td>
                         <td style={{ padding: '12px 0' }}>{s.email}</td>
-                        <td style={{ padding: '12px 0' }}>{s.coursesEnrolled} คอร์ส</td>
+                        <td style={{ padding: '12px 0' }}>{s.phone || '-'}</td>
+                        <td style={{ padding: '12px 0' }}>
+                          <span style={{ color: s.is_active ? '#16a34a' : '#ef4444', fontWeight: 'bold' }}>{s.is_active ? 'Active' : 'Inactive'}</span>
+                        </td>
+                        <td style={{ padding: '12px 0' }}>{new Date(s.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+                )}
               </div>
             )}
 
             {/* ==========================================
               EXAMS MENU
               ========================================== */}
-            {activeMenu === 'exams' && (
+            {activeMenu === 'exams' && (() => {
+              // Fetch exams on first visit
+              if (exams.length === 0 && !loadingExams) {
+                setLoadingExams(true);
+                examAPI.getAllExams().then(res => {
+                  setExams(res.data.data || []);
+                  setLoadingExams(false);
+                }).catch(err => {
+                  console.error('Error loading exams:', err);
+                  setLoadingExams(false);
+                });
+              }
+              return (
               <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start', padding: '25px', width: '100%' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: '20px' }}>
-                  <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: 0, fontWeight: 'bold' }}>คลังข้อสอบส่วนกลาง</h2>
-                  <button style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>+ สร้างชุดข้อสอบ</button>
+                  <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: 0, fontWeight: 'bold' }}>คลังข้อสอบส่วนกลาง ({exams.length} ชุด)</h2>
                 </div>
+                {loadingExams ? (
+                  <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b', width: '100%' }}>
+                    <div style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>⏳</div>
+                    <div>กำลังโหลดข้อมูล...</div>
+                  </div>
+                ) : exams.length === 0 ? (
+                  <p style={{ color: '#94a3b8', textAlign: 'center', padding: '20px 0', width: '100%' }}>ยังไม่มีข้อสอบในระบบ</p>
+                ) : (
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                   <thead>
                     <tr style={{ color: '#64748b', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0' }}>
-                      <th style={{ padding: '12px 0', fontWeight: '500' }}>รหัสข้อสอบ</th>
                       <th style={{ padding: '12px 0', fontWeight: '500' }}>ชื่อชุดข้อสอบ</th>
+                      <th style={{ padding: '12px 0', fontWeight: '500' }}>ประเภท</th>
                       <th style={{ padding: '12px 0', fontWeight: '500' }}>วิชา/คอร์ส</th>
                       <th style={{ padding: '12px 0', fontWeight: '500' }}>จำนวนข้อ</th>
-                      <th style={{ padding: '12px 0', fontWeight: '500' }}>เวลาทำสอบ</th>
+                      <th style={{ padding: '12px 0', fontWeight: '500' }}>คะแนนรวม</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {mockExams.map((e, idx) => (
-                      <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
-                        <td style={{ padding: '12px 0' }}>{e.id}</td>
+                    {exams.map((e: any) => (
+                      <tr key={e.id} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
                         <td style={{ padding: '12px 0' }}>{e.title}</td>
-                        <td style={{ padding: '12px 0' }}>{e.course}</td>
-                        <td style={{ padding: '12px 0' }}>{e.questions} ข้อ</td>
-                        <td style={{ padding: '12px 0' }}>{e.timeLimit}</td>
+                        <td style={{ padding: '12px 0' }}>
+                          <span style={{ background: '#e0e7ff', color: '#4338ca', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 'bold' }}>{e.type}</span>
+                        </td>
+                        <td style={{ padding: '12px 0' }}>{e.course_title}</td>
+                        <td style={{ padding: '12px 0' }}>{e.question_count} ข้อ</td>
+                        <td style={{ padding: '12px 0' }}>{e.total_score} คะแนน</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+                )}
               </div>
-            )}
+              );
+            })()}
 
             {/* ==========================================
               FINANCE MENU

@@ -25,6 +25,15 @@ export class ExamController {
     };
   }
 
+  @Get()
+  async getAllExams() {
+    const exams = await this.examService.getAllExams();
+    return {
+      data: exams,
+      total: exams.length,
+    };
+  }
+
   @Get(':id')
   async getExam(@Param('id') id: string) {
     return this.examService.getFullExam(id);

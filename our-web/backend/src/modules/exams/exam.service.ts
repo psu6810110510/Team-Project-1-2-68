@@ -121,6 +121,30 @@ export class ExamService {
     });
   }
 
+  async getAllExams(): Promise<any[]> {
+    const exams = await this.examRepo.find({
+      order: { created_at: 'DESC' },
+    });
+
+    const results = await Promise.all(
+      exams.map(async (exam) => {
+        const course = await this.courseRepo.findOne({ where: { id: exam.course_id } });
+        const questionCount = await this.questionRepo.count({ where: { exam_id: exam.id } });
+        return {
+          id: exam.id,
+          title: exam.title,
+          type: exam.type,
+          total_score: exam.total_score,
+          course_title: course?.title || 'ไม่ระบุ',
+          question_count: questionCount,
+          created_at: exam.created_at,
+        };
+      }),
+    );
+
+    return results;
+  }
+
   async updateExam(id: string, dto: UpdateExamDto): Promise<Exam> {
     const exam = await this.getExamById(id);
     
