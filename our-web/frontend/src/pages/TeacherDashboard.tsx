@@ -1283,9 +1283,18 @@ export default function TeacherDashboard() {
                         style={{ ...editInputStyle, flex: 1, minHeight: '80px', resize: 'vertical' }}
                       />
                     ) : (
-                      <span className="info-value" style={{ color: '#334155', fontStyle: 'italic', marginTop: '10px', lineHeight: '1.6' }}>
-                        {teacherData.description || 'ยังไม่มีคำอธิบายตัวเองเพิ่มเข้ามา'}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flex: 1, width: '100%' }}>
+                        <span className="info-value" style={{ color: '#334155', fontStyle: 'italic', marginTop: '10px', lineHeight: '1.6', flex: 1 }}>
+                          {teacherData.description || 'ยังไม่มีคำอธิบายตัวเองเพิ่มเข้ามา'}
+                        </span>
+                        <button
+                          className="edit-btn"
+                          onClick={() => setIsEditingProfile(true)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: '10px 0 0 10px' }}
+                        >
+                          <Edit3 size={18} />
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>

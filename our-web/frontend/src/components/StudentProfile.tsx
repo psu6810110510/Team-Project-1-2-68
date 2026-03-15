@@ -26,7 +26,7 @@ export default function StudentProfile() {
     lastName: '',
     email: '',
     phone: '',
-    image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200',
+    image: '',
     description: ''
   });
 
@@ -94,7 +94,7 @@ export default function StudentProfile() {
           email: userObj.email || '',
           phone: userObj.phone || prev.phone,
           description: userObj.description || prev.description,
-          image: userObj.image || prev.image
+          image: userObj.image || ''
         }));
 
         // ดึงประวัติการชำระเงิน
@@ -502,7 +502,17 @@ export default function StudentProfile() {
         <div className="profile-container">
           <aside className="profile-sidebar">
             <div style={{ position: 'relative', display: 'inline-block', marginBottom: '1rem' }}>
-              <img src={userData.image} alt="Profile" className="sidebar-avatar" style={{ objectFit: 'cover', cursor: 'pointer' }} onClick={() => setExpandedImage(userData.image)} />
+              {userData.image ? (
+                <img src={userData.image} alt="Profile" className="sidebar-avatar" style={{ objectFit: 'cover', cursor: 'pointer' }} onClick={() => setExpandedImage(userData.image)} />
+              ) : (
+                <div className="sidebar-avatar" style={{ 
+                  background: '#f1f5f9', display: 'flex', alignItems: 'center', 
+                  justifyContent: 'center', color: '#64748b', cursor: 'pointer',
+                  width: '100px', height: '100px', borderRadius: '50%', border: '4px solid #e2e8f0'
+                }}>
+                  <User size={48} />
+                </div>
+              )}
               <div
                 onClick={handleCameraClick}
                 style={{
