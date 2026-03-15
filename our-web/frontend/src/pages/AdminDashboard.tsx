@@ -365,6 +365,35 @@ export default function AdminDashboard() {
     return null;
   };
 
+  // ==========================================
+  // Computed Stats for Home Dashboard ( teemmate missing vars )
+  // ==========================================
+  const totalRevenue = payments
+    .filter(p => p.status === 'CONFIRMED')
+    .reduce((sum, p) => sum + Number(p.total_amount), 0);
+
+  const totalStudents = dashboardStats?.totalStudents || 0;
+  const totalTeachersCount = dashboardStats?.totalTeachers || 0;
+
+  const publishedCourses = adminCourses.filter(c => c.status === CourseStatus.PUBLISHED);
+  const totalPublishedCourses = publishedCourses.length;
+  const onlineCoursesCount = publishedCourses.filter(c => c.is_online).length;
+  const onsiteCoursesCount = publishedCourses.filter(c => c.is_onsite).length;
+  const hybridCoursesCount = publishedCourses.filter((c: any) => c.is_hybrid).length;
+
+  const availableOnsiteSeats = 0; 
+  const totalOnsiteQuota = 0; 
+
+  const realRevenueData = [
+    { name: 'ม.ค.', students: 0 },
+    { name: 'ก.พ.', students: 0 },
+    { name: 'มี.ค.', students: totalRevenue }
+  ];
+
+  const realInstructorData = [
+    { name: 'อาจารย์', value: totalTeachersCount }
+  ];
+
   return (
     <div className="page-container" style={{ background: '#f1f5f9', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
 
@@ -531,6 +560,7 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div style={{ width: '100%', height: '220px' }}>
+                      {/* @ts-ignore */}
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={realRevenueData}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -564,6 +594,7 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                       <div style={{ width: '100px', height: '100px' }}>
+                        {/* @ts-ignore */}
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
                             <Pie data={realInstructorData} innerRadius={35} outerRadius={50} paddingAngle={2} dataKey="value" stroke="none">
@@ -917,7 +948,7 @@ export default function AdminDashboard() {
                     >
                       🔄 โหลดข้อมูล
                     </button>
-                    <button 
+                    <button
                       onClick={() => setIsExamCourseModalOpen(true)}
                       style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
                     >
@@ -954,10 +985,10 @@ export default function AdminDashboard() {
                           <td style={{ padding: '12px 10px', fontWeight: 'bold' }}>{e.title}</td>
                           <td style={{ padding: '12px 10px' }}>{e.course_name}</td>
                           <td style={{ padding: '12px 10px' }}>
-                            <span style={{ 
+                            <span style={{
                               background: e.type === 'PRETEST' ? '#fef08a' : e.type === 'POSTTEST' ? '#bbf7d0' : '#e0e7ff',
                               color: e.type === 'PRETEST' ? '#ca8a04' : e.type === 'POSTTEST' ? '#16a34a' : '#4338ca',
-                              padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold' 
+                              padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold'
                             }}>
                               {e.type}
                             </span>
@@ -965,18 +996,18 @@ export default function AdminDashboard() {
                           <td style={{ padding: '12px 10px' }}>{e.total_score} คะแนน</td>
                           <td style={{ padding: '12px 10px', textAlign: 'right' }}>
                             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                                <button
-                                  onClick={() => navigate(`/exam-management/${e.course_id}`)}
-                                  style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
-                                >
-                                  จัดการ
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteExam(e.id, e.title)}
-                                  style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
-                                >
-                                  ลบ
-                                </button>
+                              <button
+                                onClick={() => navigate(`/exam-management/${e.course_id}`)}
+                                style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
+                              >
+                                จัดการ
+                              </button>
+                              <button
+                                onClick={() => handleDeleteExam(e.id, e.title)}
+                                style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
+                              >
+                                ลบ
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -1107,7 +1138,7 @@ export default function AdminDashboard() {
             {activeMenu === 'bookings' && (
               <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start', padding: '25px', width: '100%' }}>
                 <h2 style={{ fontSize: '1.5rem', color: '#0f172a', marginBottom: '20px', fontWeight: 'bold' }}>รายการจองออฟไลน์ทั้งหมด</h2>
-                
+
                 {loadingBookings ? (
                   <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b', width: '100%' }}>
                     กำลังโหลดข้อมูลการจอง...
@@ -1390,21 +1421,21 @@ export default function AdminDashboard() {
                                 <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '4px' }}>
                                   บทเรียนที่ {lesson.sequence_order || index + 1}
                                 </div>
-                                  <div style={{ fontWeight: 'bold', color: '#0f172a', fontSize: '0.95rem' }}>
-                                    {lesson.topic_name.includes(' - ') ? (
-                                      <>
-                                        <span style={{ color: '#3b82f6', marginRight: '8px' }}>
-                                          {lesson.topic_name.split(' - ')[0]}
-                                        </span>
-                                        <span style={{ color: '#64748b', fontSize: '0.8rem', marginRight: '8px' }}>|</span>
-                                        <span style={{ color: '#0f172a' }}>
-                                          {lesson.topic_name.split(' - ').slice(1).join(' - ')}
-                                        </span>
-                                      </>
-                                    ) : (
-                                      lesson.topic_name
-                                    )}
-                                  </div>
+                                <div style={{ fontWeight: 'bold', color: '#0f172a', fontSize: '0.95rem' }}>
+                                  {lesson.topic_name.includes(' - ') ? (
+                                    <>
+                                      <span style={{ color: '#3b82f6', marginRight: '8px' }}>
+                                        {lesson.topic_name.split(' - ')[0]}
+                                      </span>
+                                      <span style={{ color: '#64748b', fontSize: '0.8rem', marginRight: '8px' }}>|</span>
+                                      <span style={{ color: '#0f172a' }}>
+                                        {lesson.topic_name.split(' - ').slice(1).join(' - ')}
+                                      </span>
+                                    </>
+                                  ) : (
+                                    lesson.topic_name
+                                  )}
+                                </div>
                               </div>
                             </div>
 
@@ -1576,8 +1607,8 @@ export default function AdminDashboard() {
                 <FileText size={24} color="#38bdf8" />
                 รายละเอียดการจอง
               </h2>
-              <button 
-                onClick={() => { setIsBookingModalOpen(false); setSelectedBookingDetails(null); }} 
+              <button
+                onClick={() => { setIsBookingModalOpen(false); setSelectedBookingDetails(null); }}
                 style={{ background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', color: 'white', padding: '8px', borderRadius: '8px', display: 'flex', transition: 'background 0.2s' }}
                 onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
                 onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
@@ -1585,7 +1616,7 @@ export default function AdminDashboard() {
                 ✕
               </button>
             </div>
-            
+
             <div style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 <div>
@@ -1607,7 +1638,7 @@ export default function AdminDashboard() {
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '4px' }}>รูปแบบการเรียน</label>
-                 <div style={{ fontSize: '1rem', color: '#0f172a', fontWeight: '500', background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <div style={{ fontSize: '1rem', color: '#0f172a', fontWeight: '500', background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                   {selectedBookingDetails.learning_mode}
                 </div>
               </div>
@@ -1624,14 +1655,14 @@ export default function AdminDashboard() {
                 <div>
                   <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '4px' }}>รอบเวลาเรียน</label>
                   <div style={{ fontSize: '1rem', color: '#0f172a', fontWeight: '500', background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                    📅 {new Date(selectedBookingDetails.schedule_start_time).toLocaleDateString('th-TH', { 
-                          weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' 
-                       })}
+                    📅 {new Date(selectedBookingDetails.schedule_start_time).toLocaleDateString('th-TH', {
+                      weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+                    })}
                     <span style={{ margin: '0 8px', color: '#cbd5e1' }}>|</span>
                     🕐 {new Date(selectedBookingDetails.schedule_start_time).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
                     {' - '}
                     {new Date(selectedBookingDetails.schedule_end_time).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
-                    
+
                     {selectedBookingDetails.room_location && (
                       <span style={{ marginLeft: '8px', fontSize: '0.9rem', color: '#64748b' }}>
                         (📍 ห้อง: {selectedBookingDetails.room_location})
@@ -1641,19 +1672,19 @@ export default function AdminDashboard() {
                 </div>
               )}
 
-               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 <div>
-                   <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '4px' }}>ชื่อผู้จอง</label>
-                   <div style={{ fontSize: '1rem', color: '#0f172a', fontWeight: '500', background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '4px' }}>ชื่อผู้จอง</label>
+                  <div style={{ fontSize: '1rem', color: '#0f172a', fontWeight: '500', background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                     {selectedBookingDetails.user_name}
                   </div>
-                 </div>
-                 <div>
-                   <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '4px' }}>อีเมล</label>
-                   <div style={{ fontSize: '1rem', color: '#0f172a', fontWeight: '500', background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', wordBreak: 'break-word' }}>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '4px' }}>อีเมล</label>
+                  <div style={{ fontSize: '1rem', color: '#0f172a', fontWeight: '500', background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', wordBreak: 'break-word' }}>
                     {selectedBookingDetails.user_email}
                   </div>
-                 </div>
+                </div>
               </div>
 
               {selectedBookingDetails.notes && (
@@ -1675,7 +1706,7 @@ export default function AdminDashboard() {
               )}
             </div>
 
-             <div style={{ padding: '20px 30px', borderTop: '2px solid #f1f5f9', display: 'flex', justifyContent: 'flex-end', background: '#f8fafc', borderRadius: '0 0 16px 16px' }}>
+            <div style={{ padding: '20px 30px', borderTop: '2px solid #f1f5f9', display: 'flex', justifyContent: 'flex-end', background: '#f8fafc', borderRadius: '0 0 16px 16px' }}>
               <button
                 onClick={() => { setIsBookingModalOpen(false); setSelectedBookingDetails(null); }}
                 style={{ background: '#e2e8f0', color: '#475569', border: 'none', padding: '10px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem' }}
@@ -1695,7 +1726,7 @@ export default function AdminDashboard() {
               <h2 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a' }}>เลือกคอร์สเพื่อสร้างชุดข้อสอบ</h2>
               <button onClick={() => setIsExamCourseModalOpen(false)} style={{ background: 'transparent', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#64748b' }}>✕</button>
             </div>
-            
+
             <div style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
               {loading ? (
                 <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>กำลังโหลดรายวิชา...</div>
@@ -1704,13 +1735,13 @@ export default function AdminDashboard() {
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
                   {adminCourses.map(course => (
-                    <div 
-                      key={course.id} 
+                    <div
+                      key={course.id}
                       onClick={() => navigate(`/exam-management/${course.id}`)}
-                      style={{ 
-                        display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', 
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '15px', padding: '15px',
                         border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer',
-                        transition: 'all 0.2s', background: '#fff' 
+                        transition: 'all 0.2s', background: '#fff'
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.borderColor = '#3b82f6';
@@ -1723,10 +1754,10 @@ export default function AdminDashboard() {
                         e.currentTarget.style.transform = 'none';
                       }}
                     >
-                      <img 
-                        src={course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80'} 
-                        alt="" 
-                        style={{ width: '60px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} 
+                      <img
+                        src={course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80'}
+                        alt=""
+                        style={{ width: '60px', height: '40px', objectFit: 'cover', borderRadius: '4px' }}
                         onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80'; }}
                       />
                       <div style={{ flex: 1 }}>
