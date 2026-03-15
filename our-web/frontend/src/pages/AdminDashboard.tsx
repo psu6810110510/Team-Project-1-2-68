@@ -365,6 +365,29 @@ export default function AdminDashboard() {
     return null;
   };
 
+  // --- Derived Dashboard Data ---
+  const totalRevenue = payments
+    .filter(p => p.status === 'CONFIRMED' || p.status === 'PAYMENT_SUBMITTED')
+    .reduce((sum, p) => sum + Number(p.total_amount || 0), 0);
+
+  const totalStudents = dashboardStats?.totalStudents || 0;
+  const totalTeachersCount = dashboardStats?.totalTeachers || 0;
+
+  const publishedCourses = adminCourses.filter(c => c.status === CourseStatus.PUBLISHED);
+  const totalPublishedCourses = publishedCourses.length;
+
+  const hybridCoursesCount = publishedCourses.filter(c => c.is_online && c.is_onsite).length;
+  const onlineCoursesCount = publishedCourses.filter(c => c.is_online && !c.is_onsite).length;
+  const onsiteCoursesCount = publishedCourses.filter(c => !c.is_online && c.is_onsite).length;
+
+  const totalOnsiteQuota = publishedCourses.reduce((sum, c) => sum + (c.onsite_seats || 0), 0);
+  const bookedOnsiteSeats = bookings.filter(b => b.learning_mode === 'ONSITE' || b.learning_mode === 'HYBRID').length;
+  const availableOnsiteSeats = Math.max(0, totalOnsiteQuota - bookedOnsiteSeats);
+
+  const realRevenueData = enrollmentData; 
+  const realInstructorData = instructorData; 
+  // --- End Derived Data ---
+
   return (
     <div className="page-container" style={{ background: '#f1f5f9', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
 

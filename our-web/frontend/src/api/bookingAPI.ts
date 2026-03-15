@@ -38,6 +38,7 @@ export interface Booking {
   id: string;
   user_id: string;
   schedule_id: string;
+  course_id?: string;
   learning_mode: LearningMode;
   status: BookingStatus;
   booking_date: string | null;
@@ -81,6 +82,10 @@ export const bookingAPI = {
   // Confirm booking
   confirmBooking: (id: string) =>
     apiClient.put<{ id: string; status: BookingStatus; message: string }>(`/bookings/${id}/confirm`),
+
+  // Update booking
+  updateBooking: (id: string, data: { learning_mode?: LearningMode; schedule_id?: string; notes?: string }) =>
+    apiClient.patch<{ id: string; status: BookingStatus; learning_mode: LearningMode; message: string }>(`/bookings/${id}`, data),
 
   // Cancel booking
   cancelBooking: (id: string) =>

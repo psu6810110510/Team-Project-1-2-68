@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Body, Param, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Patch } from '@nestjs/common';
 import { BookingService } from './booking.service';
 import type { CreateBookingDto } from './booking.service';
-import { BookingStatus } from '../../entities/booking.entity';
+import { BookingStatus, LearningMode } from '../../entities/booking.entity';
 
 @Controller('bookings')
 export class BookingController {
@@ -62,9 +62,12 @@ export class BookingController {
       data: bookings.map((b) => ({
         id: b.id,
         schedule_id: b.schedule_id,
+        course_id: b.schedule?.course_id || null,
         learning_mode: b.learning_mode,
         status: b.status,
         created_at: b.created_at,
+        booking_date: b.booking_date,
+        notes: b.notes
       })),
       total: bookings.length,
       user_id: userId,
@@ -104,6 +107,20 @@ export class BookingController {
       id: booking.id,
       status: booking.status,
       message: 'Booking cancelled',
+    };
+  }
+
+  @Patch(':id')
+  async updateBooking(
+    @Param('id') id: string,
+    @Body() dto: { learning_mode?: LearningMode; schedule_id?: string; notes?: string },
+  ) {
+    const booking = await this.bookingService.updateBooking(id, dto);
+    return {
+      id: booking.id,
+      status: booking.status,
+      learning_mode: booking.learning_mode,
+      message: 'Booking updated successfully',
     };
   }
 

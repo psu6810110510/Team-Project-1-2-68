@@ -39,10 +39,10 @@ export default function StudentProfile() {
     id: string; title: string; instructor: string; startDate: string;
     expireDate: string; lastAccess: string; progress: number; image: string;
   }>>([]);
-  const [pendingCourses, setPendingCourses] = useState<Array<{
-    id: string; title: string; instructor: string; date: string;
-    amount: number; image: string;
-  }>>([]);
+  const [pendingCourses, setPendingCourses] = useState<any[]>([]);
+  
+  const [actualStats, setActualStats] = useState({ lessonsCount: 0, certificatesCount: 0 });
+
   const [realPurchases, setRealPurchases] = useState<PaymentRecord[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [favoriteCourses, setFavoriteCourses] = useState<APICourse[]>([]);
@@ -150,6 +150,10 @@ export default function StudentProfile() {
 
           const courseMap: Record<string, APICourse> = {};
           courseDetails.forEach(c => { if (c) courseMap[c.id] = c; });
+          courseDetails.forEach(c => { if (c) courseMap[c.id] = c; });
+
+          let totalCompletedLessonsCount = 0;
+          let completedCoursesCount = 0;
 
           // Fetch lessons and calculate progress for each course
           const coursesForDisplay = await Promise.all(
@@ -187,6 +191,8 @@ export default function StudentProfile() {
                         }
                       });
                       
+                      totalCompletedLessonsCount += completedUniqueTitles.size;
+
                       progressPercent = totalUnique > 0 ? Math.floor((completedUniqueTitles.size / totalUnique) * 100) : 0;
                     }
                   }
@@ -223,6 +229,10 @@ export default function StudentProfile() {
                   }
                 } else if (c.online_expiry) {
                   formattedExpiry = c.online_expiry.replace('days', 'วัน').replace('months', 'เดือน');
+                }
+
+                if (progressPercent === 100) {
+                  completedCoursesCount += 1;
                 }
 
                 return {
@@ -265,6 +275,11 @@ export default function StudentProfile() {
               };
             });
           setPendingCourses(pendingForDisplay);
+          
+          setActualStats({
+            lessonsCount: totalCompletedLessonsCount,
+            certificatesCount: completedCoursesCount
+          });
 
           // โหลดข้อสอบของคอร์สที่ซื้อแล้ว
           try {
@@ -686,9 +701,9 @@ export default function StudentProfile() {
                   <span className="section-title-text">สถิติการเรียนรู้</span>
                 </div>
                 <div className="stats-grid">
-                  <div className="stat-box"><Clock size={32} color="#64748b" style={{ margin: '0 auto' }} /><div className="stat-number">-</div><div className="stat-label">ชั่วโมงเรียน</div></div>
+                  <div className="stat-box"><CheckSquare size={32} color="#64748b" style={{ margin: '0 auto' }} /><div className="stat-number">{actualStats.lessonsCount}</div><div className="stat-label">บทเรียนที่ผ่านแล้ว</div></div>
                   <div className="stat-box"><Calendar size={32} color="#64748b" style={{ margin: '0 auto' }} /><div className="stat-number">{realMyCourses.length}</div><div className="stat-label">คอร์สที่เรียน</div></div>
-                  <div className="stat-box"><Award size={32} color="#64748b" style={{ margin: '0 auto' }} /><div className="stat-number">0</div><div className="stat-label">ใบประกาศ</div></div>
+                  <div className="stat-box"><Award size={32} color="#64748b" style={{ margin: '0 auto' }} /><div className="stat-number">{actualStats.certificatesCount}</div><div className="stat-label">ใบประกาศ</div></div>
                 </div>
               </>
             )}
