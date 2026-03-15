@@ -97,8 +97,13 @@ export class UserService {
     return bcrypt.compare(password, user.password_hash);
   }
 
-  async getAllUsers(limit = 10, offset = 0): Promise<[User[], number]> {
+  async getAllUsers(limit = 10, offset = 0, role?: string): Promise<[User[], number]> {
+    const where: any = {};
+    if (role) {
+      where.role = role;
+    }
     return this.userRepo.findAndCount({
+      where,
       take: limit,
       skip: offset,
       order: { created_at: 'DESC' },

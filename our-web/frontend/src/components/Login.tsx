@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/LoginTheme.css';
-import { Search, ShoppingCart, Menu, User } from 'lucide-react';
+import { Search, ShoppingCart, Menu, User, Eye, EyeOff } from 'lucide-react';
 import logoImage from '../assets/logo.png';
 import fullLogo from '../assets/name.png';
 import Footer from './Footer';
@@ -15,6 +15,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
 
@@ -201,12 +202,16 @@ export default function Login() {
                 value={email} onChange={(e) => setEmail(e.target.value)} required
               />
             </div>
-            <div className="form-group">
+            <div className="form-group" style={{ position: 'relative' }}>
               <input
-                type="password" placeholder="รหัสผ่าน" className="form-input"
+                type={showPassword ? 'text' : 'password'} placeholder="รหัสผ่าน" className="form-input"
                 name="password"
                 value={password} onChange={(e) => setPassword(e.target.value)} required
+                style={{ paddingRight: '40px' }}
               />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '15px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: '0', display: 'flex', color: '#94a3b8' }}>
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
 
             <div className="form-options">
