@@ -84,6 +84,8 @@ export class BookingService {
       seatLimit = schedule.max_onsite_seats;
     }
 
+    let initialStatus = BookingStatus.PENDING;
+
     // 3. ถ้ามีการจำกัดที่นั่ง (seatLimit ไม่เป็น null)
     if (seatLimit !== null) {
       // นับจำนวนคนที่จองไปแล้ว (นับทั้ง CONFIRMED และ PENDING เพื่อกันที่นั่งไว้ก่อน)
@@ -96,9 +98,8 @@ export class BookingService {
       });
 
       if (bookedSeats >= seatLimit) {
-        throw new ConflictException(
-          `No available seats for ${dto.learning_mode} booking`,
-        );
+        // Queue System: Instead of throwing ConflictException, assign WAITLIST
+        initialStatus = BookingStatus.WAITLIST;
       }
     }
 
@@ -106,7 +107,7 @@ export class BookingService {
       user_id: dto.user_id,
       schedule_id: dto.schedule_id,
       learning_mode: dto.learning_mode,
-      status: BookingStatus.PENDING,
+      status: initialStatus,
       booking_date: new Date(),
       notes: dto.notes || undefined,
     });

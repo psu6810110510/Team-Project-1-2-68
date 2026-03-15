@@ -83,6 +83,8 @@ const MyBookings = () => {
         return 'completed';
       case BookingStatus.CANCELLED:
         return 'cancelled';
+      case BookingStatus.WAITLIST:
+        return 'waitlist';
       default:
         return 'pending';
     }
@@ -98,6 +100,8 @@ const MyBookings = () => {
         return '✓ เสร็จสิ้น';
       case BookingStatus.CANCELLED:
         return '✕ ยกเลิกแล้ว';
+      case BookingStatus.WAITLIST:
+        return '⏳ รอคิว';
       default:
         return '-';
     }
@@ -197,7 +201,8 @@ const MyBookings = () => {
 
             <div className="booking-card-footer">
               {booking.status === BookingStatus.PENDING ||
-              booking.status === BookingStatus.CONFIRMED ? (
+              booking.status === BookingStatus.CONFIRMED ||
+              booking.status === BookingStatus.WAITLIST ? (
                 <>
                   <button
                     className="booking-edit-btn"

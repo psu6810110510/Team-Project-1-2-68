@@ -320,6 +320,7 @@ export default function AdminDashboard() {
   const renderBadge = (status: string) => {
     if (status === 'CONFIRMED' || status === 'PAID') return <span style={{ background: '#dcfce7', color: '#16a34a', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>ชำระแล้ว</span>;
     if (status === 'PAYMENT_SUBMITTED' || status === 'PENDING') return <span style={{ background: '#fef08a', color: '#ca8a04', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>รอตรวจสอบ</span>;
+    if (status === 'WAITLIST') return <span style={{ background: '#f1f5f9', color: '#64748b', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold', border: '1px solid #cbd5e1' }}>รอคิว</span>;
     return null;
   };
 
