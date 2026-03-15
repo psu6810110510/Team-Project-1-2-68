@@ -30,11 +30,9 @@ export interface Course {
   instructor_name?: string;
   tags?: string;
   is_onsite: boolean;
-  onsite_seats?: number;
-  onsite_days?: string[];
-  onsite_time_start?: string;
-  onsite_time_end?: string;
-  onsite_duration?: string;
+  onsite_seats: number | null;
+  onsite_schedule: Array<{ day: string; time_start: string; time_end: string }> | null;
+  onsite_duration: string | null;
   onsite_exam_schedule?: string;
   is_online: boolean;
   online_expiry?: string;
@@ -61,9 +59,7 @@ export interface CreateCourseRequestDto {
   tags?: string;
   is_onsite?: boolean;
   onsite_seats?: number;
-  onsite_days?: string[];
-  onsite_time_start?: string;
-  onsite_time_end?: string;
+  onsite_schedule?: Array<{ day: string; time_start: string; time_end: string }>;
   onsite_duration?: string;
   onsite_exam_schedule?: string;
   is_online?: boolean;
@@ -81,9 +77,7 @@ export interface UpdateCourseDto {
   tags?: string;
   is_onsite?: boolean;
   onsite_seats?: number;
-  onsite_days?: string[];
-  onsite_time_start?: string;
-  onsite_time_end?: string;
+  onsite_schedule?: Array<{ day: string; time_start: string; time_end: string }>;
   onsite_duration?: string;
   onsite_exam_schedule?: string;
   is_online?: boolean;

@@ -337,14 +337,6 @@ const CourseDetail = () => {
     return `฿${num.toLocaleString('th-TH')}`;
   };
 
-  const formatDays = (days?: string[]) => {
-    if (!days || days.length === 0) return null;
-    const map: Record<string, string> = {
-      monday: 'จันทร์', tuesday: 'อังคาร', wednesday: 'พุธ',
-      thursday: 'พฤหัสบดี', friday: 'ศุกร์', saturday: 'เสาร์', sunday: 'อาทิตย์',
-    };
-    return days.map((d) => map[d.toLowerCase()] ?? d).join(', ');
-  };
 
   const parseTags = (raw?: string): string[] => {
     if (!raw) return [];
@@ -595,16 +587,12 @@ const CourseDetail = () => {
                       <div className="cd-detail-item">
                         <span className="cd-detail-icon">📅</span>
                         <div>
-                          <p className="cd-detail-label">วันเรียน</p>
-                          <p className="cd-detail-value">{(course.onsite_days && course.onsite_days.length > 0) ? formatDays(course.onsite_days) : '-'}</p>
-                        </div>
-                      </div>
-
-                      <div className="cd-detail-item">
-                        <span className="cd-detail-icon">🕐</span>
-                        <div>
-                          <p className="cd-detail-label">เวลาเรียน</p>
-                          <p className="cd-detail-value">{(course.onsite_time_start && course.onsite_time_end) ? `${course.onsite_time_start.slice(0, 5)} – ${course.onsite_time_end.slice(0, 5)} น.` : '-'}</p>
+                          <p className="cd-detail-label">วันและเวลาเรียน</p>
+                          <p className="cd-detail-value">
+                            {(course.onsite_schedule && course.onsite_schedule.length > 0) 
+                              ? course.onsite_schedule.map(s => `${s.day} (${s.time_start.slice(0, 5)} - ${s.time_end.slice(0, 5)} น.)`).join(', ') 
+                              : '-'}
+                          </p>
                         </div>
                       </div>
 
@@ -786,8 +774,10 @@ const CourseDetail = () => {
                       <span className="cd-modal-type-label">
                         <span className="cd-modal-type-icon">🏫</span>
                         ออนไซต์
-                        {course.onsite_days && course.onsite_days.length > 0 && (
-                          <span className="cd-modal-type-detail">{formatDays(course.onsite_days)}</span>
+                        {course.onsite_schedule && course.onsite_schedule.length > 0 && (
+                          <span className="cd-modal-type-detail">
+                            {course.onsite_schedule.map(s => s.day).join(', ')}
+                          </span>
                         )}
                       </span>
                     </label>
