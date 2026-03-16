@@ -44,6 +44,7 @@ export class UserController {
         is_active: u.is_active,
         phone: u.phone,
         created_at: u.created_at,
+        image: u.image,
       })),
       total,
       limit: Number(limit),

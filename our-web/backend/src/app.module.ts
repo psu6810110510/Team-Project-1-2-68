@@ -16,6 +16,8 @@ import {
   ExamResult,
   SeatQuota,
   Payment,
+  Teacher,
+  Notification,
 } from './entities';
 
 
@@ -29,6 +31,7 @@ import { UploadModule } from './upload/upload.module';
 import { PaymentModule } from './modules/payments/payment.module';
 import { AuthModule } from './auth/auth.module'; // ✅ Auth module หลัก (JWT + Google OAuth)
 import { ScheduleModule } from './modules/schedules/schedule.module';
+import { NotificationModule } from './modules/notifications/notification.module';
 
 @Module({
   imports: [
@@ -64,6 +67,8 @@ import { ScheduleModule } from './modules/schedules/schedule.module';
         ExamResult,
         SeatQuota,
         Payment,
+        Teacher,
+        Notification,
       ],
       synchronize: true,
       logging: true,
@@ -78,6 +83,7 @@ import { ScheduleModule } from './modules/schedules/schedule.module';
     TeacherModule,
     UploadModule,
     PaymentModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

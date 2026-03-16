@@ -20,4 +20,20 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   role?: string;
+
+  @IsOptional()
+  @IsString()
+  bachelorDegree?: string;
+
+  @IsOptional()
+  @IsString()
+  masterDegree?: string;
+
+  @IsOptional()
+  @IsString()
+  doctorateDegree?: string;
+
+  @IsOptional()
+  @IsString()
+  expertise?: string;
 }

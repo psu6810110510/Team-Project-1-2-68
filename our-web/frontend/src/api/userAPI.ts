@@ -8,6 +8,7 @@ export interface UserRecord {
   is_active: boolean;
   phone?: string;
   created_at: string;
+  image?: string;
 }
 
 export interface UsersResponse {
