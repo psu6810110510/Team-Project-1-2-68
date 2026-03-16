@@ -1,12 +1,10 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PlayCircle, FileText, Download, ChevronDown, ChevronUp } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import BookingForm from '../components/BookingForm';
 import { courseAPI, type Course, type Lesson } from '../api/courseAPI';
 import paymentAPI from '../api/paymentAPI';
-import bookingAPI, { type Schedule } from '../api/bookingAPI';
 import '../styles/CourseDetail.css';
 
 interface CartItem {
@@ -29,19 +27,17 @@ const CourseDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState<string>('');
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [inCart, setInCart] = useState(false);
   const [cartMsg, setCartMsg] = useState('');
   const [showCartModal, setShowCartModal] = useState(false);
   const [selectedType, setSelectedType] = useState<'online' | 'onsite' | null>(null);
   const [onsiteBooked, setOnsiteBooked] = useState<number | null>(null);
-  const [showBookingForm, setShowBookingForm] = useState(false);
-  const [bookingMsg, setBookingMsg] = useState('');
   const [lessons, setLessons] = useState<any[]>([]);
   const [expandedChapters, setExpandedChapters] = useState<{ [key: string]: boolean }>({});
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [checkingAccess, setCheckingAccess] = useState(true);
-  const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
   const [remainingDays, setRemainingDays] = useState<number | null>(null);
   const [reviews, setReviews] = useState<any[]>([]);
@@ -111,6 +107,10 @@ const CourseDetail = () => {
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     setIsLoggedIn(!!token);
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try { setUserRole(JSON.parse(storedUser)?.role || ''); } catch {}
+    }
 
     if (!courseId) return;
 
@@ -126,10 +126,6 @@ const CourseDetail = () => {
           try {
             const seatRes = await courseAPI.getOnsiteBookedCount(courseId);
             setOnsiteBooked(seatRes.data.count);
-            
-            // Fetch schedules for booking
-            const schedRes = await bookingAPI.getSchedulesByCourse(courseId);
-            setSchedules(schedRes.data.data || []);
           } catch {
             setOnsiteBooked(0);
           }
@@ -349,6 +345,11 @@ const CourseDetail = () => {
     } else {
       setSelectedType(null);
     }
+    // auto-set รอบที่รับสมัครอยู่ สำหรับ onsite
+    if (course.is_onsite && course.onsite_exam_schedule) {
+      const round = getAvailableRound(course.onsite_exam_schedule);
+      setSelectedScheduleId(round !== null ? String(round.index) : null);
+    }
   };
 
   const handleConfirmAddToCart = () => {
@@ -402,6 +403,33 @@ const CourseDetail = () => {
       thursday: 'พฤหัสบดี', friday: 'ศุกร์', saturday: 'เสาร์', sunday: 'อาทิตย์',
     };
     return days.map((d) => map[d.toLowerCase()] ?? d).join(', ');
+  };
+
+  const formatThaiDate = (dateStr: string) => {
+    const [y, m, d] = dateStr.split('-');
+    return `${d}/${m}/${y}`;
+  };
+
+  // หารอบที่ยังรับสมัครอยู่ (ต้องกดลงตะกร้าภายใน 23:59:59 ของวันก่อน startDate) โดยใช้เวลาไทย (UTC+7)
+  const getAvailableRound = (scheduleJson?: string): { index: number; startDate: string; endDate: string } | null => {
+    if (!scheduleJson) return null;
+    try {
+      const schedules = JSON.parse(scheduleJson);
+      // เวลาปัจจุบันในไทย (UTC+7)
+      const now = new Date();
+      const nowInBangkok = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+      for (let i = 0; i < schedules.length; i++) {
+        const [y, m, d] = schedules[i].startDate.split('-').map(Number);
+        // deadline = 23:59:59 ของวันก่อน startDate (ไทย)
+        const deadlineBangkok = new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0) - 1); // 23:59:59.999 ของวันก่อน startDate
+        if (nowInBangkok <= deadlineBangkok) {
+          return { index: i, startDate: schedules[i].startDate, endDate: schedules[i].endDate };
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    }
   };
 
   const parseTags = (raw?: string): string[] => {
@@ -570,7 +598,7 @@ const CourseDetail = () => {
             {course.is_online && (
               <div className="cd-type-section cd-type-section--online">
                 <div className="cd-type-section-header">
-                  <span className="cd-type-section-icon">🖥️</span>
+                  <span className="cd-type-section-icon"></span>
                   ข้อมูลคอร์สออนไลน์
                 </div>
                 <div className="cd-details-grid">
@@ -585,7 +613,7 @@ const CourseDetail = () => {
                     <div className="cd-detail-item">
                       <span className="cd-detail-icon">⏳</span>
                       <div>
-                        <p className="cd-detail-label">อายุการเข้าถึง</p>
+                        <p className="cd-detail-label">อายุการเข้าถึง (เดือน)</p>
                         <p className="cd-detail-value">
                           {isEnrolled && remainingDays !== null
                             ? remainingDays > 0 ? `ใช้งานได้อีก ${remainingDays} วัน` : 'หมดอายุแล้ว'
@@ -603,7 +631,7 @@ const CourseDetail = () => {
             {course.is_onsite && (
               <div className="cd-type-section cd-type-section--onsite">
                 <div className="cd-type-section-header">
-                  <span className="cd-type-section-icon">🏫</span>
+                  <span className="cd-type-section-icon"></span>
                   ข้อมูลคอร์สออนไซต์
                 </div>
                 <div className="cd-details-grid">
@@ -615,48 +643,13 @@ const CourseDetail = () => {
                     </div>
                   </div>
 
-                  {schedules.length > 0 ? (
-                    <div className="cd-detail-item" style={{ gridColumn: '1 / -1', flexDirection: 'column', alignItems: 'flex-start' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
-                        <span className="cd-detail-icon">📅</span>
-                        <p className="cd-detail-label" style={{ marginBottom: 0, marginLeft: '8px' }}>รอบเรียนที่เปิดรับสมัคร</p>
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
-                        {schedules.map((schedule) => {
-                          const date = new Date(schedule.start_time);
-                          const dateStr = date.toLocaleDateString('th-TH', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
-                          const timeStart = new Date(schedule.start_time).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-                          const timeEnd = new Date(schedule.end_time).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-                          
-                          return (
-                            <div key={schedule.id} style={{ 
-                              background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0',
-                              display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px'
-                            }}>
-                              <div>
-                                <p style={{ fontWeight: 600, color: '#0f172a', marginBottom: '4px' }}>{dateStr}</p>
-                                <p style={{ fontSize: '0.85rem', color: '#64748b' }}>เวลา: {timeStart} - {timeEnd} น.</p>
-                                {schedule.room_location && (
-                                  <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '2px' }}>📍 {schedule.room_location}</p>
-                                )}
-                              </div>
-                              <div style={{ background: '#ecfdf5', color: '#059669', padding: '6px 12px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600 }}>
-                                รับ {schedule.max_onsite_seats || course.onsite_seats || '-'} ที่นั่ง
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
+                  <div className="cd-detail-item">
+                    <span className="cd-detail-icon">📅</span>
+                    <div>
+                      <p className="cd-detail-label">วันเรียน</p>
+                      <p className="cd-detail-value">{(course.onsite_days && course.onsite_days.length > 0) ? formatDays(course.onsite_days) : '-'}</p>
                     </div>
-                  ) : (
-                    <>
-                      <div className="cd-detail-item">
-                        <span className="cd-detail-icon">📅</span>
-                        <div>
-                          <p className="cd-detail-label">วันเรียน</p>
-                          <p className="cd-detail-value">{(course.onsite_days && course.onsite_days.length > 0) ? formatDays(course.onsite_days) : '-'}</p>
-                        </div>
-                      </div>
+                  </div>
 
                       <div className="cd-detail-item">
                         <span className="cd-detail-icon">🕐</span>
@@ -669,7 +662,7 @@ const CourseDetail = () => {
                       <div className="cd-detail-item">
                         <span className="cd-detail-icon">⏱️</span>
                         <div>
-                          <p className="cd-detail-label">ระยะเวลา</p>
+                          <p className="cd-detail-label">ระยะเวลา (วัน)</p>
                           <p className="cd-detail-value">{course.onsite_duration ? course.onsite_duration.replace('weeks', 'สัปดาห์').replace('hours', 'ชั่วโมง').replace('days', 'วัน') : '-'}</p>
                         </div>
                       </div>
@@ -683,21 +676,23 @@ const CourseDetail = () => {
                           </p>
                         </div>
                       </div>
-                    </>
-                  )}
 
                   {course.onsite_exam_schedule && (
                     <div className="cd-detail-item">
-                      <span className="cd-detail-icon">�</span>
+                      <span className="cd-detail-icon">📆</span>
                       <div>
                         <p className="cd-detail-label">รอบการสอน</p>
                         <div className="cd-detail-value">
                           {(() => {
                             try {
+                              const formatThaiDate = (dateStr: string) => {
+                                const [y, m, d] = dateStr.split('-');
+                                return `${d}/${m}/${y}`;
+                              };
                               const schedules = JSON.parse(course.onsite_exam_schedule);
                               return schedules.map((schedule: any, index: number) => (
                                 <div key={index} style={{ marginBottom: index < schedules.length - 1 ? '8px' : '0' }}>
-                                  รอบที่ {index + 1}: {schedule.startDate} - {schedule.endDate}
+                                  รอบที่ {index + 1}: {formatThaiDate(schedule.startDate)} - {formatThaiDate(schedule.endDate)}
                                 </div>
                               ));
                             } catch {
@@ -813,8 +808,8 @@ const CourseDetail = () => {
 
             <div className="cd-type-badges-row">
               <div className="cd-type-badges">
-                {course.is_online && <span className="cd-type-badge online">🖥️ ออนไลน์</span>}
-                {course.is_onsite && <span className="cd-type-badge onsite">🏫 ออนไซต์</span>}
+                {course.is_online && <span className="cd-type-badge online">ออนไลน์</span>}
+                {course.is_onsite && <span className="cd-type-badge onsite">ออนไซต์</span>}
               </div>
               {isLoggedIn && (
                 <button
@@ -846,6 +841,14 @@ const CourseDetail = () => {
               <button className="cd-login-btn" onClick={() => navigate('/login')}>
                 เข้าสู่ระบบเพื่อลงทะเบียน
               </button>
+            ) : userRole === 'TEACHER' ? (
+              <div style={{
+                textAlign: 'center', padding: '12px 16px',
+                background: '#fef3c7', border: '1px solid #fcd34d',
+                borderRadius: '8px', color: '#92400e', fontSize: '0.9rem'
+              }}>
+                🎓 ผู้สอนไม่สามารถสมัครเรียนคอร์สได้
+              </div>
             ) : (
               <div className="cd-action-buttons" style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
                 {!isEnrolled ? (
@@ -855,20 +858,13 @@ const CourseDetail = () => {
                     disabled={inCart}
                     style={{ width: '100%' }}
                   >
-                    {inCart ? '✓ อยู่ในตะกร้าแล้ว' : '🛒 สมัครเรียน'}
+                    {inCart ? '✓ อยู่ในตะกร้าแล้ว' : '🛒 เพิ่มลงตะกร้า'}
                   </button>
                 ) : (
                   <>
                     <div className="cd-enrolled-badge" style={{ textAlign: 'center', padding: '10px', background: '#ecfdf5', color: '#059669', borderRadius: '8px', fontWeight: 'bold' }}>
                       ✨ คุณสมัครคอร์สนี้แล้ว
                     </div>
-                    <button
-                      className="cd-booking-btn"
-                      onClick={() => setShowBookingForm(true)}
-                      style={{ width: '100%' }}
-                    >
-                      📅 จองการเรียนเพิ่มเติม
-                    </button>
                   </>
                 )}
               </div>
@@ -876,9 +872,7 @@ const CourseDetail = () => {
 
             {cartMsg && <p className="cd-cart-msg">{cartMsg}</p>}
 
-            {bookingMsg && <p className="cd-booking-msg">{bookingMsg}</p>}
-
-            {inCart && isLoggedIn && (
+            {inCart && isLoggedIn && userRole !== 'TEACHER' && (
               <button className="cd-go-cart-btn" onClick={() => navigate('/cart')}>
                 ไปที่ตะกร้า →
               </button>
@@ -1025,9 +1019,15 @@ const CourseDetail = () => {
                       <span className="cd-modal-type-label">
                         <span className="cd-modal-type-icon">🏫</span>
                         ออนไซต์
-                        {course.onsite_days && course.onsite_days.length > 0 && (
-                          <span className="cd-modal-type-detail">{formatDays(course.onsite_days)}</span>
-                        )}
+                        {course.onsite_exam_schedule && (() => {
+                          const round = getAvailableRound(course.onsite_exam_schedule);
+                          if (!round) return <span className="cd-modal-type-detail" style={{ color: '#ef4444' }}>ไม่มีรอบที่เปิดรับสมัคร</span>;
+                          return (
+                            <span className="cd-modal-type-detail">
+                              รอบ {round.index + 1}: {formatThaiDate(round.startDate)} – {formatThaiDate(round.endDate)}
+                            </span>
+                          );
+                        })()}
                       </span>
                     </label>
                   </div>
@@ -1039,54 +1039,15 @@ const CourseDetail = () => {
                     {course.is_online && <span className="cd-type-badge online">🖥️ ออนไลน์</span>}
                     {course.is_onsite && <span className="cd-type-badge onsite">🏫 ออนไซต์</span>}
                   </div>
-                </div>
-              )}
-
-              {/* Schedule Selection if onsite is selected */}
-              {(selectedType === 'onsite' || (!course.is_online && course.is_onsite)) && (
-                <div className="cd-modal-course-info" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-                  <p className="cd-modal-label" style={{ minWidth: 'auto', marginBottom: '8px' }}>เลือกรอบเวลาเรียน <span style={{ color: '#ef4444' }}>*</span></p>
-                  
-                  {schedules.length === 0 ? (
-                    <p style={{ color: '#64748b', fontSize: '0.9rem' }}>ไม่มีรอบเวลาเปิดรับในขณะนี้</p>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
-                      {schedules.map((schedule) => {
-                        const date = new Date(schedule.start_time);
-                        const formattedDate = date.toLocaleDateString('th-TH', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-                        const timeStart = new Date(schedule.start_time).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-                        const timeEnd = new Date(schedule.end_time).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-                        
-                        return (
-                          <label key={schedule.id} style={{
-                            display: 'flex', alignItems: 'center', padding: '10px 12px',
-                            border: `1px solid ${selectedScheduleId === schedule.id ? '#0A1C39' : '#e2e8f0'}`,
-                            borderRadius: '8px', cursor: 'pointer',
-                            background: selectedScheduleId === schedule.id ? '#f8fafc' : 'white'
-                          }}>
-                            <input
-                              type="radio"
-                              name="scheduleSelection"
-                              value={schedule.id}
-                              checked={selectedScheduleId === schedule.id}
-                              onChange={() => setSelectedScheduleId(schedule.id)}
-                              style={{ marginRight: '10px' }}
-                            />
-                            <div>
-                              <div style={{ fontSize: '0.95rem', fontWeight: '500', color: '#0f172a' }}>
-                                📅 {formattedDate} ({timeStart} - {timeEnd})
-                              </div>
-                              {schedule.room_location && (
-                                <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '4px' }}>
-                                  📍 ห้อง: {schedule.room_location}
-                                </div>
-                              )}
-                            </div>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  )}
+                  {course.is_onsite && course.onsite_exam_schedule && (() => {
+                    const round = getAvailableRound(course.onsite_exam_schedule);
+                    if (!round) return <p style={{ color: '#ef4444', fontSize: '13px', marginTop: '6px' }}>ไม่มีรอบที่เปิดรับสมัคร</p>;
+                    return (
+                      <div style={{ marginTop: '6px', fontSize: '13px', color: '#1e40af' }}>
+                        รอบ {round.index + 1}: {formatThaiDate(round.startDate)} – {formatThaiDate(round.endDate)}
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>
@@ -1099,26 +1060,6 @@ const CourseDetail = () => {
                 เพิ่มเข้าตะกร้า
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Booking form modal */}
-      {showBookingForm && course && (
-        <div className="cd-modal-overlay" onClick={() => setShowBookingForm(false)}>
-          <div className="cd-modal cd-booking-modal" onClick={(e) => e.stopPropagation()}>
-            <BookingForm
-              courseId={courseId || ''}
-              isOnline={course.is_online}
-              isOnsite={course.is_onsite}
-              onBookingComplete={(bookingId: string) => {
-                console.log('Booking complete for:', bookingId);
-                setShowBookingForm(false);
-                setBookingMsg('✓ จองการเรียนสำเร็จแล้ว!');
-                setTimeout(() => setBookingMsg(''), 3000);
-              }}
-              onClose={() => setShowBookingForm(false)}
-            />
           </div>
         </div>
       )}

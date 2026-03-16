@@ -7,13 +7,14 @@ import {
   Image as ImageIcon, 
   Trash2,
   Video, 
-Edit2, Check, Bell, Calendar
+Edit2, Check, Bell, Calendar, HelpCircle
 } from 'lucide-react';
 import '../styles/LoginTheme.css';
 import '../styles/ProfileTheme.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { courseAPI, CourseStatus, type Course as APICourse } from '../api/courseAPI';
+import { examAPI, type Question, type Choice } from '../api/examAPI';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -40,8 +41,12 @@ export default function TeacherDashboard() {
       video_url: string;
       pdf_url: string;
       videoFile?: File;
+      questions?: Array<Question & { choices?: Choice[] }>;
     }>;
   }>>([]);
+  
+  // Exam & Question Management State
+  const [courseExam, setCourseExam] = useState<any | null>(null);
   
   // Notification State
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -806,9 +811,18 @@ export default function TeacherDashboard() {
             title: '',
             content: '',
             video_url: '',
-            pdf_url: ''
+            pdf_url: '',
+            questions: []
           }]
         }]);
+      }
+      
+      // Load or create default exam for course
+      const exam = await loadOrCreateCourseExam(course.id);
+      
+      // Load questions for all lessons
+      if (exam && existingLessons && existingLessons.length > 0) {
+        await loadQuestionsForLessons(existingLessons, exam.id);
       }
     } catch (error) {
       console.error('Error loading lessons:', error);
@@ -819,9 +833,226 @@ export default function TeacherDashboard() {
           title: '',
           content: '',
           video_url: '',
-          pdf_url: ''
+          pdf_url: '',
+          questions: []
         }]
       }]);
+    }
+  };
+
+  // ==========================================
+  // Exam & Question Management Functions
+  // ==========================================
+  const loadOrCreateCourseExam = async (courseId: string) => {
+    try {
+      const response = await examAPI.getExamsByCourse(courseId);
+      const exams = response.data.data || [];
+      
+      let exam;
+      if (exams.length > 0) {
+        // Use first exam as the default course exam
+        exam = exams[0];
+      } else {
+        // Create a default exam for the course
+        const createResponse = await examAPI.createExam({
+          course_id: courseId,
+          title: 'ข้อสอบคอร์ส',
+          description: 'ข้อสอบของคอร์สนี้',
+          type: 'QUIZ',
+          total_score: 100
+        });
+        exam = createResponse.data.data;
+      }
+      
+      setCourseExam(exam);
+      return exam; // Return the exam for immediate use
+    } catch (error) {
+      console.error('Error loading/creating course exam:', error);
+      return null;
+    }
+  };
+
+  const loadQuestionsForLessons = async (_existingLessons: any[], examId: string) => {
+    try {
+      const response = await examAPI.getQuestionsByExam(examId);
+      const allQuestions = response.data.data || [];
+      
+      // Group questions by lesson_id
+      const questionsByLessonId: { [key: string]: Array<Question & { choices?: Choice[] }> } = {};
+      
+      for (const question of allQuestions) {
+        if (question.lesson_id) {
+          if (!questionsByLessonId[question.lesson_id]) {
+            questionsByLessonId[question.lesson_id] = [];
+          }
+          
+          // Load choices for each question
+          try {
+            const choicesResponse = await examAPI.getChoicesByQuestion(question.id);
+            questionsByLessonId[question.lesson_id].push({
+              ...question,
+              choices: choicesResponse.data.data || []
+            });
+          } catch (error) {
+            console.error(`Error loading choices for question ${question.id}:`, error);
+            questionsByLessonId[question.lesson_id].push(question);
+          }
+        }
+      }
+      
+      // Update lessons with questions
+      setLessons(prev => {
+        return prev.map(lesson => ({
+          ...lesson,
+          subLessons: lesson.subLessons.map(subLesson => ({
+            ...subLesson,
+            questions: subLesson.id ? (questionsByLessonId[subLesson.id] || []) : []
+          }))
+        }));
+      });
+    } catch (error) {
+      console.error('Error loading questions:', error);
+    }
+  };
+
+  const handleAddQuestion = async (lessonIndex: number, subIndex: number) => {
+    const subLesson = lessons[lessonIndex].subLessons[subIndex];
+    
+    if (!subLesson.id) {
+      alert('กรุณาบันทึกบทเรียนก่อนเพิ่มคำถาม');
+      return;
+    }
+    
+    if (!courseExam) {
+      alert('ไม่พบข้อสอบของคอร์ส กรุณาลองใหม่อีกครั้ง');
+      return;
+    }
+    
+    try {
+      const response = await examAPI.createQuestion(courseExam.id, {
+        question_text: 'คำถามใหม่',
+        type: 'MULTIPLE_CHOICE',
+        score_points: 1,
+        lesson_id: subLesson.id
+      });
+      
+      const newQuestion = response.data.data;
+      
+      // Add default choices for MULTIPLE_CHOICE
+      const choiceLabels = ['A', 'B', 'C', 'D'];
+      const newChoices: Choice[] = [];
+      
+      for (let i = 0; i < 4; i++) {
+        const choiceResponse = await examAPI.createChoice(newQuestion.id, {
+          choice_label: choiceLabels[i],
+          choice_text: `ตัวเลือก ${choiceLabels[i]}`,
+          is_correct: i === 0 // First choice is correct by default
+        });
+        newChoices.push(choiceResponse.data.data);
+      }
+      
+      // Update state
+      setLessons(prev => {
+        const updated = [...prev];
+        if (!updated[lessonIndex].subLessons[subIndex].questions) {
+          updated[lessonIndex].subLessons[subIndex].questions = [];
+        }
+        updated[lessonIndex].subLessons[subIndex].questions!.push({
+          ...newQuestion,
+          choices: newChoices
+        });
+        return updated;
+      });
+      
+      alert('✅ เพิ่มคำถามเรียบร้อยแล้ว');
+    } catch (error) {
+      console.error('Error adding question:', error);
+      alert('เกิดข้อผิดพลาดในการเพิ่มคำถาม');
+    }
+  };
+
+  const handleUpdateQuestion = async (
+    lessonIndex: number, 
+    subIndex: number, 
+    questionIndex: number, 
+    field: string, 
+    value: any
+  ) => {
+    const question = lessons[lessonIndex].subLessons[subIndex].questions?.[questionIndex];
+    if (!question) return;
+    
+    try {
+      await examAPI.updateQuestion(question.id, {
+        [field]: value
+      });
+      
+      // Update state
+      setLessons(prev => {
+        const updated = [...prev];
+        updated[lessonIndex].subLessons[subIndex].questions![questionIndex] = {
+          ...question,
+          [field]: value
+        };
+        return updated;
+      });
+    } catch (error) {
+      console.error('Error updating question:', error);
+      alert('เกิดข้อผิดพลาดในการแก้ไขคำถาม');
+    }
+  };
+
+  const handleDeleteQuestion = async (lessonIndex: number, subIndex: number, questionIndex: number) => {
+    const question = lessons[lessonIndex].subLessons[subIndex].questions?.[questionIndex];
+    if (!question) return;
+    
+    if (!confirm('คุณต้องการลบคำถามนี้ใช่หรือไม่?')) return;
+    
+    try {
+      await examAPI.deleteQuestion(question.id);
+      
+      // Update state
+      setLessons(prev => {
+        const updated = [...prev];
+        updated[lessonIndex].subLessons[subIndex].questions!.splice(questionIndex, 1);
+        return updated;
+      });
+      
+      alert('✅ ลบคำถามเรียบร้อยแล้ว');
+    } catch (error) {
+      console.error('Error deleting question:', error);
+      alert('เกิดข้อผิดพลาดในการลบคำถาม');
+    }
+  };
+
+  const handleUpdateChoice = async (
+    lessonIndex: number,
+    subIndex: number,
+    questionIndex: number,
+    choiceIndex: number,
+    field: string,
+    value: any
+  ) => {
+    const question = lessons[lessonIndex].subLessons[subIndex].questions?.[questionIndex];
+    const choice = question?.choices?.[choiceIndex];
+    if (!choice) return;
+    
+    try {
+      await examAPI.updateChoice(choice.id, {
+        [field]: value
+      });
+      
+      // Update state
+      setLessons(prev => {
+        const updated = [...prev];
+        updated[lessonIndex].subLessons[subIndex].questions![questionIndex].choices![choiceIndex] = {
+          ...choice,
+          [field]: value
+        };
+        return updated;
+      });
+    } catch (error) {
+      console.error('Error updating choice:', error);
+      alert('เกิดข้อผิดพลาดในการแก้ไขตัวเลือก');
     }
   };
 
@@ -832,7 +1063,8 @@ export default function TeacherDashboard() {
         title: '',
         content: '',
         video_url: '',
-        pdf_url: ''
+        pdf_url: '',
+        questions: []
       }]
     }]);
   };
@@ -850,7 +1082,8 @@ export default function TeacherDashboard() {
           title: '',
           content: '',
           video_url: '',
-          pdf_url: ''
+          pdf_url: '',
+          questions: []
         }]
       };
     }));
@@ -1167,17 +1400,17 @@ export default function TeacherDashboard() {
       case CourseStatus.REQUEST_CREATE: return <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>⏳ รอ Admin อนุมัติคำขอ...</span>;
       case CourseStatus.DRAFTING: return (
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <button
-            onClick={() => navigate(`/exam-management/${course.id}`)}
-            style={{ padding: '8px 20px', background: '#3b82f6', border: 'none', borderRadius: '30px', cursor: 'pointer', color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}
-          >
-            📝 จัดการข้อสอบ
-          </button>
           <button 
             onClick={() => handleOpenContentModal(course)}
-            style={{ padding: '8px 20px', background: 'white', border: '1px solid #cbd5e1', borderRadius: '30px', cursor: 'pointer', color: '#334155' }}
+            style={{ padding: '8px 20px', background: '#3b82f6', border: 'none', borderRadius: '30px', cursor: 'pointer', color: 'white' }}
           >
             ✏️ แก้ไขเนื้อหา
+          </button>
+          <button
+            onClick={() => navigate(`/exam-management/${course.id}`)}
+            style={{ padding: '8px 20px', background: '#8b5cf6', border: 'none', borderRadius: '30px', cursor: 'pointer', color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            📝 จัดการข้อสอบ
           </button>
           <button onClick={() => handleUpdateStatus(course.id, CourseStatus.PENDING_REVIEW)} style={{ padding: '8px 20px', background: '#22c55e', border: 'none', borderRadius: '30px', cursor: 'pointer', color: 'white' }}>🚀 ส่งขออนุมัติขาย</button>
         </div>
@@ -1191,11 +1424,17 @@ export default function TeacherDashboard() {
       );
       case CourseStatus.PUBLISHED: return (
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <button
-            onClick={() => navigate(`/exam-management/${course.id}`)}
-            style={{ padding: '8px 20px', background: '#0f172a', border: 'none', borderRadius: '30px', cursor: 'pointer', color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}
+          <button 
+            onClick={() => handleOpenContentModal(course)}
+            style={{ padding: '8px 20px', background: '#64748b', border: 'none', borderRadius: '30px', cursor: 'pointer', color: 'white' }}
           >
-            📝 จัดการข้อสอบ
+            👁️ ดูเนื้อหา
+          </button>
+          <button
+            onClick={() => navigate(`/exam-management/${course.id}?readonly=true`)}
+            style={{ padding: '8px 20px', background: '#64748b', border: 'none', borderRadius: '30px', cursor: 'pointer', color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            👁️ ดูข้อสอบ
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{course.students_enrolled}</span>
@@ -2023,11 +2262,24 @@ export default function TeacherDashboard() {
             </button>
 
             <h2 style={{ marginBottom: '10px', fontSize: '1.8rem', fontWeight: 'bold', color: '#0f172a' }}>
-              📚 จัดการเนื้อหาคอร์ส
+              📚 {contentCourse.status === CourseStatus.PUBLISHED ? 'ดูเนื้อหาคอร์ส' : 'จัดการเนื้อหาคอร์ส'}
             </h2>
-            <p style={{ color: '#64748b', marginBottom: '30px', fontSize: '1rem' }}>
+            <p style={{ color: '#64748b', marginBottom: '10px', fontSize: '1rem' }}>
               {contentCourse.title}
             </p>
+            {contentCourse.status === CourseStatus.PUBLISHED && (
+              <div style={{
+                background: '#fef3c7',
+                border: '1px solid #fcd34d',
+                borderRadius: '8px',
+                padding: '10px 15px',
+                marginBottom: '20px',
+                color: '#92400e',
+                fontSize: '0.9rem'
+              }}>
+                ⚠️ คอร์สนี้ถูกเผยแพร่แล้ว - ดูเนื้อหาได้เท่านั้น ไม่สามารถแก้ไขได้
+              </div>
+            )}
 
             {/* Lessons List */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
@@ -2297,6 +2549,168 @@ export default function TeacherDashboard() {
                           </div>
                         </div>
 
+                        {/* Questions Section */}
+                        {subLesson.id && (
+                          <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '2px dashed #e2e8f0' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '15px' }}>
+                              <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 'bold', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <HelpCircle size={20} color="#3b82f6" />
+                                คำถาม/ข้อสอบของบทเรียนนี้
+                              </h4>
+                              <button
+                                onClick={() => handleAddQuestion(lessonIndex, subIndex)}
+                                style={{
+                                  background: '#10b981',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  padding: '8px 16px',
+                                  cursor: 'pointer',
+                                  fontSize: '0.85rem',
+                                  fontWeight: 'bold',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px'
+                                }}
+                              >
+                                <PlusCircle size={16} />
+                                เพิ่มคำถาม
+                              </button>
+                            </div>
+
+                            {/* Questions List */}
+                            {subLesson.questions && subLesson.questions.length > 0 ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                {subLesson.questions.map((question, qIdx) => (
+                                  <div key={question.id} style={{ 
+                                    background: '#f8fafc', 
+                                    border: '1px solid #e2e8f0', 
+                                    borderRadius: '8px', 
+                                    padding: '15px' 
+                                  }}>
+                                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '10px' }}>
+                                      <span style={{ 
+                                        background: '#3b82f6', 
+                                        color: 'white', 
+                                        borderRadius: '4px', 
+                                        padding: '4px 10px', 
+                                        fontSize: '0.8rem', 
+                                        fontWeight: 'bold',
+                                        minWidth: '30px',
+                                        textAlign: 'center'
+                                      }}>
+                                        {qIdx + 1}
+                                      </span>
+                                      <div style={{ flex: 1 }}>
+                                        <textarea
+                                          value={question.question_text}
+                                          onChange={(e) => handleUpdateQuestion(lessonIndex, subIndex, qIdx, 'question_text', e.target.value)}
+                                          placeholder="พิมพ์คำถามที่นี่..."
+                                          style={{
+                                            width: '100%',
+                                            padding: '10px',
+                                            fontSize: '0.95rem',
+                                            border: '1px solid #cbd5e1',
+                                            borderRadius: '6px',
+                                            outline: 'none',
+                                            background: '#ffffff',
+                                            color: '#0f172a',
+                                            boxSizing: 'border-box',
+                                            minHeight: '80px',
+                                            resize: 'vertical'
+                                          }}
+                                        />
+                                        <div style={{ marginTop: '8px', fontSize: '0.75rem', color: '#64748b' }}>
+                                          คะแนน: {question.score_points} | ประเภท: {question.type === 'MULTIPLE_CHOICE' ? 'ปรนัย' : question.type}
+                                        </div>
+                                      </div>
+                                      <button
+                                        onClick={() => handleDeleteQuestion(lessonIndex, subIndex, qIdx)}
+                                        style={{
+                                          background: '#ef4444',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '6px',
+                                          padding: '6px 10px',
+                                          cursor: 'pointer',
+                                          fontSize: '0.8rem'
+                                        }}
+                                      >
+                                        <Trash2 size={16} />
+                                      </button>
+                                    </div>
+
+                                    {/* Choices for MULTIPLE_CHOICE */}
+                                    {question.type === 'MULTIPLE_CHOICE' && question.choices && (
+                                      <div style={{ marginLeft: '40px', marginTop: '12px' }}>
+                                        <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569', marginBottom: '8px' }}>
+                                          ตัวเลือก:
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                          {question.choices.map((choice, cIdx) => (
+                                            <div key={choice.id} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                              <input
+                                                type="radio"
+                                                name={`correct-${lessonIndex}-${subIndex}-${qIdx}`}
+                                                checked={choice.is_correct}
+                                                onChange={() => {
+                                                  // Update all choices in this question
+                                                  question.choices?.forEach((_ch, chIdx) => {
+                                                    handleUpdateChoice(lessonIndex, subIndex, qIdx, chIdx, 'is_correct', chIdx === cIdx);
+                                                  });
+                                                }}
+                                                style={{ cursor: 'pointer' }}
+                                              />
+                                              <span style={{ 
+                                                fontWeight: 'bold', 
+                                                color: choice.is_correct ? '#22c55e' : '#64748b',
+                                                minWidth: '20px'
+                                              }}>
+                                                {choice.choice_label}.
+                                              </span>
+                                              <input
+                                                type="text"
+                                                value={choice.choice_text}
+                                                onChange={(e) => handleUpdateChoice(lessonIndex, subIndex, qIdx, cIdx, 'choice_text', e.target.value)}
+                                                placeholder={`ตัวเลือก ${choice.choice_label}`}
+                                                style={{
+                                                  flex: 1,
+                                                  padding: '8px 12px',
+                                                  fontSize: '0.9rem',
+                                                  border: choice.is_correct ? '2px solid #22c55e' : '1px solid #cbd5e1',
+                                                  borderRadius: '6px',
+                                                  outline: 'none',
+                                                  background: choice.is_correct ? '#f0fdf4' : '#ffffff',
+                                                  color: '#0f172a',
+                                                  boxSizing: 'border-box'
+                                                }}
+                                              />
+                                            </div>
+                                          ))}
+                                        </div>
+                                        <div style={{ marginTop: '8px', fontSize: '0.7rem', color: '#64748b', fontStyle: 'italic' }}>
+                                          * เลือกวงกลมเพื่อกำหนดคำตอบที่ถูกต้อง
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div style={{ 
+                                padding: '20px', 
+                                textAlign: 'center', 
+                                color: '#94a3b8', 
+                                background: '#f8fafc', 
+                                borderRadius: '8px',
+                                border: '2px dashed #e2e8f0'
+                              }}>
+                                ยังไม่มีคำถามในบทเรียนนี้
+                              </div>
+                            )}
+                          </div>
+                        )}
+
                       </div>
                     ))}
 
@@ -2371,41 +2785,45 @@ export default function TeacherDashboard() {
                   cursor: 'pointer'
                 }}
               >
-                ยกเลิก
+                {contentCourse.status === CourseStatus.PUBLISHED ? 'ปิด' : 'ยกเลิก'}
               </button>
-              <button
-                onClick={handleSaveContent}
-                style={{
-                  background: '#3b82f6',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 30px',
-                  borderRadius: '8px',
-                  fontSize: '1rem',
-                  fontWeight: 'bold',
-                  cursor: 'pointer'
-                }}
-              >
-                💾 บันทึกเนื้อหา
-              </button>
-              <button
-                onClick={handleSubmitForReview}
-                style={{
-                  background: '#22c55e',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 30px',
-                  borderRadius: '8px',
-                  fontSize: '1rem',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                🚀 ส่งคำขอขายคอร์ส
-              </button>
+              {contentCourse.status !== CourseStatus.PUBLISHED && (
+                <>
+                  <button
+                    onClick={handleSaveContent}
+                    style={{
+                      background: '#3b82f6',
+                      color: 'white',
+                      border: 'none',
+                      padding: '12px 30px',
+                      borderRadius: '8px',
+                      fontSize: '1rem',
+                      fontWeight: 'bold',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    💾 บันทึกเนื้อหา
+                  </button>
+                  <button
+                    onClick={handleSubmitForReview}
+                    style={{
+                      background: '#22c55e',
+                      color: 'white',
+                      border: 'none',
+                      padding: '12px 30px',
+                      borderRadius: '8px',
+                      fontSize: '1rem',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    🚀 ส่งคำขอขายคอร์ส
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

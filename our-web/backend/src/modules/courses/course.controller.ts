@@ -265,6 +265,7 @@ export class CourseController {
         video_url: l.video_url,
         pdf_url: l.pdf_url,
         sequence_order: l.sequence_order,
+        passing_score: l.passing_score ?? 0,
       })),
       total,
       course_id: courseId,

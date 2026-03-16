@@ -100,6 +100,7 @@ export interface Lesson {
   video_url?: string;
   pdf_url?: string;
   sequence_order?: number;
+  passing_score?: number;
 }
 
 interface CreateLessonDto {
@@ -108,6 +109,7 @@ interface CreateLessonDto {
   video_url?: string;
   pdf_url?: string;
   sequence_order?: number;
+  passing_score?: number;
 }
 
 export interface CoursesResponse {

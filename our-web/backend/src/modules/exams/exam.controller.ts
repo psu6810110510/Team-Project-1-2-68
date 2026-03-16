@@ -96,6 +96,8 @@ export class ExamController {
       id: question.id,
       question_text: question.question_text,
       type: question.type,
+      score_points: question.score_points,
+      lesson_id: question.lesson_id,
       message: 'Question created successfully',
     };
   }
@@ -110,6 +112,7 @@ export class ExamController {
         type: q.type,
         score_points: q.score_points,
         sequence_order: q.sequence_order,
+        lesson_id: q.lesson_id,
       })),
       total: questions.length,
       exam_id: examId,
@@ -165,6 +168,8 @@ export class ExamController {
     return {
       id: choice.id,
       choice_label: choice.choice_label,
+      choice_text: choice.choice_text,
+      is_correct: choice.is_correct,
       message: 'Choice created successfully',
     };
   }

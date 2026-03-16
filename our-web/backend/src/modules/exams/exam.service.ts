@@ -117,7 +117,7 @@ export class ExamService {
 
     return this.examRepo.find({
       where: { course_id: courseId },
-      order: { created_at: 'DESC' },
+      order: { created_at: 'ASC' },
     });
   }
 

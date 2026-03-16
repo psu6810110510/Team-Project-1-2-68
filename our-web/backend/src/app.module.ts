@@ -12,9 +12,7 @@ import {
   Exam,
   Question,
   Choice,
-  Booking,
   ExamResult,
-  SeatQuota,
   Payment,
   Teacher,
   Notification,
@@ -25,8 +23,6 @@ import {
 import { UserModule } from './modules/users/user.module';
 import { CourseModule } from './modules/courses/course.module';
 import { ExamModule } from './modules/exams/exam.module';
-import { BookingModule } from './modules/bookings/booking.module';
-import { SeatQuotaModule } from './modules/seat-quotas/seat-quota.module';
 import { TeacherModule } from './modules/teachers/teacher.module';
 import { UploadModule } from './upload/upload.module';
 import { PaymentModule } from './modules/payments/payment.module';
@@ -65,9 +61,7 @@ import { ReviewModule } from './modules/reviews/review.module';
         Exam,
         Question,
         Choice,
-        Booking,
         ExamResult,
-        SeatQuota,
         Payment,
         Teacher,
         Notification,
@@ -81,8 +75,6 @@ import { ReviewModule } from './modules/reviews/review.module';
     CourseModule,
     ScheduleModule,
     ExamModule,
-    BookingModule,
-    SeatQuotaModule,
     TeacherModule,
     UploadModule,
     PaymentModule,

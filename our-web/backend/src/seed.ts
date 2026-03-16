@@ -10,9 +10,7 @@ import { Lesson } from './entities/lesson.entity';
 import { Exam } from './entities/exam.entity';
 import { Question } from './entities/question.entity';
 import { Choice } from './entities/choice.entity';
-import { Booking } from './entities/booking.entity';
 import { ExamResult } from './entities/exam-result.entity';
-import { SeatQuota } from './entities/seat-quota.entity';
 import { Teacher } from './entities/teacher.entity';
 import { Review } from './entities/review.entity';
 
@@ -30,7 +28,7 @@ const AppDataSource = new DataSource({
       password: process.env.DB_PASSWORD || 'password123',
       database: process.env.DB_NAME || 'Finalproy1_dev',
     }),
-  entities: [User, Profile, Course, Schedule, Lesson, Exam, Question, Choice, Booking, ExamResult, SeatQuota, Teacher, Review],
+  entities: [User, Profile, Course, Schedule, Lesson, Exam, Question, Choice, ExamResult, Teacher, Review],
   synchronize: false,
 });
 
