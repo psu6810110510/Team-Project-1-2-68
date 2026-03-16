@@ -218,11 +218,32 @@ const BookingForm = ({
       days.push(<div key={`empty-${i}`} className="calendar-cell empty"></div>);
     }
 
-    // วันที่ในเดือนนั้นๆ
     for (let d = 1; d <= daysInMonth; d++) {
       const dateSchedules = getSchedulesForDate(d);
       const hasClasses = dateSchedules.length > 0;
-      
+
+      let isFullyBooked = false;
+      let hasAvailable = false;
+      if (hasClasses) {
+        dateSchedules.forEach(sch => {
+          const stats = statsMap[sch.id];
+          const booked = stats ? stats.onsite_count : 0;
+          const total = sch.max_onsite_seats || 999;
+          if (total > 0 && booked >= total) {
+            isFullyBooked = true;
+          } else {
+            hasAvailable = true;
+          }
+        });
+      }
+
+      let statusClass = '';
+      if (hasClasses) {
+        if (hasAvailable) statusClass = 'has-available-seats';
+        else if (isFullyBooked) statusClass = 'fully-booked';
+        else statusClass = 'has-class';
+      }
+
       const isSelected = selectedDate?.getDate() === d &&
                          selectedDate?.getMonth() === month &&
                          selectedDate?.getFullYear() === year;
@@ -230,7 +251,7 @@ const BookingForm = ({
       days.push(
         <div 
           key={d} 
-          className={`calendar-cell ${hasClasses ? 'has-class' : ''} ${isSelected ? 'selected' : ''}`}
+          className={`calendar-cell ${statusClass} ${isSelected ? 'selected' : ''}`}
           onClick={() => {
             if (hasClasses) {
               const newSelectedDate = new Date(year, month, d);
@@ -241,7 +262,6 @@ const BookingForm = ({
           }}
         >
           <span className="day-number">{d}</span>
-          {hasClasses && <span className="class-indicator">•</span>}
         </div>
       );
     }

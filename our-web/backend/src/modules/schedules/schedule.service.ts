@@ -10,6 +10,13 @@ export class ScheduleService {
     private scheduleRepo: Repository<Schedule>,
   ) {}
 
+  async getAllSchedules(): Promise<Schedule[]> {
+    return this.scheduleRepo.find({
+      relations: ['course'],
+      order: { start_time: 'ASC' },
+    });
+  }
+
   async getSchedulesByCourse(courseId: string): Promise<Schedule[]> {
     // simply return all schedules for a given course
     return this.scheduleRepo.find({

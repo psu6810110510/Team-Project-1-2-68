@@ -14,22 +14,23 @@ import { Booking } from './entities/booking.entity';
 import { ExamResult } from './entities/exam-result.entity';
 import { SeatQuota } from './entities/seat-quota.entity';
 import { Teacher } from './entities/teacher.entity';
+import { Review } from './entities/review.entity';
 
 const AppDataSource = new DataSource({
   type: 'postgres',
   ...(process.env.DATABASE_URL
     ? {
-        url: process.env.DATABASE_URL,
-        ssl: { rejectUnauthorized: false },
-      }
+      url: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+    }
     : {
-        host: process.env.DB_HOST || 'localhost',
-        port: parseInt(process.env.DB_PORT || '5435'),
-        username: process.env.DB_USERNAME || 'admin',
-        password: process.env.DB_PASSWORD || 'password123',
-        database: process.env.DB_NAME || 'Finalproy1_dev',
-      }),
-  entities: [User, Profile, Course, Schedule, Lesson, Exam, Question, Choice, Booking, ExamResult, SeatQuota, Teacher],
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '5435'),
+      username: process.env.DB_USERNAME || 'admin',
+      password: process.env.DB_PASSWORD || 'password123',
+      database: process.env.DB_NAME || 'Finalproy1_dev',
+    }),
+  entities: [User, Profile, Course, Schedule, Lesson, Exam, Question, Choice, Booking, ExamResult, SeatQuota, Teacher, Review],
   synchronize: false,
 });
 
@@ -122,169 +123,169 @@ async function seed() {
     // ============================================
     // 4. สร้างคอร์ส
     // ============================================
-    
+
     // Delete all existing courses first
     await courseRepository.query('DELETE FROM courses');
     console.log('✅ ลบข้อมูลคอร์สเก่า');
 
     const coursesData: Partial<Course>[] = [
-        {
-          title: 'TypeScript Fundamentals',
-          description: 'เรียนรู้ TypeScript ตั้งแต่พื้นฐาน เหมาะสำหรับผู้เริ่มต้น',
-          thumbnail_url: 'https://via.placeholder.com/300x200?text=TypeScript',
-          video_url: 'https://example.com/typescript-intro.mp4',
-          price: 1499,
-          level: CourseLevel.BEGINNER,
-          instructor_id: teacherUser.id,
-          instructor_name: 'อาจารย์ ใจดี สอนเก่ง',
-          tags: 'typescript,javascript,programming',
-          is_onsite: false,
-          is_online: true,
-          online_expiry: '90 days',
-          status: CourseStatus.PUBLISHED,
-          is_active: true,
-          students_enrolled: 25,
-        },
-        {
-          title: 'React Advanced Patterns',
-          description: 'เรียนรู้ React Patterns ขั้นสูง เพื่อเขียนโค้ดที่เป็นมืออาชีพ',
-          thumbnail_url: 'https://via.placeholder.com/300x200?text=React',
-          video_url: 'https://example.com/react-advanced.mp4',
-          price: 2499,
-          level: CourseLevel.INTERMEDIATE,
-          instructor_id: teacherUser.id,
-          instructor_name: 'อาจารย์ ใจดี สอนเก่ง',
-          tags: 'react,javascript,frontend',
-          is_onsite: false,
-          is_online: true,
-          online_expiry: '120 days',
-          status: CourseStatus.PUBLISHED,
-          is_active: true,
-          students_enrolled: 18,
-        },
-        {
-          title: 'NestJS Backend Development',
-          description: 'พัฒนา Backend ด้วย NestJS Framework',
-          thumbnail_url: 'https://via.placeholder.com/300x200?text=NestJS',
-          video_url: 'https://example.com/nestjs-course.mp4',
-          price: 1999,
-          level: CourseLevel.INTERMEDIATE,
-          instructor_id: teacherUser.id,
-          instructor_name: 'อาจารย์ ใจดี สอนเก่ง',
-          tags: 'nestjs,backend,nodejs',
-          is_onsite: true,
-          onsite_seats: 30,
-          onsite_days: ['Monday', 'Wednesday', 'Friday'],
-          onsite_time_start: '09:00',
-          onsite_time_end: '12:00',
-          onsite_duration: '6 weeks',
-          is_online: true,
-          online_expiry: '60 days',
-          status: CourseStatus.PUBLISHED,
-          is_active: true,
-          students_enrolled: 42,
-        },
-        {
-          title: 'Database Design & SQL Mastery',
-          description: 'ออกแบบ Database และเขียน SQL ที่มีประสิทธิภาพ',
-          thumbnail_url: 'https://via.placeholder.com/300x200?text=Database',
-          video_url: 'https://example.com/database-course.mp4',
-          price: 1799,
-          level: CourseLevel.HARD,
-          instructor_id: teacherUser.id,
-          instructor_name: 'อาจารย์ ใจดี สอนเก่ง',
-          tags: 'database,sql,postgresql',
-          is_onsite: false,
-          is_online: true,
-          online_expiry: '180 days',
-          status: CourseStatus.PUBLISHED,
-          is_active: true,
-          students_enrolled: 15,
-        },
-        {
-          title: 'Full Stack Web Development',
-          description: 'เรียนรู้ Full Stack Development ด้วย React และ NestJS',
-          thumbnail_url: 'https://via.placeholder.com/300x200?text=FullStack',
-          video_url: 'https://example.com/fullstack-course.mp4',
-          price: 3999,
-          level: CourseLevel.INTERMEDIATE,
-          instructor_id: teacherUser.id,
-          instructor_name: 'อาจารย์ ใจดี สอนเก่ง',
-          tags: 'fullstack,react,nodejs,backend',
-          is_onsite: true,
-          onsite_seats: 25,
-          onsite_days: ['Tuesday', 'Thursday'],
-          onsite_time_start: '14:00',
-          onsite_time_end: '17:00',
-          onsite_duration: '8 weeks',
-          is_online: true,
-          online_expiry: '365 days',
-          status: CourseStatus.PUBLISHED,
-          is_active: true,
-          students_enrolled: 52,
-        },
-      ];
+      {
+        title: 'TypeScript Fundamentals',
+        description: 'เรียนรู้ TypeScript ตั้งแต่พื้นฐาน เหมาะสำหรับผู้เริ่มต้น',
+        thumbnail_url: 'https://via.placeholder.com/300x200?text=TypeScript',
+        video_url: 'https://example.com/typescript-intro.mp4',
+        price: 1499,
+        level: CourseLevel.BEGINNER,
+        instructor_id: teacherUser.id,
+        instructor_name: 'อาจารย์ ใจดี สอนเก่ง',
+        tags: 'typescript,javascript,programming',
+        is_onsite: false,
+        is_online: true,
+        online_expiry: '90 days',
+        status: CourseStatus.PUBLISHED,
+        is_active: true,
+        students_enrolled: 25,
+      },
+      {
+        title: 'React Advanced Patterns',
+        description: 'เรียนรู้ React Patterns ขั้นสูง เพื่อเขียนโค้ดที่เป็นมืออาชีพ',
+        thumbnail_url: 'https://via.placeholder.com/300x200?text=React',
+        video_url: 'https://example.com/react-advanced.mp4',
+        price: 2499,
+        level: CourseLevel.INTERMEDIATE,
+        instructor_id: teacherUser.id,
+        instructor_name: 'อาจารย์ ใจดี สอนเก่ง',
+        tags: 'react,javascript,frontend',
+        is_onsite: false,
+        is_online: true,
+        online_expiry: '120 days',
+        status: CourseStatus.PUBLISHED,
+        is_active: true,
+        students_enrolled: 18,
+      },
+      {
+        title: 'NestJS Backend Development',
+        description: 'พัฒนา Backend ด้วย NestJS Framework',
+        thumbnail_url: 'https://via.placeholder.com/300x200?text=NestJS',
+        video_url: 'https://example.com/nestjs-course.mp4',
+        price: 1999,
+        level: CourseLevel.INTERMEDIATE,
+        instructor_id: teacherUser.id,
+        instructor_name: 'อาจารย์ ใจดี สอนเก่ง',
+        tags: 'nestjs,backend,nodejs',
+        is_onsite: true,
+        onsite_seats: 30,
+        onsite_days: ['Monday', 'Wednesday', 'Friday'],
+        onsite_time_start: '09:00',
+        onsite_time_end: '12:00',
+        onsite_duration: '6 weeks',
+        is_online: true,
+        online_expiry: '60 days',
+        status: CourseStatus.PUBLISHED,
+        is_active: true,
+        students_enrolled: 42,
+      },
+      {
+        title: 'Database Design & SQL Mastery',
+        description: 'ออกแบบ Database และเขียน SQL ที่มีประสิทธิภาพ',
+        thumbnail_url: 'https://via.placeholder.com/300x200?text=Database',
+        video_url: 'https://example.com/database-course.mp4',
+        price: 1799,
+        level: CourseLevel.HARD,
+        instructor_id: teacherUser.id,
+        instructor_name: 'อาจารย์ ใจดี สอนเก่ง',
+        tags: 'database,sql,postgresql',
+        is_onsite: false,
+        is_online: true,
+        online_expiry: '180 days',
+        status: CourseStatus.PUBLISHED,
+        is_active: true,
+        students_enrolled: 15,
+      },
+      {
+        title: 'Full Stack Web Development',
+        description: 'เรียนรู้ Full Stack Development ด้วย React และ NestJS',
+        thumbnail_url: 'https://via.placeholder.com/300x200?text=FullStack',
+        video_url: 'https://example.com/fullstack-course.mp4',
+        price: 3999,
+        level: CourseLevel.INTERMEDIATE,
+        instructor_id: teacherUser.id,
+        instructor_name: 'อาจารย์ ใจดี สอนเก่ง',
+        tags: 'fullstack,react,nodejs,backend',
+        is_onsite: true,
+        onsite_seats: 25,
+        onsite_days: ['Tuesday', 'Thursday'],
+        onsite_time_start: '14:00',
+        onsite_time_end: '17:00',
+        onsite_duration: '8 weeks',
+        is_online: true,
+        online_expiry: '365 days',
+        status: CourseStatus.PUBLISHED,
+        is_active: true,
+        students_enrolled: 52,
+      },
+    ];
 
-      for (const courseData of coursesData) {
-        const course = courseRepository.create(courseData);
-        await courseRepository.save(course);
+    for (const courseData of coursesData) {
+      const course = courseRepository.create(courseData);
+      await courseRepository.save(course);
+    }
+    console.log('✅ สร้างคอร์ส 5 รายการสำเร็จ');
+
+    // ============================================
+    // 5. สร้าง Schedule ตัวอย่างสำหรับคอร์สที่เป็น onsite
+    // ============================================
+    const scheduleRepository = AppDataSource.getRepository(Schedule);
+    // Clear existing schedules first to avoid duplicates
+    await scheduleRepository.query('DELETE FROM schedules');
+
+    // helper to create a Date for next week given weekday and time
+    const nextDate = (weekday: number, time: string) => {
+      const now = new Date();
+      const date = new Date(now);
+      // set to next occurrence of given weekday (0=Sunday)
+      const diff = (weekday + 7 - date.getDay()) % 7 || 7;
+      date.setDate(date.getDate() + diff);
+      const [h, m] = time.split(':').map((v) => parseInt(v, 10));
+      date.setHours(h, m, 0, 0);
+      return date;
+    };
+
+    // fetch onsite courses and seed a few schedules
+    const onsiteCourses = await courseRepository.find({ where: { is_onsite: true } });
+    for (const course of onsiteCourses) {
+      // create 3 upcoming schedules spaced one week apart
+      for (let i = 0; i < 3; i++) {
+        // pick first available day from course.onsite_days or default to Tuesday
+        const dayName = (course.onsite_days && course.onsite_days[0]) || 'Tuesday';
+        const dayMap: Record<string, number> = {
+          sunday: 0,
+          monday: 1,
+          tuesday: 2,
+          wednesday: 3,
+          thursday: 4,
+          friday: 5,
+          saturday: 6,
+        };
+        const weekday = dayMap[dayName.toLowerCase()] ?? 2;
+        const start = nextDate(weekday, course.onsite_time_start || '09:00');
+        const end = new Date(start);
+        const [endH, endM] = (course.onsite_time_end || '12:00').split(':').map(Number);
+        end.setHours(endH, endM, 0, 0);
+
+        const schedule = scheduleRepository.create({
+          course_id: course.id,
+          start_time: start,
+          end_time: end,
+          // repository.create accepts undefined for optional fields, so
+          // prefer undefined when there is no seat value instead of null
+          max_onsite_seats: course.onsite_seats ?? undefined,
+          room_location: 'อาคารเรียน 101',
+        });
+        await scheduleRepository.save(schedule);
       }
-      console.log('✅ สร้างคอร์ส 5 รายการสำเร็จ');
-
-      // ============================================
-      // 5. สร้าง Schedule ตัวอย่างสำหรับคอร์สที่เป็น onsite
-      // ============================================
-      const scheduleRepository = AppDataSource.getRepository(Schedule);
-      // Clear existing schedules first to avoid duplicates
-      await scheduleRepository.query('DELETE FROM schedules');
-
-      // helper to create a Date for next week given weekday and time
-      const nextDate = (weekday: number, time: string) => {
-        const now = new Date();
-        const date = new Date(now);
-        // set to next occurrence of given weekday (0=Sunday)
-        const diff = (weekday + 7 - date.getDay()) % 7 || 7;
-        date.setDate(date.getDate() + diff);
-        const [h, m] = time.split(':').map((v) => parseInt(v, 10));
-        date.setHours(h, m, 0, 0);
-        return date;
-      };
-
-      // fetch onsite courses and seed a few schedules
-      const onsiteCourses = await courseRepository.find({ where: { is_onsite: true } });
-      for (const course of onsiteCourses) {
-        // create 3 upcoming schedules spaced one week apart
-        for (let i = 0; i < 3; i++) {
-          // pick first available day from course.onsite_days or default to Tuesday
-          const dayName = (course.onsite_days && course.onsite_days[0]) || 'Tuesday';
-          const dayMap: Record<string, number> = {
-            sunday: 0,
-            monday: 1,
-            tuesday: 2,
-            wednesday: 3,
-            thursday: 4,
-            friday: 5,
-            saturday: 6,
-          };
-          const weekday = dayMap[dayName.toLowerCase()] ?? 2;
-          const start = nextDate(weekday, course.onsite_time_start || '09:00');
-          const end = new Date(start);
-          const [endH, endM] = (course.onsite_time_end || '12:00').split(':').map(Number);
-          end.setHours(endH, endM, 0, 0);
-
-          const schedule = scheduleRepository.create({
-            course_id: course.id,
-            start_time: start,
-            end_time: end,
-            // repository.create accepts undefined for optional fields, so
-            // prefer undefined when there is no seat value instead of null
-            max_onsite_seats: course.onsite_seats ?? undefined,
-            room_location: 'อาคารเรียน 101',
-          });
-          await scheduleRepository.save(schedule);
-        }
-      }
-      console.log('✅ สร้าง Schedule ตัวอย่างสำหรับคอร์ส onsite เสร็จ');
+    }
+    console.log('✅ สร้าง Schedule ตัวอย่างสำหรับคอร์ส onsite เสร็จ');
 
     // ดึงคอร์ส Full Stack ที่สร้างขึ้น
     const fullStackCourse = await courseRepository.findOne({
@@ -308,10 +309,10 @@ async function seed() {
 
       for (const schedule of schedules) {
         const dayDate = getNextDate(schedule.weekday);
-        
+
         const startTime = new Date(dayDate);
         startTime.setHours(14, 0, 0, 0);
-        
+
         const endTime = new Date(dayDate);
         endTime.setHours(17, 0, 0, 0);
 
