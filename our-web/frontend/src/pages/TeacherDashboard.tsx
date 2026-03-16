@@ -1,4 +1,4 @@
-/* ไฟล์: src/pages/TeacherDashboard.tsx */
+﻿/* ไฟล์: src/pages/TeacherDashboard.tsx */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -7,11 +7,7 @@ import {
   Image as ImageIcon, 
   Trash2,
   Video, 
-<<<<<<< HEAD
-Edit2, Check, Bell, Calendar, HelpCircle
-=======
-  Edit2, Check, Bell, Calendar
->>>>>>> fc3c9e3ac6cb771c9cac87ccd2cb633b3736df4e
+    Edit2, Check, Bell, Calendar, HelpCircle
 } from 'lucide-react';
 import '../styles/LoginTheme.css';
 import '../styles/ProfileTheme.css';
@@ -685,23 +681,18 @@ export default function TeacherDashboard() {
       
       if (existingLessons && existingLessons.length > 0) {
         const groupedLessons: { [key: string]: typeof lessons[0] } = {};
-        
         existingLessons.forEach((lesson) => {
           const parts = lesson.topic_name.split(' - ');
-          
           if (parts.length >= 2) {
             const parentName = parts[0];
             const childName = parts.slice(1).join(' - ');
-            
             if (!groupedLessons[parentName]) {
               groupedLessons[parentName] = { id: lesson.id, topic_name: parentName, subLessons: [] };
             }
-            
             const existingSub = groupedLessons[parentName].subLessons.find(s => s.title === childName);
             if (existingSub) {
               const hasOldContent = !!existingSub.content || !!existingSub.video_url;
               const hasNewContent = !!lesson.content || !!lesson.video_url;
-
               if (!hasOldContent && hasNewContent) {
                 existingSub.id = lesson.id;
                 existingSub.content = lesson.content || '';
@@ -714,7 +705,8 @@ export default function TeacherDashboard() {
                 title: childName,
                 content: lesson.content || '',
                 video_url: lesson.video_url || '',
-                pdf_url: lesson.pdf_url || ''
+                pdf_url: lesson.pdf_url || '',
+                questions: []
               });
             }
           } else {
@@ -726,27 +718,18 @@ export default function TeacherDashboard() {
               title: lesson.topic_name,
               content: lesson.content || '',
               video_url: lesson.video_url || '',
-              pdf_url: lesson.pdf_url || ''
+              pdf_url: lesson.pdf_url || '',
+              questions: []
             });
           }
         });
         setLessons(Object.values(groupedLessons));
       } else {
-<<<<<<< HEAD
-        // Initialize with one empty lesson if no existing lessons
+        // Always initialize with questions: []
         setLessons([{
           topic_name: '',
-          subLessons: [{
-            title: '',
-            content: '',
-            video_url: '',
-            pdf_url: '',
-            questions: []
-          }]
+          subLessons: [{ title: '', content: '', video_url: '', pdf_url: '', questions: [] }]
         }]);
-=======
-        setLessons([{ topic_name: '', subLessons: [{ title: '', content: '', video_url: '', pdf_url: '' }] }]);
->>>>>>> fc3c9e3ac6cb771c9cac87ccd2cb633b3736df4e
       }
       
       // Load or create default exam for course
@@ -758,21 +741,10 @@ export default function TeacherDashboard() {
       }
     } catch (error) {
       console.error('Error loading lessons:', error);
-<<<<<<< HEAD
-      // Initialize with one empty lesson on error
       setLessons([{
         topic_name: '',
-        subLessons: [{
-          title: '',
-          content: '',
-          video_url: '',
-          pdf_url: '',
-          questions: []
-        }]
+        subLessons: [{ title: '', content: '', video_url: '', pdf_url: '', questions: [] }]
       }]);
-=======
-      setLessons([{ topic_name: '', subLessons: [{ title: '', content: '', video_url: '', pdf_url: '' }] }]);
->>>>>>> fc3c9e3ac6cb771c9cac87ccd2cb633b3736df4e
     }
   };
 
@@ -993,20 +965,10 @@ export default function TeacherDashboard() {
   };
 
   const handleAddLesson = () => {
-<<<<<<< HEAD
     setLessons(prev => [...prev, {
       topic_name: '',
-      subLessons: [{
-        title: '',
-        content: '',
-        video_url: '',
-        pdf_url: '',
-        questions: []
-      }]
+      subLessons: [{ title: '', content: '', video_url: '', pdf_url: '', questions: [] }]
     }]);
-=======
-    setLessons(prev => [...prev, { topic_name: '', subLessons: [{ title: '', content: '', video_url: '', pdf_url: '' }] }]);
->>>>>>> fc3c9e3ac6cb771c9cac87ccd2cb633b3736df4e
   };
 
   const handleRemoveLesson = (lessonIndex: number) => {
@@ -1016,20 +978,10 @@ export default function TeacherDashboard() {
   const handleAddSubLesson = (lessonIndex: number) => {
     setLessons(prev => prev.map((lesson, idx) => {
       if (idx !== lessonIndex) return lesson;
-<<<<<<< HEAD
       return {
         ...lesson,
-        subLessons: [...lesson.subLessons, {
-          title: '',
-          content: '',
-          video_url: '',
-          pdf_url: '',
-          questions: []
-        }]
+        subLessons: [...lesson.subLessons, { title: '', content: '', video_url: '', pdf_url: '', questions: [] }]
       };
-=======
-      return { ...lesson, subLessons: [...lesson.subLessons, { title: '', content: '', video_url: '', pdf_url: '' }] };
->>>>>>> fc3c9e3ac6cb771c9cac87ccd2cb633b3736df4e
     }));
   };
 
@@ -1262,95 +1214,6 @@ export default function TeacherDashboard() {
     setLessons([]);
     setContentCourse(null);
   };
-
-<<<<<<< HEAD
-  const getStatusBadge = (status: CourseStatus) => {
-    switch (status) {
-      case CourseStatus.REQUEST_CREATE: return <span style={{ color: '#eab308', background: '#fefce8', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px' }}><Clock size={14} /> รออนุมัติสร้าง</span>;
-      case CourseStatus.DRAFTING: return <span style={{ color: '#3b82f6', background: '#eff6ff', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px' }}><Edit3 size={14} /> กำลังใส่เนื้อหา</span>;
-      case CourseStatus.PENDING_REVIEW: return <span style={{ color: '#f97316', background: '#fff7ed', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px' }}><AlertCircle size={14} /> รออนุมัติขาย</span>;
-      case CourseStatus.PUBLISHED: return <span style={{ color: '#22c55e', background: '#f0fdf4', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px' }}><CheckCircle size={14} /> วางขายแล้ว</span>;
-      case CourseStatus.REJECTED: return <span style={{ color: '#ef4444', background: '#fef2f2', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px' }}><X size={14} /> ถูกปฏิเสธ</span>;
-      default: return null;
-    }
-  };
-
-  const renderCourseActions = (course: APICourse) => {
-    switch (course.status) {
-      case CourseStatus.REQUEST_CREATE: return <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>⏳ รอ Admin อนุมัติคำขอ...</span>;
-      case CourseStatus.DRAFTING: return (
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <button 
-            onClick={() => handleOpenContentModal(course)}
-            style={{ padding: '8px 20px', background: '#3b82f6', border: 'none', borderRadius: '30px', cursor: 'pointer', color: 'white' }}
-          >
-            ✏️ แก้ไขเนื้อหา
-          </button>
-          <button
-            onClick={() => navigate(`/exam-management/${course.id}`)}
-            style={{ padding: '8px 20px', background: '#8b5cf6', border: 'none', borderRadius: '30px', cursor: 'pointer', color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}
-          >
-            📝 จัดการข้อสอบ
-          </button>
-          <button onClick={() => handleUpdateStatus(course.id, CourseStatus.PENDING_REVIEW)} style={{ padding: '8px 20px', background: '#22c55e', border: 'none', borderRadius: '30px', cursor: 'pointer', color: 'white' }}>🚀 ส่งขออนุมัติขาย</button>
-        </div>
-      );
-      case CourseStatus.PENDING_REVIEW: return <span style={{ color: '#f97316', fontSize: '0.9rem' }}>🕵️‍♀️ กำลังตรวจสอบความถูกต้อง...</span>;
-      case CourseStatus.REJECTED: return (
-        <div>
-          <span style={{ color: '#ef4444', fontSize: '0.9rem', display: 'block', marginBottom: '0.5rem' }}>❌ ถูกปฏิเสธ</span>
-          {course.rejection_reason && <span style={{ color: '#64748b', fontSize: '0.85rem' }}>เหตุผล: {course.rejection_reason}</span>}
-        </div>
-      );
-      case CourseStatus.PUBLISHED: return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <button 
-            onClick={() => handleOpenContentModal(course)}
-            style={{ padding: '8px 20px', background: '#64748b', border: 'none', borderRadius: '30px', cursor: 'pointer', color: 'white' }}
-          >
-            👁️ ดูเนื้อหา
-          </button>
-          <button
-            onClick={() => navigate(`/exam-management/${course.id}?readonly=true`)}
-            style={{ padding: '8px 20px', background: '#64748b', border: 'none', borderRadius: '30px', cursor: 'pointer', color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}
-          >
-            👁️ ดูข้อสอบ
-          </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{course.students_enrolled}</span>
-            <span style={{ fontSize: '0.9rem', color: '#64748b' }}>นักเรียนที่ลงทะเบียน</span>
-          </div>
-        </div>
-      );
-      default: return null;
-    }
-  };
-
-  const renderCourseList = (courses: APICourse[], emptyMessage: string) => {
-    if (courses.length === 0) return <div style={{ color: '#94a3b8', padding: '1.5rem', textAlign: 'center', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>{emptyMessage}</div>;
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        {courses.map((course) => (
-          <div key={course.id} style={{ display: 'flex', flexWrap: 'wrap', background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.2rem', gap: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-            <img
-              src={course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80'}
-              alt={course.title}
-              style={{ width: '180px', height: '130px', objectFit: 'cover', borderRadius: '10px' }}
-              onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80'; }}
-            />
-            <div style={{ flex: 1, minWidth: '250px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}><h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#0f172a' }}>{course.title}</h3>{getStatusBadge(course.status)}</div>
-              <p style={{ fontSize: '0.9rem', color: '#64748b', margin: '0.5rem 0 1.5rem 0' }}>รหัสคอร์ส: COURSE-{course.id.toString().slice(-4)}</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', marginTop: 'auto' }}>{renderCourseActions(course)}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-=======
->>>>>>> fc3c9e3ac6cb771c9cac87ccd2cb633b3736df4e
   return (
     <div className="page-container">
       <Header />
@@ -1386,6 +1249,7 @@ export default function TeacherDashboard() {
             <ul className="sidebar-menu">
               <li className={`menu-item ${activeMenu === 'profile' ? 'active' : ''}`} onClick={() => setActiveMenu('profile')}><User size={20} /> ข้อมูลส่วนตัว</li>
               <li className={`menu-item ${activeMenu === 'courses' ? 'active' : ''}`} onClick={() => setActiveMenu('courses')}><BookOpen size={20} /> จัดการคอร์สเรียน</li>
+              {/* <li className={`menu-item ${activeMenu === 'exam-bank' ? 'active' : ''}`} onClick={() => setActiveMenu('exam-bank')}><HelpCircle size={20} /> คลังข้อสอบ</li> */}
               <li className="menu-item logout" onClick={handleLogout}><LogOut size={20} /> ออกจากระบบ</li>
             </ul>
           </aside>
@@ -2616,7 +2480,6 @@ export default function TeacherDashboard() {
             </div>
 
             {/* Action Buttons */}
-<<<<<<< HEAD
             <div style={{ 
               marginTop: '30px', 
               paddingTop: '25px', 
@@ -2678,12 +2541,6 @@ export default function TeacherDashboard() {
                   </button>
                 </>
               )}
-=======
-            <div style={{ marginTop: '30px', paddingTop: '25px', borderTop: '2px solid #e2e8f0', display: 'flex', gap: '15px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-              <button onClick={closeContentModal} style={{ background: '#f1f5f9', color: '#475569', border: 'none', padding: '12px 30px', borderRadius: '8px', fontSize: '1rem', fontWeight: 'bold', cursor: 'pointer' }}>ยกเลิก</button>
-              <button onClick={handleSaveContent} style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '12px 30px', borderRadius: '8px', fontSize: '1rem', fontWeight: 'bold', cursor: 'pointer' }}>💾 บันทึกเนื้อหา</button>
-              <button onClick={handleSubmitForReview} style={{ background: '#22c55e', color: 'white', border: 'none', padding: '12px 30px', borderRadius: '8px', fontSize: '1rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>🚀 ส่งคำขอขายคอร์ส</button>
->>>>>>> fc3c9e3ac6cb771c9cac87ccd2cb633b3736df4e
             </div>
           </div>
         </div>
