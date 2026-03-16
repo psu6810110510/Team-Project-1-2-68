@@ -1502,8 +1502,21 @@ export default function AdminDashboard() {
                       )}
                       {selectedCourse.onsite_exam_schedule && (
                         <div style={{ gridColumn: '1 / -1' }}>
-                          <label style={{ fontSize: '0.8rem', color: '#78716c' }}>กำหนดสอบ</label>
-                          <div style={{ fontWeight: 'bold', color: '#0f172a' }}>{selectedCourse.onsite_exam_schedule}</div>
+                          <label style={{ fontSize: '0.8rem', color: '#78716c' }}>รอบการสอน</label>
+                          <div style={{ fontWeight: 'bold', color: '#0f172a' }}>
+                            {(() => {
+                              try {
+                                const schedules = JSON.parse(selectedCourse.onsite_exam_schedule);
+                                return schedules.map((schedule: any, index: number) => (
+                                  <div key={index} style={{ marginBottom: index < schedules.length - 1 ? '8px' : '0' }}>
+                                    รอบที่ {index + 1}: {schedule.startDate} - {schedule.endDate}
+                                  </div>
+                                ));
+                              } catch {
+                                return selectedCourse.onsite_exam_schedule;
+                              }
+                            })()}
+                          </div>
                         </div>
                       )}
                     </div>

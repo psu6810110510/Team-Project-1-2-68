@@ -688,10 +688,23 @@ const CourseDetail = () => {
 
                   {course.onsite_exam_schedule && (
                     <div className="cd-detail-item">
-                      <span className="cd-detail-icon">📝</span>
+                      <span className="cd-detail-icon">�</span>
                       <div>
-                        <p className="cd-detail-label">กำหนดสอบ</p>
-                        <p className="cd-detail-value">{course.onsite_exam_schedule}</p>
+                        <p className="cd-detail-label">รอบการสอน</p>
+                        <div className="cd-detail-value">
+                          {(() => {
+                            try {
+                              const schedules = JSON.parse(course.onsite_exam_schedule);
+                              return schedules.map((schedule: any, index: number) => (
+                                <div key={index} style={{ marginBottom: index < schedules.length - 1 ? '8px' : '0' }}>
+                                  รอบที่ {index + 1}: {schedule.startDate} - {schedule.endDate}
+                                </div>
+                              ));
+                            } catch {
+                              return course.onsite_exam_schedule;
+                            }
+                          })()}
+                        </div>
                       </div>
                     </div>
                   )}
