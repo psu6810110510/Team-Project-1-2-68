@@ -46,6 +46,7 @@ export interface Course {
     id: string;
     full_name: string;
     email: string;
+    image?: string;
   };
 }
 

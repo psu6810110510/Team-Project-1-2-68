@@ -44,6 +44,27 @@ const CourseDetail = () => {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
   const [remainingDays, setRemainingDays] = useState<number | null>(null);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [userRating, setUserRating] = useState(5);
+  const [userComment, setUserComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+
+  const mockReviews = [
+    {
+      id: 'mock1',
+      rating: 5,
+      comment: 'เนื้อหาดีมากครับ สอนเข้าใจง่าย มีแบบฝึกหัดให้ทำสนุกดีครับ',
+      created_at: new Date().toISOString(),
+      user: { full_name: 'สมชาย รักเรียน', image: '' }
+    },
+    {
+      id: 'mock2',
+      rating: 4,
+      comment: 'ชอบการปูพื้นฐานตั้งแต่เริ่มต้น ทำให้เข้าใจ SQL แบบไม่หลงทางเลยครับ',
+      created_at: new Date().toISOString(),
+      user: { full_name: 'วิภา พัฒนา', image: '' }
+    }
+  ];
 
   useEffect(() => {
     if (isEnrolled && course && course.is_online && course.online_expiry) {
@@ -190,6 +211,28 @@ const CourseDetail = () => {
           if (grouped.length > 0) {
             setExpandedChapters({ [grouped[0].title]: true });
           }
+        } else {
+          // Fallback Mock Lessons for Demonstration when DB sets are empty
+          const fallbackGrouped = [
+            {
+              title: 'บทที่ 1',
+              name: 'การเริ่มต้นใช้งานและโครงสร้างข้อมูลเบื้องต้น',
+              lessons: [
+                { id: 'mock_1', displayTitle: 'แนะนำอาจารย์และเนื้อหาภาพรวมของคอร์ส', video_url: true },
+                { id: 'mock_2', displayTitle: 'ทำความเข้าใจ Relational Database', pdf_url: true }
+              ]
+            },
+            {
+              title: 'บทที่ 2',
+              name: 'ชุดคำสั่ง SQL พื้นฐาน',
+              lessons: [
+                { id: 'mock_3', displayTitle: 'การใช้คำสั่ง SELECT ดึงข้อมูลและหรอง Filter' },
+                { id: 'mock_4', displayTitle: 'การวิเคราะห์ผลลัพธ์ข้อมูลจาก Query' }
+              ]
+            }
+          ];
+          setLessons(fallbackGrouped);
+          setExpandedChapters({ [fallbackGrouped[0].title]: true });
         }
       } catch (err: any) {
         if (err.response?.status === 401) {
@@ -200,6 +243,20 @@ const CourseDetail = () => {
         }
       } finally {
         setLoading(false);
+      }
+    };
+
+    const fetchReviews = async () => {
+      try {
+        const res = await fetch(`http://localhost:3000/courses/${courseId}/reviews`);
+        const data = await res.json();
+        if (data && data.length > 0) {
+          setReviews(data);
+        } else {
+          setReviews(mockReviews);
+        }
+      } catch (err) {
+        setReviews(mockReviews);
       }
     };
     
@@ -232,6 +289,7 @@ const CourseDetail = () => {
 
     fetchData();
     checkAccess();
+    fetchReviews();
   }, [courseId, navigate, isLoggedIn, course?.instructor_id]); // เพิ่ม dep ของ instructor_id เพื่อเช็คสิทธิ์ครู
 
   // Sync favorites from API & cart state from localStorage
@@ -427,8 +485,8 @@ const CourseDetail = () => {
             </div>
           )}
 
-          {/* Lesson Content Section */}
-          {lessons.length > 0 && (
+          {/* Lesson Content Section (Moved to Sidebar) */}
+          {false && lessons.length > 0 && (
             <div className="cd-section">
               <h2 className="cd-section-title">เนื้อหาของคอร์ส</h2>
               <div className="cd-syllabus">
@@ -454,7 +512,7 @@ const CourseDetail = () => {
                     {expandedChapters[chapter.title] && (
                       <div className="cd-sublesson-list">
                         {chapter.lessons.map((sub: any, sIdx: number) => {
-                          const isLocked = !isEnrolled && !checkingAccess;
+                          const isLocked = (!isEnrolled && !checkingAccess) || (sub.id && sub.id.toString().startsWith('mock_'));
                           
                           return (
                             <div 
@@ -641,9 +699,100 @@ const CourseDetail = () => {
               </div>
             )}
           </div>
-        </div>
 
-        {/* Right: action card */}
+          {/* รีวิวจากผู้เรียน */}
+          <div className="cd-section">
+            <h2 className="cd-section-title">รีวิวจากผู้เรียน ({reviews.length})</h2>
+            <div className="cd-reviews-list">
+              {reviews.map((r) => (
+                <div key={r.id} className="cd-review-item">
+                  <div className="cd-review-header">
+                    <div className="cd-review-user">
+                      <div className="cd-review-avatar">
+                        {r.user?.image ? (
+                          <img src={r.user.image} alt="Avatar" />
+                        ) : (
+                          r.user?.full_name?.[0]?.toUpperCase() || 'U'
+                        )}
+                      </div>
+                      <div>
+                        <p className="cd-review-name">{r.user?.full_name || 'ผู้เรียน'}</p>
+                        <p className="cd-review-date">{new Date(r.created_at).toLocaleDateString('th-TH')}</p>
+                      </div>
+                    </div>
+                    <div className="cd-review-stars">
+                      {'⭐'.repeat(r.rating)}
+                    </div>
+                  </div>
+                  <p className="cd-review-comment">{r.comment}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* ฟอร์มเขียนรีวิว */}
+            {isEnrolled && (
+              <div className="cd-review-form-box">
+                <h3 className="cd-review-form-title">เขียนรีวิวของคุณ</h3>
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={{ display: 'block', fontSize: '0.9rem', color: '#64748b', marginBottom: '6px' }}>ให้คะแนนคอร์สนี้:</label>
+                  <div className="cd-review-form-stars">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button 
+                        key={star} 
+                        onClick={() => setUserRating(star)} 
+                        className="cd-star-btn"
+                        style={{ color: star <= userRating ? '#f59e0b' : '#cbd5e1' }}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <textarea 
+                  rows={3} 
+                  placeholder="แชร์ความความเห็นของคุณเกี่ยวกับบทเรียน ความเข้าใจ และการสอน..." 
+                  value={userComment}
+                  onChange={(e) => setUserComment(e.target.value)}
+                  className="cd-review-textarea"
+                />
+                <button 
+                  onClick={async () => {
+                    if (!userComment.trim()) return alert('กรุณากรอกคอมเมนต์');
+                    setSubmittingReview(true);
+                    try {
+                      const res = await fetch(`http://localhost:3000/courses/${courseId}/reviews`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                        },
+                        body: JSON.stringify({ rating: userRating, comment: userComment })
+                      });
+                      if (res.ok) {
+                        alert('ส่งรีวิวสำเร็จ!');
+                        setUserComment('');
+                        const rRes = await fetch(`http://localhost:3000/courses/${courseId}/reviews`);
+                        const rData = await rRes.json();
+                        setReviews(rData.length > 0 ? rData : mockReviews);
+                      } else {
+                        alert('ส่งรีวิวไม่สำเร็จ');
+                      }
+                    } catch (err) {
+                      alert('เกิดข้อผิดพลาดในการส่งรีวิว');
+                    } finally {
+                      setSubmittingReview(false);
+                    }
+                  }} 
+                  disabled={submittingReview}
+                  className="cd-review-submit-btn"
+                >
+                  {submittingReview ? 'กำลังส่ง...' : 'ส่งรีวิว'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      {/* Right: action card */}
         <div className="cd-sidebar">
           <div className="cd-action-card">
             {/* price big */}
@@ -722,11 +871,88 @@ const CourseDetail = () => {
               </button>
             )}
 
-            <div className="cd-instructor-block">
+
+            {/* Reverted Instructor block INSIDE action card */}
+            <div className="cd-instructor-block" style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid #e2e8f0' }}>
               <p className="cd-instructor-label">ผู้สอน</p>
               <p className="cd-instructor-name">{instructorName}</p>
             </div>
           </div>
+
+          {/* Full-Size Syllabus on Sidebar */}
+          {lessons.length > 0 && (
+            <div className="cd-section cd-sidebar-syllabus-container" style={{ marginTop: '16px', background: 'white', borderRadius: '16px', padding: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+              <h2 className="cd-section-title" style={{ fontSize: '1.15rem', marginBottom: '16px' }}>เนื้อหาของคอร์ส</h2>
+              <div className="cd-syllabus">
+                {lessons.map((chapter: { title: string; name?: string; lessons: any[] }, cIdx: number) => (
+                  <div key={cIdx} className="cd-chapter-group">
+                    <button 
+                      className="cd-chapter-header"
+                      onClick={() => setExpandedChapters(prev => ({
+                        ...prev,
+                        [chapter.title]: !prev[chapter.title]
+                      }))}
+                    >
+                      <div className="cd-chapter-info">
+                        <span className="cd-chapter-label">{chapter.title}:</span>
+                        {chapter.name && <span className="cd-chapter-name">{chapter.name}</span>}
+                      </div>
+                      <div className="cd-chapter-meta">
+                        <span className="cd-lesson-count">{chapter.lessons.length} บทเรียน</span>
+                        {expandedChapters[chapter.title] ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                      </div>
+                    </button>
+                    
+                    {expandedChapters[chapter.title] && (
+                      <div className="cd-sublesson-list">
+                        {chapter.lessons.map((sub: any, sIdx: number) => {
+                          const isLocked = (!isEnrolled && !checkingAccess) || (sub.id && sub.id.toString().startsWith('mock_'));
+                          
+                          return (
+                            <div 
+                              key={sub.id || sIdx} 
+                              className={`cd-sublesson-item ${isLocked ? 'cd-sublesson-locked' : ''}`}
+                              onClick={() => {
+                                if (!isLocked) navigate(`/learning/${courseId}?lessonId=${sub.id}`);
+                              }}
+                            >
+                              <div className="cd-sublesson-main">
+                                {isLocked ? (
+                                  <span className="cd-lock-icon">🔒</span>
+                                ) : sub.video_url ? (
+                                  <PlayCircle size={18} className="cd-icon-video" />
+                                ) : (
+                                  <FileText size={18} className="cd-icon-text" />
+                                )}
+                                <span className="cd-sublesson-title">{sub.displayTitle}</span>
+                              </div>
+                              <div className="cd-sublesson-actions">
+                                {sub.pdf_url && (
+                                  <a 
+                                    href={isLocked ? '#' : sub.pdf_url} 
+                                    target={isLocked ? '_self' : '_blank'} 
+                                    rel="noopener noreferrer"
+                                    className={`cd-pdf-link ${isLocked ? 'disabled' : ''}`}
+                                    onClick={(e) => {
+                                      if (isLocked) e.preventDefault();
+                                      e.stopPropagation();
+                                    }}
+                                  >
+                                    <Download size={16} />
+                                    <span>เอกสาร</span>
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

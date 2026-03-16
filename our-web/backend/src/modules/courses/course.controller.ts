@@ -192,6 +192,7 @@ export class CourseController {
         id: course.instructor.id,
         full_name: course.instructor.full_name,
         email: course.instructor.email,
+        image: course.instructor.image,
       } : null,
     };
   }
