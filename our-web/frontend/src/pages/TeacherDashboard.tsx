@@ -7,7 +7,7 @@ import {
   Image as ImageIcon, 
   Trash2,
   Video, 
-Edit2, Check, Bell
+Edit2, Check, Bell, Calendar
 } from 'lucide-react';
 import '../styles/LoginTheme.css';
 import '../styles/ProfileTheme.css';
@@ -306,6 +306,12 @@ export default function TeacherDashboard() {
     setCourseForm(prev => ({ ...prev, instructor: `อ.${teacherData.firstName} ${teacherData.lastName}` }));
   }, [teacherData.firstName, teacherData.lastName]);
 
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return 'เลือกวันที่';
+    const [year, month, day] = dateStr.split('-');
+    return `${day}/${month}/${year}`;
+  };
+
   const DAY_MAP: Record<string, number> = { 'จ': 1, 'อ': 2, 'พ': 3, 'พฤ': 4, 'ศ': 5, 'ส': 6, 'อา': 0 };
   const calcEndDate = (startDateStr: string, days: string[], durationStr: string): string => {
     const totalDays = parseInt(durationStr);
@@ -340,6 +346,15 @@ export default function TeacherDashboard() {
       ...prev,
       onsiteSchedules: prev.onsiteSchedules.map((s, i) =>
         i === idx ? { startDate, endDate: calcEndDate(startDate, prev.onsiteDays, prev.onsiteDuration) } : s
+      )
+    }));
+  };
+
+  const updateScheduleEnd = (idx: number, endDate: string) => {
+    setCourseForm(prev => ({
+      ...prev,
+      onsiteSchedules: prev.onsiteSchedules.map((s, i) =>
+        i === idx ? { ...s, endDate } : s
       )
     }));
   };
@@ -1268,9 +1283,18 @@ export default function TeacherDashboard() {
                         style={{ ...editInputStyle, flex: 1, minHeight: '80px', resize: 'vertical' }}
                       />
                     ) : (
-                      <span className="info-value" style={{ color: '#334155', fontStyle: 'italic', marginTop: '10px', lineHeight: '1.6' }}>
-                        {teacherData.description || 'ยังไม่มีคำอธิบายตัวเองเพิ่มเข้ามา'}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flex: 1, width: '100%' }}>
+                        <span className="info-value" style={{ color: '#334155', fontStyle: 'italic', marginTop: '10px', lineHeight: '1.6', flex: 1 }}>
+                          {teacherData.description || 'ยังไม่มีคำอธิบายตัวเองเพิ่มเข้ามา'}
+                        </span>
+                        <button
+                          className="edit-btn"
+                          onClick={() => setIsEditingProfile(true)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: '10px 0 0 10px' }}
+                        >
+                          <Edit3 size={18} />
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1592,26 +1616,64 @@ export default function TeacherDashboard() {
                         {courseForm.onsiteSchedules.map((schedule, rIdx) => (
                           <div key={rIdx} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
                             <span style={{ fontSize: '0.78rem', color: '#374151', minWidth: '52px' }}>รอบที่ {rIdx + 1}</span>
-                            <input
-                              type="date"
-                              value={schedule.startDate}
-                              min={todayStr}
-                              max={yearEndStr}
-                              onChange={(e) => updateScheduleStart(rIdx, e.target.value)}
-                              style={{ padding: '3px 6px', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '0.78rem', width: '132px' }}
-                            />
+                            <div style={{ ...inputContainerStyle, position: 'relative', width: '135px', padding: 0 }}>
+                              <div style={{ padding: '8px 10px', fontSize: '0.9rem', color: '#1e293b', paddingRight: '32px' }}>{formatDate(schedule.startDate)}</div>
+                              <input
+                                type="date"
+                                className="onsite-schedule-input"
+                                value={schedule.startDate}
+                                min={todayStr}
+                                max={yearEndStr}
+                                onChange={(e) => updateScheduleStart(rIdx, e.target.value)}
+                                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer', zIndex: 10 }}
+                              />
+                              <Calendar size={16} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none', zIndex: 1 }} />
+                            </div>
                             <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>ถึง</span>
-                            <input
-                              type="date"
-                              value={schedule.endDate}
-                              readOnly
-                              style={{ padding: '3px 6px', border: '1px solid #e5e7eb', borderRadius: '4px', fontSize: '0.78rem', width: '132px', background: '#f9fafb', color: '#6b7280' }}
-                            />
+                            <div style={{ ...inputContainerStyle, position: 'relative', width: '135px', padding: 0 }}>
+                              <div style={{ padding: '8px 10px', fontSize: '0.9rem', color: '#1e293b', paddingRight: '32px' }}>{formatDate(schedule.endDate)}</div>
+                              <input
+                                type="date"
+                                className="onsite-schedule-input"
+                                value={schedule.endDate}
+                                onChange={(e) => updateScheduleEnd(rIdx, e.target.value)}
+                                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer', zIndex: 10 }}
+                              />
+                              <Calendar size={16} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none', zIndex: 1 }} />
+                            </div>
                             {rIdx > 0 && (
                               <button type="button" onClick={() => removeSchedule(rIdx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', fontSize: '0.9rem', fontWeight: 'bold', padding: '0 4px' }}>✕</button>
                             )}
                           </div>
                         ))}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                         <button
                           type="button"
                           onClick={addSchedule}
@@ -1736,26 +1798,64 @@ export default function TeacherDashboard() {
                         {courseForm.onsiteSchedules.map((schedule, rIdx) => (
                           <div key={rIdx} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
                             <span style={{ fontSize: '0.78rem', color: '#374151', minWidth: '52px' }}>รอบที่ {rIdx + 1}</span>
-                            <input
-                              type="date"
-                              value={schedule.startDate}
-                              min={todayStr}
-                              max={yearEndStr}
-                              onChange={(e) => updateScheduleStart(rIdx, e.target.value)}
-                              style={{ padding: '3px 6px', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '0.78rem', width: '132px' }}
-                            />
+                            <div style={{ ...inputContainerStyle, position: 'relative', width: '135px', padding: 0 }}>
+                              <div style={{ padding: '8px 10px', fontSize: '0.9rem', color: '#1e293b', paddingRight: '32px' }}>{formatDate(schedule.startDate)}</div>
+                              <input
+                                type="date"
+                                className="onsite-schedule-input"
+                                value={schedule.startDate}
+                                min={todayStr}
+                                max={yearEndStr}
+                                onChange={(e) => updateScheduleStart(rIdx, e.target.value)}
+                                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer', zIndex: 10 }}
+                              />
+                              <Calendar size={16} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none', zIndex: 1 }} />
+                            </div>
                             <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>ถึง</span>
-                            <input
-                              type="date"
-                              value={schedule.endDate}
-                              readOnly
-                              style={{ padding: '3px 6px', border: '1px solid #e5e7eb', borderRadius: '4px', fontSize: '0.78rem', width: '132px', background: '#f9fafb', color: '#6b7280' }}
-                            />
+                            <div style={{ ...inputContainerStyle, position: 'relative', width: '135px', padding: 0 }}>
+                              <div style={{ padding: '8px 10px', fontSize: '0.9rem', color: '#1e293b', paddingRight: '32px' }}>{formatDate(schedule.endDate)}</div>
+                              <input
+                                type="date"
+                                className="onsite-schedule-input"
+                                value={schedule.endDate}
+                                onChange={(e) => updateScheduleEnd(rIdx, e.target.value)}
+                                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer', zIndex: 10 }}
+                              />
+                              <Calendar size={16} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none', zIndex: 1 }} />
+                            </div>
                             {rIdx > 0 && (
                               <button type="button" onClick={() => removeSchedule(rIdx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', fontSize: '0.9rem', fontWeight: 'bold', padding: '0 4px' }}>✕</button>
                             )}
                           </div>
                         ))}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                         <button
                           type="button"
                           onClick={addSchedule}

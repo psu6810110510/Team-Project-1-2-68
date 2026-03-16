@@ -197,4 +197,16 @@ export class UserService {
 
     return { message: 'Course removed from favorites' };
   }
+
+  async deleteUser(id: string) {
+    // 1. Delete Profile first to prevent Foreign Key restricts
+    await this.profileRepo.delete({ user_id: id });
+    
+    // 2. Delete User
+    const result = await this.userRepo.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException('User not found');
+    }
+    return { message: 'User deleted successfully' };
+  }
 }
