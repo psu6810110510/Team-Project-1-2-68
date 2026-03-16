@@ -134,16 +134,16 @@ export default function Register() {
             {formData.role === 'TEACHER' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '15px' }}>
                 <div className="form-group">
-                  <input name="bachelorDegree" value={formData.bachelorDegree} placeholder="🎓 ปริญญาตรี (สถาบัน/สาขา)" className="form-input" onChange={handleChange} required />
+                  <input name="bachelorDegree" value={formData.bachelorDegree} placeholder="ปริญญาตรี (สถาบัน/สาขา)" className="form-input" onChange={handleChange} required />
                 </div>
                 <div className="form-group">
-                  <input name="masterDegree" value={formData.masterDegree} placeholder="🎓 ปริญญาโท (ถ้ามี)" className="form-input" onChange={handleChange} />
+                  <input name="masterDegree" value={formData.masterDegree} placeholder="ปริญญาโท (ถ้ามี)" className="form-input" onChange={handleChange} />
                 </div>
                 <div className="form-group">
-                  <input name="doctorateDegree" value={formData.doctorateDegree} placeholder="🎓 ปริญญาเอก (ถ้ามี)" className="form-input" onChange={handleChange} />
+                  <input name="doctorateDegree" value={formData.doctorateDegree} placeholder="ปริญญาเอก (ถ้ามี)" className="form-input" onChange={handleChange} />
                 </div>
                 <div className="form-group">
-                  <input name="expertise" value={formData.expertise} placeholder="💡 ความเชี่ยวชาญ (เช่น React, Node.js)" className="form-input" onChange={handleChange} required />
+                  <input name="expertise" value={formData.expertise} placeholder="ความเชี่ยวชาญ (เช่น React, Node.js)" className="form-input" onChange={handleChange} required />
                 </div>
               </div>
             )}
