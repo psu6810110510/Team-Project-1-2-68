@@ -1,0 +1,15 @@
+[Line 547] {realInstructorData.map((_entry, index) => (
+[Line 575] {recentPaymentsList.map((p, idx) => (
+[Line 619] adminCourses.filter(c => c.status === CourseStatus.REQUEST_CREATE).map(course => (
+[Line 657] adminCourses.filter(c => c.status === CourseStatus.PENDING_REVIEW).map(course => (
+[Line 698] .map(course => (
+[Line 754] .map(course => (
+[Line 824] {teachers.map((t) => (
+[Line 858] {students.map((s) => (
+[Line 917] {exams.map((e: any) => (
+[Line 994] {payments.map((p, idx) => (
+[Line 1001] {p.course_titles.map((title, i) => (
+[Line 1099] bookings.map((b, idx) => (
+[Line 1258] {selectedCourse.tags.split(',').map((tag, idx) => (
+[Line 1343] {courseLessons.map((lesson, index) => (
+[Line 1607] {adminCourses.map(course => (

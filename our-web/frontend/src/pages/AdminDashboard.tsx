@@ -66,6 +66,23 @@ export default function AdminDashboard() {
   // ==========================================
   // Fetch Functions
   // ==========================================
+
+  const handleDeleteUser = async (id: string, role: 'TEACHER' | 'STUDENT') => {
+    if (!window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบผู้ใช้นี้? การกระทำนี้ไม่สามารถย้อนกลับได้')) return;
+    try {
+      await userAPI.deleteUser(id);
+      alert('ลบผู้ใช้สำเร็จ!');
+      if (role === 'TEACHER') {
+        setTeachers(prev => prev.filter(u => u.id !== id));
+      } else {
+        setStudents(prev => prev.filter(u => u.id !== id));
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.message || 'เกิดข้อผิดพลาดในการลบผู้ใช้');
+    }
+  };
+
   const refreshCourses = async () => {
     try {
       const [requested, drafting, pending, published] = await Promise.all([
@@ -818,6 +835,7 @@ export default function AdminDashboard() {
                       <th style={{ padding: '12px 0', fontWeight: '500' }}>เบอร์โทร</th>
                       <th style={{ padding: '12px 0', fontWeight: '500' }}>สถานะ</th>
                       <th style={{ padding: '12px 0', fontWeight: '500' }}>วันที่สมัคร</th>
+                       <th style={{ padding: '12px 0', fontWeight: '500', textAlign: 'center' }}>จัดการ</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -830,6 +848,9 @@ export default function AdminDashboard() {
                           <span style={{ color: t.is_active ? '#16a34a' : '#ef4444', fontWeight: 'bold' }}>{t.is_active ? 'Active' : 'Inactive'}</span>
                         </td>
                         <td style={{ padding: '12px 0' }}>{new Date(t.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}</td>
+                        <td style={{ padding: '12px 0', textAlign: 'center' }}>
+                          <button onClick={() => handleDeleteUser(t.id, 'TEACHER')} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>ลบ</button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -852,6 +873,7 @@ export default function AdminDashboard() {
                       <th style={{ padding: '12px 0', fontWeight: '500' }}>เบอร์โทร</th>
                       <th style={{ padding: '12px 0', fontWeight: '500' }}>สถานะ</th>
                       <th style={{ padding: '12px 0', fontWeight: '500' }}>วันที่สมัคร</th>
+                       <th style={{ padding: '12px 0', fontWeight: '500', textAlign: 'center' }}>จัดการ</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -864,6 +886,9 @@ export default function AdminDashboard() {
                           <span style={{ color: s.is_active ? '#16a34a' : '#ef4444', fontWeight: 'bold' }}>{s.is_active ? 'Active' : 'Inactive'}</span>
                         </td>
                         <td style={{ padding: '12px 0' }}>{new Date(s.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}</td>
+                        <td style={{ padding: '12px 0', textAlign: 'center' }}>
+                          <button onClick={() => handleDeleteUser(s.id, 'STUDENT')} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>ลบ</button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

@@ -35,6 +35,9 @@ export const userAPI = {
 
   getDashboardStats: () =>
     apiClient.get<DashboardStats>('/users/dashboard/stats'),
+
+  deleteUser: (id: string) =>
+    apiClient.delete<{ message: string }>(`/users/${id}`),
 };
 
 export default userAPI;

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, Query, Delete, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Query, Delete, UseGuards, Request, UnauthorizedException } from '@nestjs/common';
 import { UserService } from './user.service';
 import type { CreateUserDto, UpdateUserDto } from './user.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -99,5 +99,14 @@ export class UserController {
   async removeFavorite(@Request() req, @Param('courseId') courseId: string) {
     const userId = req.user.sub;
     return await this.userService.removeFavoriteCourse(userId, courseId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id')
+  async deleteUser(@Request() req, @Param('id') id: string) {
+    if (req.user.role !== 'ADMIN') {
+      throw new UnauthorizedException('Only admins can delete users');
+    }
+    return await this.userService.deleteUser(id);
   }
 }
