@@ -16,7 +16,11 @@ export default function Register() {
     phone: '',
     password: '',
     confirmPassword: '',
-    role: 'STUDENT', // ค่าเริ่มต้นเป็น STUDENT
+    role: 'STUDENT',
+    bachelorDegree: '',
+    masterDegree: '',
+    doctorateDegree: '',
+    expertise: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -54,6 +58,12 @@ export default function Register() {
           full_name: fullName, 
           phone: formData.phone, 
           role: formData.role, // ✅ ส่งค่า role ที่ผู้ใช้เลือก (STUDENT หรือ TEACHER)
+          ...(formData.role === 'TEACHER' && {
+            bachelorDegree: formData.bachelorDegree,
+            masterDegree: formData.masterDegree,
+            doctorateDegree: formData.doctorateDegree,
+            expertise: formData.expertise,
+          })
         }),
       });
 
@@ -120,6 +130,23 @@ export default function Register() {
                 <option value="TEACHER">👨‍🏫 สมัครเป็นผู้สอน (Teacher)</option>
               </select>
             </div>
+
+            {formData.role === 'TEACHER' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '15px' }}>
+                <div className="form-group">
+                  <input name="bachelorDegree" value={formData.bachelorDegree} placeholder="🎓 ปริญญาตรี (สถาบัน/สาขา)" className="form-input" onChange={handleChange} required />
+                </div>
+                <div className="form-group">
+                  <input name="masterDegree" value={formData.masterDegree} placeholder="🎓 ปริญญาโท (ถ้ามี)" className="form-input" onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                  <input name="doctorateDegree" value={formData.doctorateDegree} placeholder="🎓 ปริญญาเอก (ถ้ามี)" className="form-input" onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                  <input name="expertise" value={formData.expertise} placeholder="💡 ความเชี่ยวชาญ (เช่น React, Node.js)" className="form-input" onChange={handleChange} required />
+                </div>
+              </div>
+            )}
 
             <div style={{ display: 'flex', gap: '10px' }}>
               <div className="form-group" style={{ flex: 1 }}>

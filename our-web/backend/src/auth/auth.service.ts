@@ -7,11 +7,14 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { User, UserRole } from '../entities/user.entity'; 
+import { Teacher } from '../entities/teacher.entity'; 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    @InjectRepository(Teacher)
+    private teacherRepository: Repository<Teacher>,
     private jwtService: JwtService,
   ) {}
 
@@ -38,6 +41,18 @@ export class AuthService {
     });
 
     const savedUser = await this.usersRepository.save(user);
+
+    if (role === 'TEACHER') {
+      await this.teacherRepository.save(this.teacherRepository.create({
+        user_id: savedUser.id,
+        name: full_name || '',
+        bachelorDegree: registerDto.bachelorDegree || '',
+        masterDegree: registerDto.masterDegree,
+        doctorateDegree: registerDto.doctorateDegree,
+        expertise: registerDto.expertise || '',
+        is_approved: false,
+      }));
+    }
 
     const access_token = this.jwtService.sign({
       sub: savedUser.id,
@@ -151,6 +166,7 @@ export class AuthService {
   async findOne(id: any): Promise<User | null> {
     return this.usersRepository.findOne({
       where: { id },
+      relations: ['teacher'],
     });
   }
 
