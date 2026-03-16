@@ -68,8 +68,8 @@ export default function TeacherDashboard() {
     email: 'ajarn@gmail.com',
     phone: '081-234-5678',
     role: 'TEACHER',
-    image: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=200&h=200',
-    description: '“ความรู้คืออาวุธ”',
+    image: '',
+    description: '',
     bachelorDegree: '',
     masterDegree: '',
     doctorateDegree: '',
@@ -1246,7 +1246,15 @@ export default function TeacherDashboard() {
           {/* Sidebar */}
           <aside className="profile-sidebar">
             <div style={{ position: 'relative', display: 'inline-block', marginBottom: '1rem' }}>
-              <img src={teacherData.image} alt="Profile" className="sidebar-avatar" style={{ objectFit: 'cover', width: '120px', height: '120px', borderRadius: '50%' }} />
+              {teacherData.image ? (
+                <img src={teacherData.image} alt="Profile" className="sidebar-avatar" style={{ objectFit: 'cover', width: '120px', height: '120px', borderRadius: '50%' }} />
+              ) : (
+                <div className="sidebar-avatar default-profile" style={{ width: '120px', height: '120px', borderRadius: '50%', background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+                  <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: '60px', height: '60px' }}>
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                  </svg>
+                </div>
+              )}
               <input type="file" id="profile-upload" accept="image/*" style={{ display: 'none' }} onChange={handleProfileImageUpload} />
               <label htmlFor="profile-upload" style={{ position: 'absolute', bottom: '5px', right: '5px', background: 'white', borderRadius: '50%', padding: '8px', border: '1px solid #e2e8f0', display: 'flex', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
                 <Camera size={16} color="#475569" />
