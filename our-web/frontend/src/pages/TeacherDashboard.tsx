@@ -77,27 +77,23 @@ export default function TeacherDashboard() {
   };
 
   const [teacherData, setTeacherData] = useState(() => {
-    const savedData = localStorage.getItem('teacherProfileData');
     const mainUser = localStorage.getItem('user');
 
-    let initialData = defaultTeacherData;
-    if (savedData) {
-      initialData = JSON.parse(savedData);
-    }
+    let initialData = { ...defaultTeacherData };
 
-    // Override with main user data if it exists and is newer
+    // Override with main user data if it exists
     if (mainUser) {
       try {
         const userObj = JSON.parse(mainUser);
         if (userObj.full_name) {
           const parts = userObj.full_name.split(' ');
-          initialData.firstName = parts[0] || initialData.firstName;
-          initialData.lastName = parts.slice(1).join(' ') || initialData.lastName;
+          initialData.firstName = parts[0] || '';
+          initialData.lastName = parts.slice(1).join(' ') || '';
         }
         if (userObj.email) initialData.email = userObj.email;
-        if (userObj.phone) initialData.phone = userObj.phone;
-        if (userObj.image) initialData.image = userObj.image;
-        if (userObj.description) initialData.description = userObj.description;
+        if (userObj.phone) initialData.phone = userObj.phone || '';
+        if (userObj.image) initialData.image = userObj.image || '';
+        if (userObj.description) initialData.description = userObj.description || '';
       } catch (e) { }
     }
 
@@ -113,7 +109,6 @@ export default function TeacherDashboard() {
 
   const handleSaveProfile = async () => {
     setTeacherData(editProfileForm);
-    localStorage.setItem('teacherProfileData', JSON.stringify(editProfileForm));
 
     // Sync to main user token
     const mainUser = localStorage.getItem('user');
@@ -198,7 +193,6 @@ export default function TeacherDashboard() {
         const base64String = reader.result as string;
         const updatedData = { ...teacherData, image: base64String };
         setTeacherData(updatedData);
-        localStorage.setItem('teacherProfileData', JSON.stringify(updatedData));
 
         const token = localStorage.getItem('access_token');
 

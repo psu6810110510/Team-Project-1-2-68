@@ -83,6 +83,18 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleApproveTeacher = async (teacherId: string) => {
+    if (!window.confirm('คุณแน่ใจหรือไม่ว่าต้องการอนุมัติอาจารย์ท่านนี้?')) return;
+    try {
+      await userAPI.approveTeacher(teacherId);
+      alert('อนุมัติอาจารย์สําเร็จ!');
+      setTeachers(prev => prev.map(t => t.teacher_id === teacherId ? { ...t, is_approved: true } : t));
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.message || 'เกิดข้อผิดพลาดในการอนุมัติ');
+    }
+  };
+
   const refreshCourses = async () => {
     try {
       const [requested, drafting, pending, published] = await Promise.all([
@@ -854,10 +866,26 @@ export default function AdminDashboard() {
                         <td style={{ padding: '12px 0' }}>{t.phone || '-'}</td>
                         <td style={{ padding: '12px 0' }}>
                           <span style={{ color: t.is_active ? '#16a34a' : '#ef4444', fontWeight: 'bold' }}>{t.is_active ? 'Active' : 'Inactive'}</span>
+                          {t.is_approved === false && (
+                            <span style={{ display: 'block', fontSize: '0.75rem', color: '#ca8a04', marginTop: '2px' }}>(รอตรวจสอบ)</span>
+                          )}
+                          {t.is_approved === true && (
+                            <span style={{ display: 'block', fontSize: '0.75rem', color: '#16a34a', marginTop: '2px' }}>(อนุมัติแล้ว)</span>
+                          )}
                         </td>
                         <td style={{ padding: '12px 0' }}>{new Date(t.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}</td>
                         <td style={{ padding: '12px 0', textAlign: 'center' }}>
-                          <button onClick={() => handleDeleteUser(t.id, 'TEACHER')} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>ลบ</button>
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                            {t.is_approved === false && t.teacher_id && (
+                              <button 
+                                onClick={() => handleApproveTeacher(t.teacher_id!)} 
+                                style={{ background: '#10b981', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
+                              >
+                                อนุมัติ
+                              </button>
+                            )}
+                            <button onClick={() => handleDeleteUser(t.id, 'TEACHER')} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>ลบ</button>
+                          </div>
                         </td>
                       </tr>
                     ))}

@@ -107,6 +107,7 @@ export class UserService {
       take: limit,
       skip: offset,
       order: { created_at: 'DESC' },
+      relations: ['teacher'],
     });
   }
 

@@ -9,6 +9,8 @@ export interface UserRecord {
   phone?: string;
   created_at: string;
   image?: string;
+  is_approved?: boolean;
+  teacher_id?: string;
 }
 
 export interface UsersResponse {
@@ -39,6 +41,9 @@ export const userAPI = {
 
   deleteUser: (id: string) =>
     apiClient.delete<{ message: string }>(`/users/${id}`),
+
+  approveTeacher: (teacherId: string) =>
+    apiClient.post<any>(`/teachers/${teacherId}/approve`),
 };
 
 export default userAPI;
