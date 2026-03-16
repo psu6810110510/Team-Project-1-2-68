@@ -19,6 +19,7 @@ import type { Course } from '../api/courseAPI';
 export default function Home() {
   const [user, setUser] = useState<any>(null);
   const [popularCourses, setPopularCourses] = useState<Course[]>([]);
+  const [totalCourses, setTotalCourses] = useState<number>(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,8 +34,12 @@ export default function Home() {
       .then(res => {
         const courses = res.data?.data ?? [];
         setPopularCourses(courses.slice(0, 3));
+        setTotalCourses(res.data?.total || courses.length);
       })
-      .catch(() => setPopularCourses([]));
+      .catch(() => {
+        setPopularCourses([]);
+        setTotalCourses(0);
+      });
   }, []);
 
   const features = [
@@ -172,15 +177,17 @@ export default function Home() {
           )}
         </div>
 
-        <div className="view-all-container">
-          <button 
-            className="btn-view-all"
-            onClick={() => navigate('/courses')}
-          >
-            ดูคอร์สทั้งหมด
-            <ArrowRight size={20} />
-          </button>
-        </div>
+        {totalCourses > popularCourses.length && (
+          <div className="view-all-container">
+            <button 
+              className="btn-view-all"
+              onClick={() => navigate('/courses')}
+            >
+              ดูคอร์สทั้งหมด
+              <ArrowRight size={20} />
+            </button>
+          </div>
+        )}
       </section>
 
       {/* CTA Section */}

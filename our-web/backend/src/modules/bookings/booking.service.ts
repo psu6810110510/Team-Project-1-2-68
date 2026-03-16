@@ -84,6 +84,8 @@ export class BookingService {
       seatLimit = schedule.max_onsite_seats;
     }
 
+    let initialStatus = BookingStatus.PENDING;
+
     // 3. ถ้ามีการจำกัดที่นั่ง (seatLimit ไม่เป็น null)
     if (seatLimit !== null) {
       // นับจำนวนคนที่จองไปแล้ว (นับทั้ง CONFIRMED และ PENDING เพื่อกันที่นั่งไว้ก่อน)
@@ -96,9 +98,8 @@ export class BookingService {
       });
 
       if (bookedSeats >= seatLimit) {
-        throw new ConflictException(
-          `No available seats for ${dto.learning_mode} booking`,
-        );
+        // Queue System: Instead of throwing ConflictException, assign WAITLIST
+        initialStatus = BookingStatus.WAITLIST;
       }
     }
 
@@ -106,7 +107,7 @@ export class BookingService {
       user_id: dto.user_id,
       schedule_id: dto.schedule_id,
       learning_mode: dto.learning_mode,
-      status: BookingStatus.PENDING,
+      status: initialStatus,
       booking_date: new Date(),
       notes: dto.notes || undefined,
     });
@@ -133,6 +134,7 @@ export class BookingService {
 
     return this.bookingRepo.find({
       where: { user_id: userId },
+      relations: ['schedule'],
       order: { created_at: 'DESC' },
     });
   }
@@ -165,6 +167,69 @@ export class BookingService {
   ): Promise<Booking> {
     const booking = await this.getBookingById(id);
     booking.status = status;
+    return this.bookingRepo.save(booking);
+  }
+
+  async updateBooking(
+    id: string,
+    dto: { learning_mode?: LearningMode; schedule_id?: string; notes?: string },
+  ): Promise<Booking> {
+    const booking = await this.getBookingById(id);
+
+    // If both learning_mode and schedule_id remain exactly the same as current, we don't need seat validation.
+    const isNewSchedule = dto.schedule_id && dto.schedule_id !== booking.schedule_id;
+    const isNewMode = dto.learning_mode && dto.learning_mode !== booking.learning_mode;
+
+    const targetScheduleId = dto.schedule_id || booking.schedule_id;
+    const targetMode = dto.learning_mode || booking.learning_mode;
+
+    if (isNewSchedule || isNewMode) {
+      // Need to validate seats for the target schedule and mode.
+      const schedule = await this.scheduleRepo.findOne({
+        where: { id: targetScheduleId },
+      });
+      if (!schedule) {
+        throw new NotFoundException('Schedule not found');
+      }
+
+      let seatLimit: number | null = null;
+      const quotaRecord = await this.seatQuotaRepo.findOne({
+        where: {
+          schedule_id: targetScheduleId,
+          learning_mode: targetMode,
+        },
+      });
+
+      if (quotaRecord) {
+        seatLimit = quotaRecord.quota;
+      } else if (
+        targetMode === LearningMode.ONSITE &&
+        schedule.max_onsite_seats
+      ) {
+        seatLimit = schedule.max_onsite_seats;
+      }
+
+      if (seatLimit !== null) {
+        const bookedSeats = await this.bookingRepo.count({
+          where: {
+            schedule_id: targetScheduleId,
+            learning_mode: targetMode,
+            status: In([BookingStatus.CONFIRMED, BookingStatus.PENDING]),
+          },
+        });
+
+        if (bookedSeats >= seatLimit) {
+          throw new ConflictException(
+            `No available seats for ${targetMode} booking`,
+          );
+        }
+      }
+    }
+
+    if (dto.schedule_id) booking.schedule_id = dto.schedule_id;
+    if (dto.learning_mode) booking.learning_mode = dto.learning_mode;
+    if (dto.notes !== undefined) booking.notes = dto.notes;
+
     return this.bookingRepo.save(booking);
   }
 

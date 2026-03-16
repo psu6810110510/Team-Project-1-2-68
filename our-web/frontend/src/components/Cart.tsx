@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import '../styles/Cart.css';
-import qrImage from "../assets/QR.png";
+import qrImage from "../assets/qrreal.jpg";
 import { paymentAPI } from '../api/paymentAPI';
 import bookingAPI, { LearningMode } from '../api/bookingAPI';
 

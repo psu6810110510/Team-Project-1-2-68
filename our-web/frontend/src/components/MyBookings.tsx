@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import bookingAPI, { type Booking, BookingStatus, LearningMode } from '../api/bookingAPI';
+import EditBookingModal from './EditBookingModal';
 import '../styles/MyBookings.css';
 
 const MyBookings = () => {
@@ -82,6 +83,8 @@ const MyBookings = () => {
         return 'completed';
       case BookingStatus.CANCELLED:
         return 'cancelled';
+      case BookingStatus.WAITLIST:
+        return 'waitlist';
       default:
         return 'pending';
     }
@@ -97,6 +100,8 @@ const MyBookings = () => {
         return '✓ เสร็จสิ้น';
       case BookingStatus.CANCELLED:
         return '✕ ยกเลิกแล้ว';
+      case BookingStatus.WAITLIST:
+        return '⏳ รอคิว';
       default:
         return '-';
     }
@@ -127,6 +132,8 @@ const MyBookings = () => {
         return '-';
     }
   };
+
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
 
   if (loading) {
     return <div className="my-bookings-loading">กำลังโหลดรายการการจอง...</div>;
@@ -194,18 +201,52 @@ const MyBookings = () => {
 
             <div className="booking-card-footer">
               {booking.status === BookingStatus.PENDING ||
-              booking.status === BookingStatus.CONFIRMED ? (
-                <button
-                  className="booking-cancel-btn"
-                  onClick={() => handleCancelBooking(booking.id)}
-                >
-                  ยกเลิกการจอง
-                </button>
+              booking.status === BookingStatus.CONFIRMED ||
+              booking.status === BookingStatus.WAITLIST ? (
+                <>
+                  <button
+                    className="booking-edit-btn"
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      border: '1px solid #e2e8f0',
+                      background: 'white',
+                      cursor: 'pointer',
+                      fontWeight: 500,
+                      color: '#475569',
+                      marginRight: '12px'
+                    }}
+                    onClick={() => setEditingBooking(booking)}
+                  >
+                    ✎ แก้ไข
+                  </button>
+                  <button
+                    className="booking-cancel-btn"
+                    onClick={() => handleCancelBooking(booking.id)}
+                  >
+                    ยกเลิกการจอง
+                  </button>
+                </>
               ) : null}
             </div>
           </div>
         ))}
       </div>
+
+      {editingBooking && (
+        <EditBookingModal 
+          booking={editingBooking}
+          // Note: In real setup you'd get courseId from booking details relations. Usually schedule comes with course.
+          // Since our Booking interface doesn't neatly hold course_id at top level, we pass a helper if needed or modify the backend to return course_id.
+          courseId={editingBooking.course_id} // Backend needs to pass course_id for this to fetch new schedules smoothly
+          onSuccess={() => {
+            setEditingBooking(null);
+            // Refresh logic: for simplicity just reload window or mutate state
+            window.location.reload(); 
+          }}
+          onClose={() => setEditingBooking(null)}
+        />
+      )}
     </div>
   );
 };
