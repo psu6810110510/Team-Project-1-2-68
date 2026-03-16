@@ -841,7 +841,15 @@ export default function AdminDashboard() {
                   <tbody>
                     {teachers.map((t) => (
                       <tr key={t.id} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
-                        <td style={{ padding: '12px 0' }}>{t.full_name || '-'}</td>
+                        <td style={{ padding: '12px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <img
+                            src={t.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${t.full_name || t.id}&backgroundColor=b6e3f4`}
+                            alt={t.full_name || 'Teacher'}
+                            style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #e2e8f0' }}
+                            onError={(e) => { e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${t.full_name || t.id}&backgroundColor=b6e3f4`; }}
+                          />
+                          <span>{t.full_name || '-'}</span>
+                        </td>
                         <td style={{ padding: '12px 0' }}>{t.email}</td>
                         <td style={{ padding: '12px 0' }}>{t.phone || '-'}</td>
                         <td style={{ padding: '12px 0' }}>
@@ -879,7 +887,15 @@ export default function AdminDashboard() {
                   <tbody>
                     {students.map((s) => (
                       <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
-                        <td style={{ padding: '12px 0' }}>{s.full_name || '-'}</td>
+                        <td style={{ padding: '12px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <img
+                            src={s.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.full_name || s.id}&backgroundColor=d1fae5`}
+                            alt={s.full_name || 'Student'}
+                            style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #e2e8f0' }}
+                            onError={(e) => { e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.full_name || s.id}&backgroundColor=d1fae5`; }}
+                          />
+                          <span>{s.full_name || '-'}</span>
+                        </td>
                         <td style={{ padding: '12px 0' }}>{s.email}</td>
                         <td style={{ padding: '12px 0' }}>{s.phone || '-'}</td>
                         <td style={{ padding: '12px 0' }}>
