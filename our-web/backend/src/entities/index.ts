@@ -12,3 +12,4 @@ export { SeatQuota } from './seat-quota.entity';
 export { Teacher } from './teacher.entity';
 export { Payment, PaymentStatus } from './payment.entity';
 export { Notification } from './notification.entity';
+export { Review } from './review.entity';

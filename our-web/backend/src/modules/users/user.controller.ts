@@ -45,6 +45,8 @@ export class UserController {
         phone: u.phone,
         created_at: u.created_at,
         image: u.image,
+        is_approved: u.teacher?.is_approved,
+        teacher_id: u.teacher?.id,
       })),
       total,
       limit: Number(limit),

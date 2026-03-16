@@ -18,6 +18,7 @@ import {
   Payment,
   Teacher,
   Notification,
+  Review,
 } from './entities';
 
 
@@ -32,6 +33,7 @@ import { PaymentModule } from './modules/payments/payment.module';
 import { AuthModule } from './auth/auth.module'; // ✅ Auth module หลัก (JWT + Google OAuth)
 import { ScheduleModule } from './modules/schedules/schedule.module';
 import { NotificationModule } from './modules/notifications/notification.module';
+import { ReviewModule } from './modules/reviews/review.module';
 
 @Module({
   imports: [
@@ -69,6 +71,7 @@ import { NotificationModule } from './modules/notifications/notification.module'
         Payment,
         Teacher,
         Notification,
+        Review,
       ],
       synchronize: true,
       logging: true,
@@ -84,6 +87,7 @@ import { NotificationModule } from './modules/notifications/notification.module'
     UploadModule,
     PaymentModule,
     NotificationModule,
+    ReviewModule,
   ],
   controllers: [AppController],
   providers: [AppService],

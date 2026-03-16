@@ -13,6 +13,7 @@ import { Schedule } from './schedule.entity';
 import { Lesson } from './lesson.entity';
 import { Exam } from './exam.entity';
 import { User } from './user.entity';
+import { Review } from './review.entity';
 
 export enum CourseStatus {
   REQUEST_CREATE = 'REQUEST_CREATE',
@@ -123,4 +124,7 @@ export class Course {
 
   @ManyToMany(() => User, (user) => user.favorite_courses)
   liked_by_users: User[];
+
+  @OneToMany(() => Review, (review) => review.course)
+  reviews: Review[];
 }
