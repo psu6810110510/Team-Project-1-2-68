@@ -294,7 +294,7 @@ export default function AdminDashboard() {
   };
 
   const handleToggleCourseActive = async (id: string, title: string, currentActive: boolean) => {
-    const action = currentActive ? 'ปิดการใช้งาน' : 'เปิดการใช้งาน';
+    const action = currentActive ? 'ปิดการขาย' : 'เปิดการขาย';
     if (!window.confirm(`คุณต้องการ${action}คอร์ส "${title}" หรือไม่?\n\n${currentActive ? 'คอร์สจะไม่แสดงในหน้ารวมคอร์สอีกต่อไป' : 'คอร์สจะกลับมาแสดงในหน้ารวมคอร์สอีกครั้ง'}`)) return;
     try {
       await courseAPI.updateCourseDetails(id, { is_active: !currentActive });
@@ -769,16 +769,16 @@ export default function AdminDashboard() {
                     <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start' }}>
                       <div style={{ width: '100%', borderBottom: '2px solid #bbf7d0', paddingBottom: '10px', marginBottom: '15px' }}>
                         <h3 style={{ fontSize: '1.1rem', color: '#15803d', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          🛒 คอร์สที่เปิดขายแล้ว (Published) ({adminCourses.filter(c => c.status === CourseStatus.PUBLISHED).length} คอร์ส)
+                          🛒 คอร์สที่เปิดขายอยู่ (Published) ({adminCourses.filter(c => c.status === CourseStatus.PUBLISHED && c.is_active).length} คอร์ส)
                         </h3>
                       </div>
 
                       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                        {adminCourses.filter(c => c.status === CourseStatus.PUBLISHED).length === 0 ? (
+                        {adminCourses.filter(c => c.status === CourseStatus.PUBLISHED && c.is_active).length === 0 ? (
                           <p style={{ color: '#94a3b8', textAlign: 'center', padding: '20px 0' }}>ยังไม่มีคอร์สที่เปิดขาย</p>
                         ) : (
                           adminCourses
-                            .filter(c => c.status === CourseStatus.PUBLISHED)
+                            .filter(c => c.status === CourseStatus.PUBLISHED && c.is_active)
                             .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
                             .map(course => (
                               <div key={course.id} style={{ display: 'flex', gap: '15px', padding: '15px', border: '1px solid #e2e8f0', borderRadius: '8px', alignItems: 'center', background: '#f0fdf4' }}>
@@ -799,7 +799,7 @@ export default function AdminDashboard() {
                                     ผู้สอน: {course.instructor_name || course.instructor?.full_name || 'ไม่ระบุ'} •
                                     ราคา: {course.price ? `฿${course.price.toLocaleString('th-TH')}` : 'ฟรี'} •
                                     นักเรียน: {course.students_enrolled || 0} คน
-                                    {!course.is_active && <span style={{ color: '#ef4444', fontWeight: 'bold' }}> • ปิดการใช้งาน</span>}
+                                    {!course.is_active && <span style={{ color: '#ef4444', fontWeight: 'bold' }}> • ปิดการขาย</span>}
                                   </p>
                                 </div>
                                 <div style={{ display: 'flex', gap: '10px' }}>
@@ -816,7 +816,65 @@ export default function AdminDashboard() {
                                       borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem'
                                     }}
                                   >
-                                    {course.is_active ? '⏸️ ปิดการใช้งาน' : '▶️ เปิดการใช้งาน'}
+                                    {course.is_active ? '⏸️ ปิดการขาย' : '▶️ เปิดการขาย'}
+                                  </button>
+                                </div>
+                              </div>
+                            ))
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Section 5: คอร์สที่ปิดการขาย (Closed) */}
+                    <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start' }}>
+                      <div style={{ width: '100%', borderBottom: '2px solid #f87171', paddingBottom: '10px', marginBottom: '15px' }}>
+                        <h3 style={{ fontSize: '1.1rem', color: '#dc2626', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          ⏸️ คอร์สที่ปิดการขาย ({adminCourses.filter(c => c.status === CourseStatus.PUBLISHED && !c.is_active).length} คอร์ส)
+                        </h3>
+                      </div>
+
+                      <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        {adminCourses.filter(c => c.status === CourseStatus.PUBLISHED && !c.is_active).length === 0 ? (
+                          <p style={{ color: '#94a3b8', textAlign: 'center', padding: '20px 0' }}>ไม่มีคอร์สที่ปิดการขาย</p>
+                        ) : (
+                          adminCourses
+                            .filter(c => c.status === CourseStatus.PUBLISHED && !c.is_active)
+                            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                            .map(course => (
+                              <div key={course.id} style={{ display: 'flex', gap: '15px', padding: '15px', border: '1px solid #e2e8f0', borderRadius: '8px', alignItems: 'center', background: '#f8fafc' }}>
+                                <img
+                                  src={course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80'}
+                                  alt={course.title}
+                                  style={{ width: '100px', height: '70px', objectFit: 'cover', borderRadius: '6px', opacity: 0.7 }}
+                                  onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80'; }}
+                                />
+                                <div style={{ flex: 1 }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
+                                    <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#475569' }}>{course.title}</h4>
+                                    <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '12px', background: '#fee2e2', color: '#ef4444', fontWeight: 'bold' }}>
+                                      🚫 ปิดการขาย
+                                    </span>
+                                  </div>
+                                  <p style={{ margin: 0, fontSize: '0.9rem', color: '#64748b' }}>
+                                    ผู้สอน: {course.instructor_name || course.instructor?.full_name || 'ไม่ระบุ'} •
+                                    ราคา: {course.price ? `฿${course.price.toLocaleString('th-TH')}` : 'ฟรี'}
+                                  </p>
+                                </div>
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                  <button
+                                    onClick={() => openCourseDetailModal(course)}
+                                    style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem' }}
+                                  >
+                                    📋 ดูรายละเอียด
+                                  </button>
+                                  <button
+                                    onClick={() => handleToggleCourseActive(course.id, course.title, course.is_active)}
+                                    style={{
+                                      background: '#10b981', color: 'white', border: 'none', padding: '8px 20px',
+                                      borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem'
+                                    }}
+                                  >
+                                    ▶️ เปิดการขาย
                                   </button>
                                 </div>
                               </div>
@@ -1373,12 +1431,32 @@ export default function AdminDashboard() {
                           <div style={{ fontWeight: 'bold', color: '#0f172a' }}>{selectedCourse.onsite_duration} สัปดาห์</div>
                         </div>
                       )}
+                      
                       {selectedCourse.onsite_exam_schedule && (
-                        <div style={{ gridColumn: '1 / -1' }}>
-                          <label style={{ fontSize: '0.8rem', color: '#78716c' }}>กำหนดสอบ</label>
-                          <div style={{ fontWeight: 'bold', color: '#0f172a' }}>{selectedCourse.onsite_exam_schedule}</div>
+                        <div style={{ gridColumn: '1 / -1', marginTop: '10px' }}>
+                          <label style={{ fontSize: '0.85rem', color: '#78716c', display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>📅 กำหนดการสอน / กำหนดสอบ</label>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {(() => {
+                              try {
+                                const schedules = JSON.parse(selectedCourse.onsite_exam_schedule);
+                                if (Array.isArray(schedules)) {
+                                  return schedules.map((item: any, idx: number) => (
+                                    <div key={idx} style={{ background: '#fef3c7', padding: '10px 14px', borderRadius: '8px', border: '1px solid #fde68a', color: '#92400e', fontSize: '0.9rem', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                      <span>รอบที่ {idx + 1}:</span>
+                                      <span style={{ fontWeight: 'bold' }}>
+                                        {new Date(item.startDate).toLocaleDateString('th-TH')} - {new Date(item.endDate).toLocaleDateString('th-TH')}
+                                      </span>
+                                    </div>
+                                  ));
+                                }
+                              } catch (e) {
+                                return <div style={{ fontWeight: 'bold', color: '#0f172a', background: '#fef3c7', padding: '10px 14px', borderRadius: '8px', border: '1px solid #fde68a' }}>{selectedCourse.onsite_exam_schedule}</div>;
+                              }
+                            })()}
+                          </div>
                         </div>
                       )}
+
                     </div>
                   </div>
                 )}
@@ -1521,18 +1599,35 @@ export default function AdminDashboard() {
               >
                 ยกเลิก
               </button>
-              <button
-                onClick={handleRejectFromModal}
-                style={{ background: '#ef4444', color: 'white', border: 'none', padding: '12px 30px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem' }}
-              >
-                ❌ ปฏิเสธ
-              </button>
-              <button
-                onClick={handleApproveFromModal}
-                style={{ background: '#22c55e', color: 'white', border: 'none', padding: '12px 30px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem' }}
-              >
-                ✅ อนุมัติ
-              </button>
+              {selectedCourse?.status === CourseStatus.PUBLISHED ? (
+                <button
+                  onClick={async () => {
+                    await handleToggleCourseActive(selectedCourse.id, selectedCourse.title, selectedCourse.is_active);
+                    setSelectedCourse(prev => prev ? { ...prev, is_active: !prev.is_active } : null);
+                  }}
+                  style={{
+                    background: selectedCourse.is_active ? '#f59e0b' : '#10b981', color: 'white', border: 'none', padding: '12px 30px',
+                    borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem'
+                  }}
+                >
+                  {selectedCourse.is_active ? '⏸️ ปิดการขาย' : '▶️ เปิดการขาย'}
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={handleRejectFromModal}
+                    style={{ background: '#ef4444', color: 'white', border: 'none', padding: '12px 30px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem' }}
+                  >
+                    ❌ ปฏิเสธ
+                  </button>
+                  <button
+                    onClick={handleApproveFromModal}
+                    style={{ background: '#22c55e', color: 'white', border: 'none', padding: '12px 30px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem' }}
+                  >
+                    ✅ อนุมัติ
+                  </button>
+                </>
+              )}
             </div>
 
           </div>
