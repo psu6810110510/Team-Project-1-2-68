@@ -115,7 +115,6 @@ export class AuthService {
         email: googleUser.email,
         full_name: `${googleUser.firstName} ${googleUser.lastName}`.trim(),
         google_id: googleUser.email, // ใช้ email เป็น google_id
-        image: googleUser.picture,
         role: UserRole.STUDENT,
         password_hash: null as any, // Google user ไม่มี password
       });
@@ -124,9 +123,6 @@ export class AuthService {
       // อัพเดทข้อมูลจาก Google ถ้ามี user อยู่แล้ว
       if (!user.google_id) {
         user.google_id = googleUser.email;
-      }
-      if (googleUser.picture && !user.image) {
-        user.image = googleUser.picture;
       }
       if (!user.full_name && googleUser.firstName) {
         user.full_name = `${googleUser.firstName} ${googleUser.lastName}`.trim();
