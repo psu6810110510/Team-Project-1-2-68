@@ -18,7 +18,10 @@ export class TeacherService {
   }
 
   async getAllTeachers(): Promise<Teacher[]> {
-    return this.teacherRepository.find();
+    return this.teacherRepository.find({
+      where: { is_approved: true },
+      relations: ['user'],
+    });
   }
 
   // ✅ แก้ไขตรงนี้: เพิ่มการดักจับกรณีหาข้อมูลไม่เจอ (null)
