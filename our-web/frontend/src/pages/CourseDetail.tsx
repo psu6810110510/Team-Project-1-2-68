@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PlayCircle, FileText, Download, ChevronDown, ChevronUp } from 'lucide-react';
 import Header from '../components/Header';
@@ -45,22 +45,22 @@ const CourseDetail = () => {
   const [userComment, setUserComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
 
-  const mockReviews = [
-    {
-      id: 'mock1',
-      rating: 5,
-      comment: 'เนื้อหาดีมากครับ สอนเข้าใจง่าย มีแบบฝึกหัดให้ทำสนุกดีครับ',
-      created_at: new Date().toISOString(),
-      user: { full_name: 'สมชาย รักเรียน', image: '' }
-    },
-    {
-      id: 'mock2',
-      rating: 4,
-      comment: 'ชอบการปูพื้นฐานตั้งแต่เริ่มต้น ทำให้เข้าใจ SQL แบบไม่หลงทางเลยครับ',
-      created_at: new Date().toISOString(),
-      user: { full_name: 'วิภา พัฒนา', image: '' }
-    }
-  ];
+  // const mockReviews = [
+  //   {
+  //     id: 'mock1',
+  //     rating: 5,
+  //     comment: 'เนื้อหาดีมากครับ สอนเข้าใจง่าย มีแบบฝึกหัดให้ทำสนุกดีครับ',
+  //     created_at: new Date().toISOString(),
+  //     user: { full_name: 'สมชาย รักเรียน', image: '' }
+  //   },
+  //   {
+  //     id: 'mock2',
+  //     rating: 4,
+  //     comment: 'ชอบการปูพื้นฐานตั้งแต่เริ่มต้น ทำให้เข้าใจ SQL แบบไม่หลงทางเลยครับ',
+  //     created_at: new Date().toISOString(),
+  //     user: { full_name: 'วิภา พัฒนา', image: '' }
+  //   }
+  // ];
 
   useEffect(() => {
     if (isEnrolled && course && course.is_online && course.online_expiry) {

@@ -302,18 +302,7 @@ const Courses = () => {
               const formattedPrice = isNaN(price) || price === 0 ? 'ฟรี' : `฿${price.toLocaleString('th-TH')}`;
               const instructorName = course.instructor_name || course.instructor?.full_name || 'ไม่ระบุ';
               
-              // Parse tags properly to check for level
-              const tags = (course.tags || '').toLowerCase();
-              const tagArray = tags.split(/[\s,]+/).filter(t => t.startsWith('#'));
-              
-              let level: string | null = null;
-              if (tagArray.includes('#beginner')) {
-                level = 'Beginner';
-              } else if (tagArray.includes('#intermediate')) {
-                level = 'Intermediate';
-              } else if (tagArray.includes('#hard')) {
-                level = 'Hard';
-              }
+
               
               const enrolledCount = course.students_enrolled ?? 0;
 

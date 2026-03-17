@@ -1,7 +1,7 @@
 /* eslint-disable */
 import React, { useState, useEffect } from 'react';
 import {
-  Search, User, Settings, CreditCard, BookOpen, FileText, Home, Users,
+  Search, User, Settings, CreditCard, BookOpen, Home, Users,
   ArrowUp, MonitorPlay, LogOut, ChevronLeft, Calendar, Clock
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -49,7 +49,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedCourse, setSelectedCourse] = useState<APICourse | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // ...existing code...
+  const [, setCourseLessons] = useState<any[]>([]);
+  const [, setLoadingLessons] = useState(false);
 
   // Payment
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
@@ -251,42 +252,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleApproveCourse = async (id: string, currentStatus: CourseStatus) => {
-    try {
-      if (currentStatus === CourseStatus.REQUEST_CREATE) {
-        await courseAPI.approveCreateRequest(id);
-        alert('อนุมัติการสร้างคอร์สเรียบร้อยแล้ว! อาจารย์สามารถเริ่มใส่เนื้อหาได้');
-      } else if (currentStatus === CourseStatus.PENDING_REVIEW) {
-        await courseAPI.approvePublish(id);
-        alert('อนุมัติการขายคอร์สเรียบร้อยแล้ว! คอร์สจะปรากฏในหน้ารวมคอร์ส');
-      }
-      await refreshCourses();
-    } catch (error: any) {
-      console.error('Error approving course:', error);
-      alert(error.response?.data?.message || 'เกิดข้อผิดพลาดในการอนุมัติ');
-    }
-  };
-
-  const handleRejectCourse = async (id: string, currentStatus: CourseStatus) => {
-    const reason = prompt('กรุณาระบุเหตุผลในการปฏิเสธ:');
-    if (!reason) return;
-    try {
-      if (currentStatus === CourseStatus.REQUEST_CREATE) {
-        await courseAPI.rejectCreateRequest(id, reason);
-        alert('ปฏิเสธคำขอสร้างคอร์สแล้ว');
-      } else if (currentStatus === CourseStatus.PENDING_REVIEW) {
-        await courseAPI.rejectPublish(id, reason);
-        alert('ส่งคอร์สกลับไปแก้ไขแล้ว');
-      }
-      setIsModalOpen(false);
-      setSelectedCourse(null);
-      await refreshCourses();
-    } catch (error: any) {
-      console.error('Error rejecting course:', error);
-      alert(error.response?.data?.message || 'เกิดข้อผิดพลาดในการปฏิเสธ');
-    }
-  };
-
   const openCourseDetailModal = async (course: APICourse) => {
     setSelectedCourse(course);
     setIsModalOpen(true);
@@ -337,7 +302,6 @@ export default function AdminDashboard() {
     setCourseLessons([]);
   };
 
-  // ...existing code...
 
   const handleLogout = () => {
     localStorage.removeItem('access_token');
@@ -925,7 +889,7 @@ export default function AdminDashboard() {
                       {teachers.map((t) => (
                         <tr key={t.id} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
                           <td style={{ padding: '12px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${t.full_name || t.id}&backgroundColor=b6e3f4`} alt="Teacher" style={{ width: '30px', height: '30px', borderRadius: '50%' }} />
+                            <img src={t.image && t.image.trim() !== '' ? (t.image.startsWith('http') || t.image.startsWith('data:') ? t.image : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${t.image.startsWith('/') ? '' : '/'}${t.image}`) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${t.full_name || t.id}&backgroundColor=b6e3f4`} alt="Teacher" style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${t.full_name || t.id}&backgroundColor=b6e3f4`; }} />
                             <span>{t.full_name || '-'}</span>
                           </td>
                           <td style={{ padding: '12px 0' }}>{t.email}</td>
@@ -971,7 +935,7 @@ export default function AdminDashboard() {
                       {students.map((s) => (
                         <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
                           <td style={{ padding: '12px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${s.full_name || s.id}&backgroundColor=d1fae5`} alt="Student" style={{ width: '30px', height: '30px', borderRadius: '50%' }} />
+                            <img src={s.image && s.image.trim() !== '' ? (s.image.startsWith('http') || s.image.startsWith('data:') ? s.image : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${s.image.startsWith('/') ? '' : '/'}${s.image}`) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.full_name || s.id}&backgroundColor=d1fae5`} alt="Student" style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.full_name || s.id}&backgroundColor=d1fae5`; }} />
                             <span>{s.full_name || '-'}</span>
                           </td>
                           <td style={{ padding: '12px 0' }}>{s.email}</td>
@@ -1078,7 +1042,7 @@ export default function AdminDashboard() {
                                 src={p.slip_url.startsWith('http') ? p.slip_url : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${p.slip_url}`}
                                 alt="สลิปโอนเงิน"
                                 style={{ width: '56px', height: '56px', objectFit: 'cover', borderRadius: '8px', border: '2px solid #e2e8f0', cursor: 'pointer' }}
-                                onClick={() => setSelectedSlip(p.slip_url.startsWith('http') ? p.slip_url : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${p.slip_url}`)}
+                                onClick={() => setSelectedSlip(p.slip_url!.startsWith('http') ? p.slip_url! : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${p.slip_url}`)}
                               />
                             ) : (<span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>ไม่มี</span>)}
                           </td>
