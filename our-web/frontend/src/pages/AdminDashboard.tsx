@@ -18,9 +18,24 @@ import examAPI, { type Exam } from '../api/examAPI';
 import userAPI, { type UserRecord, type DashboardStats } from '../api/userAPI';
 
 // ==========================================
-// Constants
+// Constants & Mocks (เพิ่มส่วนที่ขาดหายไป)
 // ==========================================
 const COLORS = ['#3b82f6', '#cbd5e1'];
+
+// เพิ่ม Enum สำหรับสถานะการจอง (BStatus) ป้องกัน Error
+const BStatus = {
+  CONFIRMED: 'CONFIRMED',
+  PENDING: 'PENDING',
+  CANCELLED: 'CANCELLED',
+  COMPLETED: 'COMPLETED'
+};
+
+// Mock API สำหรับการจองชั่วคราว (หากคุณมี bookingAPI อยู่แล้ว สามารถลบส่วนนี้และ import มาแทนได้ครับ)
+const bookingAPI = {
+  confirmBooking: async (id: string) => Promise.resolve(),
+  cancelBooking: async (id: string) => Promise.resolve(),
+  getAllBookings: async () => Promise.resolve({ data: { data: [] } })
+};
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -42,6 +57,7 @@ export default function AdminDashboard() {
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [homePayments, setHomePayments] = useState<PaymentRecord[]>([]);
   const [loadingPayments, setLoadingPayments] = useState(false);
+  const [selectedSlip, setSelectedSlip] = useState<string | null>(null);
 
   // Users
   const [teachers, setTeachers] = useState<UserRecord[]>([]);
@@ -56,9 +72,47 @@ export default function AdminDashboard() {
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
 
+  // ------------------------------------------
+  // เพิ่ม States ที่ขาดหายไปสำหรับ Bookings & Calendar
+  // ------------------------------------------
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [loadingBookings, setLoadingBookings] = useState(false);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [selectedBookingDetails, setSelectedBookingDetails] = useState<any>(null);
+
+  const [allSchedules, setAllSchedules] = useState<any[]>([]);
+  const [loadingSchedules, setLoadingSchedules] = useState(false);
+
+
   // ==========================================
   // Fetch Functions
   // ==========================================
+
+  // เพิ่มฟังก์ชันโหลดข้อมูล Bookings
+  const loadBookings = async () => {
+    setLoadingBookings(true);
+    try {
+      const res = await bookingAPI.getAllBookings();
+      setBookings(res.data?.data || []);
+    } catch (error) {
+      console.error('Error loading bookings:', error);
+    } finally {
+      setLoadingBookings(false);
+    }
+  };
+
+  // เพิ่มฟังก์ชันโหลดข้อมูล Schedules
+  const loadSchedules = async () => {
+    setLoadingSchedules(true);
+    try {
+      // TODO: ใส่ API โหลดข้อมูลตารางเรียนที่นี่
+      setAllSchedules([]);
+    } catch (error) {
+      console.error('Error loading schedules:', error);
+    } finally {
+      setLoadingSchedules(false);
+    }
+  };
 
   const handleDeleteUser = async (id: string, role: 'TEACHER' | 'STUDENT') => {
     if (!window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบผู้ใช้นี้? การกระทำนี้ไม่สามารถย้อนกลับได้')) return;
@@ -153,7 +207,9 @@ export default function AdminDashboard() {
       await Promise.all([
         refreshCourses(),
         loadPayments(),
-        fetchDashboardStats()
+        fetchDashboardStats(),
+        loadBookings(), // โหลดข้อมูลการจองตอนเริ่มต้น
+        loadSchedules() // โหลดข้อมูลตารางเวลาตอนเริ่มต้น
       ]);
       try {
         const [teachersRes, studentsRes] = await Promise.all([
@@ -1129,13 +1185,12 @@ export default function AdminDashboard() {
                           </td>
                           <td style={{ padding: '12px 8px' }}>
                             {p.slip_url ? (
-                              <a href={p.slip_url} target="_blank" rel="noopener noreferrer" title="ดูสลิปโอนเงิน">
-                                <img
-                                  src={p.slip_url}
-                                  alt="สลิปโอนเงิน"
-                                  style={{ width: '56px', height: '56px', objectFit: 'cover', borderRadius: '8px', border: '2px solid #e2e8f0', cursor: 'pointer' }}
-                                />
-                              </a>
+                              <img
+                                src={p.slip_url.startsWith('http') ? p.slip_url : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${p.slip_url}`}
+                                alt="สลิปโอนเงิน"
+                                style={{ width: '56px', height: '56px', objectFit: 'cover', borderRadius: '8px', border: '2px solid #e2e8f0', cursor: 'pointer' }}
+                                onClick={() => setSelectedSlip(p.slip_url.startsWith('http') ? p.slip_url : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${p.slip_url}`)}
+                              />
                             ) : (
                               <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>ไม่มี</span>
                             )}
@@ -1187,7 +1242,181 @@ export default function AdminDashboard() {
             )}
 
             {/* ==========================================
-              SETTINGS
+              BOOKINGS MENU (รายการจอง)
+              ========================================== */}
+            {activeMenu === 'bookings' && (
+              <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start', padding: '25px', width: '100%' }}>
+                <h2 style={{ fontSize: '1.5rem', color: '#0f172a', marginBottom: '20px', fontWeight: 'bold' }}>รายการจองออฟไลน์ทั้งหมด</h2>
+
+                {loadingBookings ? (
+                  <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b', width: '100%' }}>
+                    กำลังโหลดข้อมูลการจอง...
+                  </div>
+                ) : (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ color: '#64748b', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0' }}>
+                        <th style={{ padding: '12px 0', fontWeight: '500' }}>รหัสการจอง</th>
+                        <th style={{ padding: '12px 0', fontWeight: '500' }}>ชื่อผู้จอง</th>
+                        <th style={{ padding: '12px 0', fontWeight: '500' }}>คอร์สเรียน</th>
+                        <th style={{ padding: '12px 0', fontWeight: '500' }}>รูปแบบ</th>
+                        <th style={{ padding: '12px 0', fontWeight: '500' }}>สถานะ</th>
+                        <th style={{ padding: '12px 0', fontWeight: '500', textAlign: 'right' }}>จัดการ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {bookings.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} style={{ textAlign: 'center', padding: '20px', color: '#94a3b8' }}>ไม่มีข้อมูลการจอง</td>
+                        </tr>
+                      ) : (
+                        bookings.map((b, idx) => (
+                          <tr key={b.id || idx} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
+                            <td style={{ padding: '12px 0' }}>{b.id?.substring(0, 8)}...</td>
+                            <td style={{ padding: '12px 0' }}>
+                              <div>{b.user_name}</div>
+                              <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{b.user_email}</div>
+                            </td>
+                            <td style={{ padding: '12px 0' }}>{b.course_name}</td>
+                            <td style={{ padding: '12px 0' }}>{b.learning_mode}</td>
+                            <td style={{ padding: '12px 0' }}>
+                              {b.status === BStatus.CONFIRMED && <span style={{ background: '#dcfce7', color: '#16a34a', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>ยืนยันแล้ว</span>}
+                              {b.status === BStatus.PENDING && <span style={{ background: '#fef08a', color: '#ca8a04', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>รอยืนยัน</span>}
+                              {b.status === BStatus.CANCELLED && <span style={{ background: '#fee2e2', color: '#ef4444', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>ยกเลิกแล้ว</span>}
+                              {b.status === BStatus.COMPLETED && <span style={{ background: '#dbeafe', color: '#2563eb', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>เสร็จสิ้น</span>}
+                            </td>
+                            <td style={{ padding: '12px 0', textAlign: 'right', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                              <button
+                                onClick={() => {
+                                  setSelectedBookingDetails(b);
+                                  setIsBookingModalOpen(true);
+                                }}
+                                style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 2px 4px rgba(59, 130, 246, 0.2)' }}
+                                title="ดูรายละเอียดการจอง"
+                              >
+                                🔎
+                              </button>
+                              {b.status === BStatus.PENDING && (
+                                <button
+                                  onClick={async () => {
+                                    if (window.confirm('ยืนยันอนุญาตการจองคอร์สนี้?')) {
+                                      try {
+                                        await bookingAPI.confirmBooking(b.id);
+                                        loadBookings();
+                                      } catch (err) {
+                                        alert('ยืนยันไม่สำเร็จ');
+                                      }
+                                    }
+                                  }}
+                                  style={{ background: '#16a34a', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                >
+                                  ✅ ยืนยัน
+                                </button>
+                              )}
+                              {(b.status === BStatus.PENDING || b.status === BStatus.CONFIRMED) && (
+                                <button
+                                  onClick={async () => {
+                                    if (window.confirm('ยืนยันยกเลิกการจองนี้?')) {
+                                      try {
+                                        await bookingAPI.cancelBooking(b.id);
+                                        loadBookings();
+                                      } catch (err) {
+                                        alert('ยกเลิกไม่สำเร็จ');
+                                      }
+                                    }
+                                  }}
+                                  style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                >
+                                  ❌ ยกเลิก
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            )}
+
+            {/* ==========================================
+              CALENDAR MENU (รอบเรียน)
+              ========================================== */}
+            {activeMenu === 'calendar' && (
+              <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start', padding: '25px', width: '100%' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: 0, fontWeight: 'bold' }}>📍 รอบเวลาเรียนทั้งหมด ({allSchedules.length} รอบ)</h2>
+                  <button
+                    onClick={loadSchedules}
+                    style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}
+                  >
+                    🔄 โหลดข้อมูล
+                  </button>
+                </div>
+
+                {loadingSchedules ? (
+                  <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b', width: '100%' }}>
+                    <div style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>⏳</div>
+                    <div>กำลังโหลดข้อมูลรอบเรียน...</div>
+                  </div>
+                ) : allSchedules.length === 0 ? (
+                  <p style={{ color: '#94a3b8', textAlign: 'center', padding: '20px 0', width: '100%' }}>ยังไม่มีรอบเวลาเรียนในระบบ</p>
+                ) : (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ color: '#64748b', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0' }}>
+                        <th style={{ padding: '12px 10px', fontWeight: '500' }}>📚 คอร์สเรียน</th>
+                        <th style={{ padding: '12px 10px', fontWeight: '500' }}>⏰ รอบเวลา (ปี/เดือน/วัน)</th>
+                        <th style={{ padding: '12px 10px', fontWeight: '500' }}>📍 สถานที่ / ช่องทาง</th>
+                        <th style={{ padding: '12px 10px', fontWeight: '500' }}>🪑 ที่นั่ง (Onsite)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {allSchedules.map((s: any) => {
+                        const course = adminCourses.find(c => c.id === s.course_id);
+                        return (
+                          <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
+                            <td style={{ padding: '15px 10px', fontWeight: 'bold', color: '#0f172a' }}>
+                              {course ? course.title : 'คอร์สที่ไม่พบ (id: ' + s.course_id.substring(0,6) + '...)'}
+                            </td>
+                            <td style={{ padding: '15px 10px' }}>
+                              <div style={{ fontWeight: '500' }}>
+                                📅 {new Date(s.start_time).toLocaleDateString('th-TH', { 
+                                  weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' 
+                                })}
+                              </div>
+                              <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>
+                                🕐 {new Date(s.start_time).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} - {new Date(s.end_time).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
+                              </div>
+                            </td>
+                            <td style={{ padding: '15px 10px' }}>
+                              {s.room_location ? (
+                                <span style={{ background: '#e0f2fe', color: '#0284c7', padding: '4px 10px', borderRadius: '12px', fontSize: '0.85rem' }}>
+                                  📍 {s.room_location}
+                                </span>
+                              ) : (
+                                <span style={{ color: '#94a3b8' }}>ไม่ได้กำหนด</span>
+                              )}
+                            </td>
+                            <td style={{ padding: '15px 10px' }}>
+                              {s.max_onsite_seats ? (
+                                <span style={{ color: '#10b981', fontWeight: '500' }}>{s.max_onsite_seats} ที่นั่ง</span>
+                              ) : (
+                                <span style={{ color: '#64748b' }}>-</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            )}
+            
+            {/* ==========================================
+              SETTINGS MENU
               ========================================== */}
             {activeMenu === 'settings' && (
               <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start', padding: '25px', width: '100%' }}>
@@ -1590,6 +1819,23 @@ export default function AdminDashboard() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Slip Viewer Modal */}
+      {selectedSlip && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, padding: '20px' }} onClick={() => setSelectedSlip(null)}>
+          <div style={{ background: '#fff', borderRadius: '16px', padding: '15px', maxWidth: '500px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a' }}>สลิปโอนเงิน</h3>
+              <button onClick={() => setSelectedSlip(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: '#64748b' }}>✕</button>
+            </div>
+            <img 
+              src={selectedSlip} 
+              alt="สลิปโอนเงินแบบเต็ม" 
+              style={{ width: '100%', maxHeight: '75vh', objectFit: 'contain', borderRadius: '8px' }} 
+            />
           </div>
         </div>
       )}
