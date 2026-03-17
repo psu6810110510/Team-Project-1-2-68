@@ -1479,7 +1479,7 @@ export default function TeacherDashboard() {
                     <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column' }}>
                       <div style={{ width: '100%', borderBottom: '2px solid #fef08a', paddingBottom: '10px', marginBottom: '15px' }}>
                         <h3 style={{ fontSize: '1.1rem', color: '#a16207', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          ⏳ คำขอเปิดคอร์สใหม่ (รออนุมัติ)
+                          คำขอเปิดคอร์สใหม่ (รออนุมัติ)
                         </h3>
                       </div>
                       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '15px' }}>
@@ -1516,7 +1516,7 @@ export default function TeacherDashboard() {
                     <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column' }}>
                       <div style={{ width: '100%', borderBottom: '2px solid #fed7aa', paddingBottom: '10px', marginBottom: '15px' }}>
                         <h3 style={{ fontSize: '1.1rem', color: '#c2410c', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          🚀 คำขอเปิดขายคอร์ส (รอตรวจสอบเนื้อหา)
+                          คำขอเปิดขายคอร์ส (รอตรวจสอบเนื้อหา)
                         </h3>
                       </div>
                       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '15px' }}>
@@ -1553,7 +1553,7 @@ export default function TeacherDashboard() {
                     <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column' }}>
                       <div style={{ width: '100%', borderBottom: '2px solid #e0e7ff', paddingBottom: '10px', marginBottom: '15px' }}>
                         <h3 style={{ fontSize: '1.1rem', color: '#4338ca', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          ✍️ คอร์สที่กำลังใส่เนื้อหา ({myCourses.filter(c => c.status === CourseStatus.DRAFTING).length} คอร์ส)
+                          คอร์สที่กำลังใส่เนื้อหา ({myCourses.filter(c => c.status === CourseStatus.DRAFTING).length} คอร์ส)
                         </h3>
                       </div>
                       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '15px' }}>
@@ -1585,25 +1585,25 @@ export default function TeacherDashboard() {
                                     onClick={() => handleOpenContentModal(course)}
                                     style={{ background: '#10b981', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem' }}
                                   >
-                                    📚 จัดการเนื้อหา
+                                    จัดการเนื้อหา
                                   </button>
                                   <button
                                     onClick={() => navigate(`/exam-management/${course.id}`)}
                                     style={{ background: '#8b5cf6', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem' }}
                                   >
-                                    🎯 จัดการข้อสอบ
+                                    จัดการข้อสอบ
                                   </button>
                                   <button
                                     onClick={() => handleEditCourse(course)}
                                     style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem' }}
                                   >
-                                    ✏️ แก้ไขคอร์ส
+                                    แก้ไขคอร์ส
                                   </button>
                                   <button
                                     onClick={() => handleDeleteCourse(course.id, course.title, course.status)}
                                     style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem' }}
                                   >
-                                    🗑️ ลบ
+                                    🗑️
                                   </button>
                                 </div>
                               </div>
@@ -1616,7 +1616,7 @@ export default function TeacherDashboard() {
                     <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column' }}>
                       <div style={{ width: '100%', borderBottom: '2px solid #bbf7d0', paddingBottom: '10px', marginBottom: '15px' }}>
                         <h3 style={{ fontSize: '1.1rem', color: '#15803d', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          🛒 คอร์สที่เปิดขายอยู่ (Published) ({myCourses.filter(c => c.status === CourseStatus.PUBLISHED && c.is_active).length} คอร์ส)
+                          คอร์สที่เปิดขายอยู่ (Published) ({myCourses.filter(c => c.status === CourseStatus.PUBLISHED && c.is_active).length} คอร์ส)
                         </h3>
                       </div>
                       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '15px' }}>
@@ -1648,19 +1648,19 @@ export default function TeacherDashboard() {
                                     onClick={() => navigate(`/exam-management/${course.id}?readonly=true`)}
                                     style={{ background: '#8b5cf6', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem' }}
                                   >
-                                    📋 ดูข้อสอบ
+                                    ดูข้อสอบ
                                   </button>
                                   <button
                                     onClick={() => handleEditCourse(course)}
                                     style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem' }}
                                   >
-                                    ✏️ แก้ไขคอร์ส
+                                    แก้ไขคอร์ส
                                   </button>
                                   <button
                                     onClick={() => handleToggleCourseActive(course.id, course.title, course.is_active)}
                                     style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem' }}
                                   >
-                                    ⏸️ ปิดการขาย
+                                    ปิดการขาย
                                   </button>
                                 </div>
                               </div>
@@ -1673,7 +1673,7 @@ export default function TeacherDashboard() {
                     <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column' }}>
                       <div style={{ width: '100%', borderBottom: '2px solid #f87171', paddingBottom: '10px', marginBottom: '15px' }}>
                         <h3 style={{ fontSize: '1.1rem', color: '#dc2626', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          ⏸️ คอร์สที่ปิดการขาย ({myCourses.filter(c => c.status === CourseStatus.PUBLISHED && !c.is_active).length} คอร์ส)
+                          คอร์สที่ปิดการขาย ({myCourses.filter(c => c.status === CourseStatus.PUBLISHED && !c.is_active).length} คอร์ส)
                         </h3>
                       </div>
                       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '15px' }}>
