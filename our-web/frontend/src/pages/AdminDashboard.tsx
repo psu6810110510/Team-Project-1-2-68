@@ -889,7 +889,7 @@ export default function AdminDashboard() {
                       {teachers.map((t) => (
                         <tr key={t.id} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
                           <td style={{ padding: '12px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <img src={t.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${t.full_name || t.id}&backgroundColor=b6e3f4`} alt="Teacher" style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover' }} />
+                            <img src={t.image && t.image.trim() !== '' ? (t.image.startsWith('http') || t.image.startsWith('data:') ? t.image : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${t.image.startsWith('/') ? '' : '/'}${t.image}`) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${t.full_name || t.id}&backgroundColor=b6e3f4`} alt="Teacher" style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${t.full_name || t.id}&backgroundColor=b6e3f4`; }} />
                             <span>{t.full_name || '-'}</span>
                           </td>
                           <td style={{ padding: '12px 0' }}>{t.email}</td>
@@ -935,7 +935,7 @@ export default function AdminDashboard() {
                       {students.map((s) => (
                         <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
                           <td style={{ padding: '12px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <img src={s.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.full_name || s.id}&backgroundColor=d1fae5`} alt="Student" style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover' }} />
+                            <img src={s.image && s.image.trim() !== '' ? (s.image.startsWith('http') || s.image.startsWith('data:') ? s.image : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${s.image.startsWith('/') ? '' : '/'}${s.image}`) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.full_name || s.id}&backgroundColor=d1fae5`} alt="Student" style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.full_name || s.id}&backgroundColor=d1fae5`; }} />
                             <span>{s.full_name || '-'}</span>
                           </td>
                           <td style={{ padding: '12px 0' }}>{s.email}</td>
