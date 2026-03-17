@@ -86,8 +86,7 @@ export default function Home() {
   const displayStats = [
     { number: stats.totalStudents > 0 ? `${stats.totalStudents.toLocaleString()}+` : '0', label: 'นักเรียน' },
     { number: stats.totalCourses > 0 ? `${stats.totalCourses.toLocaleString()}+` : '0', label: 'คอร์สเรียน' },
-    { number: stats.totalTeachers > 0 ? `${stats.totalTeachers.toLocaleString()}+` : '0', label: 'อาจารย์' },
-    { number: stats.averageRating > 0 ? `${stats.averageRating.toFixed(1)}/5` : 'N/A', label: 'คะแนนเฉลี่ย' }
+    { number: stats.totalTeachers > 0 ? `${stats.totalTeachers.toLocaleString()}+` : '0', label: 'อาจารย์' }
   ];
 
   return (
