@@ -1265,7 +1265,7 @@ export default function AdminDashboard() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '200px', overflowY: 'auto' }}>
                       {courseLessons.map((lesson: any, idx: number) => (
                         <div key={lesson.id} style={{ padding: '8px 12px', background: '#f8fafc', borderRadius: '6px', fontSize: '0.9rem', color: '#334155' }}>
-                          {idx + 1}. {lesson.title}
+                          {idx + 1}. {lesson.topic_name}
                         </div>
                       ))}
                     </div>
