@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import Header from './Header';
 import '../styles/Home.css';
-import homeicon from '../assets/homeicon.png';
+import homeicon from '../assets/homeimage.png';
 import Footer from './Footer';
 import { courseAPI, CourseStatus } from '../api/courseAPI';
 import type { Course } from '../api/courseAPI';
