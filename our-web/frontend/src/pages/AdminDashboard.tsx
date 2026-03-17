@@ -49,8 +49,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedCourse, setSelectedCourse] = useState<APICourse | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [, setCourseLessons] = useState<any[]>([]);
-  const [, setLoadingLessons] = useState(false);
+  const [courseLessons, setCourseLessons] = useState<any[]>([]);
+  const [loadingLessons, setLoadingLessons] = useState(false);
 
   // Payment
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
