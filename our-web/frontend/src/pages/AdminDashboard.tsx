@@ -62,10 +62,7 @@ export default function AdminDashboard() {
   const [teachers, setTeachers] = useState<UserRecord[]>([]);
   const [students, setStudents] = useState<UserRecord[]>([]);
 
-  // Exams
-  const [exams, setExams] = useState<any[]>([]);
-  const [loadingExams, setLoadingExams] = useState(false);
-  const [isExamCourseModalOpen, setIsExamCourseModalOpen] = useState(false);
+
 
   // Dashboard Stats
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
@@ -167,17 +164,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const loadExams = async () => {
-    setLoadingExams(true);
-    try {
-      const res = await examAPI.getAllExams();
-      setExams(res.data.data);
-    } catch (error) {
-      console.error('Error loading exams:', error);
-    } finally {
-      setLoadingExams(false);
-    }
-  };
+
 
   const fetchDashboardStats = async () => {
     setLoading(true);
@@ -219,18 +206,7 @@ export default function AdminDashboard() {
   // ==========================================
   // Handlers
   // ==========================================
-  const handleDeleteExam = async (id: string, title: string) => {
-    if (window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบข้อสอบ "${title}"?\nหากลบแล้วจะไม่สามารถกู้คืนได้`)) {
-      try {
-        await examAPI.deleteExam(id);
-        alert('ลบข้อสอบสำเร็จ');
-        loadExams();
-      } catch (error) {
-        console.error('Error deleting exam:', error);
-        alert('เกิดข้อผิดพลาดในการลบข้อสอบ');
-      }
-    }
-  };
+
 
   const handleConfirmPayment = async (id: string) => {
     try {
@@ -987,55 +963,7 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {/* ==========================================
-              EXAMS MENU
-              ========================================== */}
-            {activeMenu === 'exams' && (
-              <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start', padding: '25px', width: '100%' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: '20px' }}>
-                  <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: 0, fontWeight: 'bold' }}>คลังข้อสอบส่วนกลาง ({exams.length} ชุด)</h2>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <button onClick={loadExams} style={{ background: '#e2e8f0', color: '#475569', border: 'none', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>🔄 โหลดข้อมูล</button>
-                    <button onClick={() => setIsExamCourseModalOpen(true)} style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>+ สร้างชุดข้อสอบ</button>
-                  </div>
-                </div>
-                {loadingExams ? (
-                  <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b', width: '100%' }}>⏳ กำลังโหลดข้อมูล...</div>
-                ) : exams.length === 0 ? (
-                  <p style={{ color: '#94a3b8', textAlign: 'center', padding: '20px 0', width: '100%' }}>ยังไม่มีข้อสอบในระบบ</p>
-                ) : (
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                    <thead>
-                      <tr style={{ color: '#64748b', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0' }}>
-                        <th style={{ padding: '12px 10px', fontWeight: '500' }}>ชื่อชุดข้อสอบ</th>
-                        <th style={{ padding: '12px 10px', fontWeight: '500' }}>คอร์สที่เกี่ยวข้อง</th>
-                        <th style={{ padding: '12px 10px', fontWeight: '500' }}>ประเภท</th>
-                        <th style={{ padding: '12px 10px', fontWeight: '500', textAlign: 'right' }}>การจัดการ</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {exams.map((e: any) => (
-                        <tr key={e.id} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
-                          <td style={{ padding: '12px 10px', fontWeight: 'bold' }}>{e.title}</td>
-                          <td style={{ padding: '12px 10px' }}>{e.course_title || e.course_name}</td>
-                          <td style={{ padding: '12px 10px' }}>
-                            <span style={{ background: e.type === 'PRETEST' ? '#fef08a' : e.type === 'POSTTEST' ? '#bbf7d0' : '#e0e7ff', color: e.type === 'PRETEST' ? '#ca8a04' : e.type === 'POSTTEST' ? '#16a34a' : '#4338ca', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold' }}>
-                              {e.type}
-                            </span>
-                          </td>
-                          <td style={{ padding: '12px 10px', textAlign: 'right' }}>
-                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                              <button onClick={() => navigate(`/exam-management/${e.course_id}`)} style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>จัดการ</button>
-                              <button onClick={() => handleDeleteExam(e.id, e.title)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>ลบ</button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            )}
+
 
             {/* ==========================================
               FINANCE MENU
@@ -1331,26 +1259,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Select Course for Exam Modal */}
-      {isExamCourseModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }}>
-          <div style={{ background: 'white', borderRadius: '12px', maxWidth: '600px', width: '100%', maxHeight: '80vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '20px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
-              <h2 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a' }}>เลือกคอร์สเพื่อสร้างชุดข้อสอบ</h2>
-              <button onClick={() => setIsExamCourseModalOpen(false)} style={{ background: 'transparent', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#64748b' }}>✕</button>
-            </div>
-            <div style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
-              {adminCourses.map(course => (
-                <div key={course.id} onClick={() => navigate(`/exam-management/${course.id}`)} style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer', marginBottom: '10px' }}>
-                  <img src={course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80'} alt="" style={{ width: '60px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
-                  <div style={{ flex: 1 }}><h4 style={{ margin: 0, color: '#0f172a' }}>{course.title}</h4></div>
-                  <div style={{ color: '#3b82f6' }}>▶</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* Slip Viewer Modal */}
       {selectedSlip && (
