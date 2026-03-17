@@ -19,6 +19,34 @@ import examAPI from '../api/examAPI';
 import userAPI, { type UserRecord, type DashboardStats } from '../api/userAPI';
 
 // ==========================================
+// Helpers
+// ==========================================
+const buildFileUrl = (url?: string | null): string | null => {
+  if (!url) return null;
+  const apiBase = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000';
+
+  // ถ้าเป็น absolute URL
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    try {
+      const parsed = new URL(url);
+      const localBase = new URL(apiBase);
+      // ถ้า domain ต่างกัน (เช่น wd12.pupasoft.com vs localhost)
+      // ให้แปลง URL ให้ชี้ที่ local แทน โดยตัด /api prefix ออกถ้ามี
+      if (localBase.hostname === 'localhost' && parsed.hostname !== 'localhost') {
+        // ตัด /api prefix ออก (production มี /api/ แต่ local ไม่มี)
+        const localPath = parsed.pathname.replace(/^\/api\//, '/');
+        return `${apiBase.replace(/\/$/, '')}${localPath}`;
+      }
+      return url;
+    } catch {
+      return url;
+    }
+  }
+  // เป็น relative path
+  return `${apiBase.replace(/\/$/, '')}/${url.replace(/^\//, '')}`;
+};
+
+// ==========================================
 // Constants & Mocks
 // ==========================================
 const COLORS = ['#3b82f6', '#cbd5e1'];
@@ -254,8 +282,7 @@ export default function AdminDashboard() {
         await courseAPI.rejectPublish(id, reason);
         alert('ส่งคอร์สกลับไปแก้ไขแล้ว');
       }
-      setIsModalOpen(false);
-      setSelectedCourse(null);
+      closeModal();
       await refreshCourses();
     } catch (error: any) {
       alert(error.response?.data?.message || 'เกิดข้อผิดพลาดในการปฏิเสธ');
@@ -676,7 +703,7 @@ export default function AdminDashboard() {
                   <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>⏳ กำลังโหลดข้อมูลคอร์ส...</div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-                    
+
                     {/* Section 1: รออนุมัติสร้างคอร์ส */}
                     <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start' }}>
                       <div style={{ width: '100%', borderBottom: '2px solid #fef08a', paddingBottom: '10px', marginBottom: '15px' }}>
@@ -1000,13 +1027,23 @@ export default function AdminDashboard() {
                           <td style={{ padding: '12px 8px', fontWeight: '600', color: '#16a34a' }}>฿{Number(p.total_amount).toLocaleString()}</td>
                           <td style={{ padding: '12px 8px' }}>
                             {p.slip_url ? (
-                              <img
-                                src={p.slip_url.startsWith('http') ? p.slip_url : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${p.slip_url}`}
-                                alt="สลิปโอนเงิน"
-                                style={{ width: '56px', height: '56px', objectFit: 'cover', borderRadius: '8px', border: '2px solid #e2e8f0', cursor: 'pointer' }}
-                                onClick={() => setSelectedSlip(p.slip_url!.startsWith('http') ? p.slip_url! : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${p.slip_url}`)}
-                              />
-                            ) : (<span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>ไม่มี</span>)}
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
+                                <img
+                                  src={buildFileUrl(p.slip_url) || ''}
+                                  alt="สลิปโอนเงิน"
+                                  style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: '8px', border: '2px solid #cbd5e1', cursor: 'pointer', transition: 'transform 0.2s', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+                                  onClick={() => setSelectedSlip(buildFileUrl(p.slip_url))}
+                                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                  title="คลิกเพื่อดูสลิปขนาดใหญ่"
+                                />
+                                <button
+                                  onClick={() => setSelectedSlip(buildFileUrl(p.slip_url))}
+                                  style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '5px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                >
+                                  🔍 ดูสลิป
+                                </button>
+                              </div>
+                            ) : (<span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>ไม่มีสลิป</span>)}
                           </td>
                           <td style={{ padding: '12px 8px' }}>{renderBadge(p.status)}</td>
                           <td style={{ padding: '12px 8px' }}>
@@ -1152,7 +1189,7 @@ export default function AdminDashboard() {
       {/* ==========================================
           MODALS AREA
           ========================================== */}
-      
+
       {/* Course Detail Modal */}
       {isModalOpen && selectedCourse && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }}>
@@ -1263,13 +1300,66 @@ export default function AdminDashboard() {
 
       {/* Slip Viewer Modal */}
       {selectedSlip && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, padding: '20px' }} onClick={() => setSelectedSlip(null)}>
-          <div style={{ background: '#fff', borderRadius: '16px', padding: '15px', maxWidth: '500px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a' }}>สลิปโอนเงิน</h3>
-              <button onClick={() => setSelectedSlip(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: '#64748b' }}>✕</button>
+        <div
+          style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(6px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, padding: '20px' }}
+          onClick={() => setSelectedSlip(null)}
+        >
+          <div
+            style={{ background: '#fff', borderRadius: '20px', padding: '0', maxWidth: '540px', width: '100%', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 60px -12px rgba(0,0,0,0.4)', overflow: 'hidden' }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', background: 'linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%)', color: 'white' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '1.3rem' }}>🧾</span>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold' }}>สลิปโอนเงิน</h3>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <a
+                  href={selectedSlip}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}
+                  title="เปิดในแท็บใหม่"
+                >
+                  🔗 เปิดเต็มจอ
+                </a>
+                <button
+                  onClick={() => setSelectedSlip(null)}
+                  style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: 'white', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  ✕
+                </button>
+              </div>
             </div>
-            <img src={selectedSlip} alt="สลิปโอนเงินแบบเต็ม" style={{ width: '100%', maxHeight: '75vh', objectFit: 'contain', borderRadius: '8px' }} />
+
+            {/* Slip Image */}
+            <div style={{ padding: '20px', background: '#f8fafc', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
+              <img
+                src={selectedSlip}
+                alt="สลิปโอนเงินแบบเต็ม"
+                style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  (e.currentTarget.nextSibling as HTMLElement).style.display = 'flex';
+                }}
+              />
+              <div style={{ display: 'none', flexDirection: 'column', alignItems: 'center', gap: '12px', color: '#94a3b8', padding: '40px' }}>
+                <span style={{ fontSize: '3rem' }}>🖼️</span>
+                <p style={{ margin: 0, fontSize: '0.95rem' }}>ไม่สามารถแสดงรูปภาพได้</p>
+                <a href={selectedSlip} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', fontSize: '0.85rem' }}>คลิกเพื่อเปิดลิงก์โดยตรง</a>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding: '14px 20px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '10px', background: 'white' }}>
+              <button
+                onClick={() => setSelectedSlip(null)}
+                style={{ background: '#e2e8f0', color: '#475569', border: 'none', padding: '10px 24px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem' }}
+              >
+                ปิด
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1282,23 +1372,23 @@ export default function AdminDashboard() {
               <h2 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a' }}>รายละเอียดการจอง</h2>
               <button onClick={() => setIsBookingModalOpen(false)} style={{ background: 'transparent', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#64748b' }}>✕</button>
             </div>
-            
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '10px', fontSize: '0.95rem' }}>
               <div style={{ color: '#64748b', fontWeight: 'bold' }}>รหัสการจอง:</div>
               <div style={{ color: '#0f172a' }}>{selectedBookingDetails.id}</div>
-              
+
               <div style={{ color: '#64748b', fontWeight: 'bold' }}>ชื่อผู้จอง:</div>
               <div style={{ color: '#0f172a' }}>{selectedBookingDetails.user_name}</div>
-              
+
               <div style={{ color: '#64748b', fontWeight: 'bold' }}>อีเมล:</div>
               <div style={{ color: '#0f172a' }}>{selectedBookingDetails.user_email}</div>
-              
+
               <div style={{ color: '#64748b', fontWeight: 'bold' }}>คอร์สเรียน:</div>
               <div style={{ color: '#0f172a' }}>{selectedBookingDetails.course_name}</div>
-              
+
               <div style={{ color: '#64748b', fontWeight: 'bold' }}>รูปแบบ:</div>
               <div style={{ color: '#0f172a' }}>{selectedBookingDetails.learning_mode}</div>
-              
+
               <div style={{ color: '#64748b', fontWeight: 'bold' }}>วันที่จอง:</div>
               <div style={{ color: '#0f172a' }}>{new Date(selectedBookingDetails.created_at || Date.now()).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
             </div>
