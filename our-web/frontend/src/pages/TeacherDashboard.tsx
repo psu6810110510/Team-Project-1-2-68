@@ -45,8 +45,8 @@ export default function TeacherDashboard() {
     }>;
   }>>([]);
   
-  // Exam & Question Management State
-  const [courseExam, setCourseExam] = useState<any | null>(null);
+  // Exam & Question Management State (one exam per lesson chapter)
+  const [lessonExams, setLessonExams] = useState<Record<string, any>>({});
   
   // Notification State
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -732,12 +732,10 @@ export default function TeacherDashboard() {
         }]);
       }
       
-      // Load or create default exam for course
-      const exam = await loadOrCreateCourseExam(course.id);
-      
-      // Load questions for all lessons
-      if (exam && existingLessons && existingLessons.length > 0) {
-        await loadQuestionsForLessons(existingLessons, exam.id);
+      // Load or create one exam per chapter
+      if (existingLessons && existingLessons.length > 0) {
+        const exams = await loadOrCreateLessonExams(course.id, existingLessons);
+        await loadQuestionsForLessons(exams);
       }
     } catch (error) {
       console.error('Error loading lessons:', error);
@@ -751,93 +749,116 @@ export default function TeacherDashboard() {
   // ==========================================
   // Exam & Question Management Functions
   // ==========================================
-  const loadOrCreateCourseExam = async (courseId: string) => {
+
+  // Create one exam per chapter (บท) — key is chapter representative lesson id
+  const loadOrCreateLessonExams = async (courseId: string, dbLessons: any[]) => {
     try {
+      // Group DB lessons by chapter name (topic_name prefix before ' - ')
+      const chapters: { name: string; lessonId: string }[] = [];
+      const seen = new Set<string>();
+      dbLessons.forEach((lesson) => {
+        const parts = lesson.topic_name.split(' - ');
+        const chapterName = parts[0].trim();
+        if (!seen.has(chapterName)) {
+          seen.add(chapterName);
+          chapters.push({ name: chapterName, lessonId: lesson.id });
+        }
+      });
+
+      // Get existing exams for the course
       const response = await examAPI.getExamsByCourse(courseId);
-      const exams = response.data.data || [];
-      
-      let exam;
-      if (exams.length > 0) {
-        // Use first exam as the default course exam
-        exam = exams[0];
-      } else {
-        // Create a default exam for the course
-        const createResponse = await examAPI.createExam({
-          course_id: courseId,
-          title: 'ข้อสอบคอร์ส',
-          description: 'ข้อสอบของคอร์สนี้',
-          type: 'QUIZ',
-          total_score: 100
-        });
-        exam = createResponse.data.data;
+      const existingExams: any[] = response.data.data || [];
+
+      const newLessonExams: Record<string, any> = {};
+
+      for (const chapter of chapters) {
+        // Match by lesson_id or by title
+        const existing = existingExams.find(
+          (e) => e.lesson_id === chapter.lessonId || e.title === `ข้อสอบ${chapter.name}`
+        );
+
+        if (existing) {
+          newLessonExams[chapter.lessonId] = existing;
+        } else {
+          const createResponse = await examAPI.createExam({
+            course_id: courseId,
+            lesson_id: chapter.lessonId,
+            title: `ข้อสอบ${chapter.name}`,
+            type: 'QUIZ',
+            total_score: 100,
+          });
+          newLessonExams[chapter.lessonId] = createResponse.data;
+        }
       }
-      
-      setCourseExam(exam);
-      return exam; // Return the exam for immediate use
+
+      setLessonExams(newLessonExams);
+      return newLessonExams;
     } catch (error) {
-      console.error('Error loading/creating course exam:', error);
-      return null;
+      console.error('Error loading/creating lesson exams:', error);
+      return {};
     }
   };
 
-  const loadQuestionsForLessons = async (_existingLessons: any[], examId: string) => {
+  const loadQuestionsForLessons = async (exams: Record<string, any>) => {
     try {
-      const response = await examAPI.getQuestionsByExam(examId);
-      const allQuestions = response.data.data || [];
-      
-      // Group questions by lesson_id
       const questionsByLessonId: { [key: string]: Array<Question & { choices?: Choice[] }> } = {};
-      
-      for (const question of allQuestions) {
-        if (question.lesson_id) {
-          if (!questionsByLessonId[question.lesson_id]) {
-            questionsByLessonId[question.lesson_id] = [];
-          }
-          
-          // Load choices for each question
-          try {
-            const choicesResponse = await examAPI.getChoicesByQuestion(question.id);
-            questionsByLessonId[question.lesson_id].push({
-              ...question,
-              choices: choicesResponse.data.data || []
-            });
-          } catch (error) {
-            console.error(`Error loading choices for question ${question.id}:`, error);
-            questionsByLessonId[question.lesson_id].push(question);
+
+      for (const exam of Object.values(exams)) {
+        if (!exam?.id) continue;
+        const response = await examAPI.getQuestionsByExam(exam.id);
+        const questions = response.data.data || [];
+
+        for (const question of questions) {
+          if (question.lesson_id) {
+            if (!questionsByLessonId[question.lesson_id]) {
+              questionsByLessonId[question.lesson_id] = [];
+            }
+            try {
+              const choicesResponse = await examAPI.getChoicesByQuestion(question.id);
+              questionsByLessonId[question.lesson_id].push({
+                ...question,
+                choices: choicesResponse.data.data || [],
+              });
+            } catch {
+              questionsByLessonId[question.lesson_id].push(question);
+            }
           }
         }
       }
-      
-      // Update lessons with questions
-      setLessons(prev => {
-        return prev.map(lesson => ({
+
+      setLessons((prev) =>
+        prev.map((lesson) => ({
           ...lesson,
-          subLessons: lesson.subLessons.map(subLesson => ({
+          subLessons: lesson.subLessons.map((subLesson) => ({
             ...subLesson,
-            questions: subLesson.id ? (questionsByLessonId[subLesson.id] || []) : []
-          }))
-        }));
-      });
+            questions: subLesson.id ? (questionsByLessonId[subLesson.id] || []) : [],
+          })),
+        }))
+      );
     } catch (error) {
       console.error('Error loading questions:', error);
     }
   };
 
   const handleAddQuestion = async (lessonIndex: number, subIndex: number) => {
-    const subLesson = lessons[lessonIndex].subLessons[subIndex];
-    
+    const lesson = lessons[lessonIndex];
+    const subLesson = lesson.subLessons[subIndex];
+
     if (!subLesson.id) {
       alert('กรุณาบันทึกบทเรียนก่อนเพิ่มคำถาม');
       return;
     }
-    
-    if (!courseExam) {
-      alert('ไม่พบข้อสอบของคอร์ส กรุณาลองใหม่อีกครั้ง');
+
+    // Find the exam for this chapter using the chapter representative lesson id
+    const chapterExam = lesson.id ? lessonExams[lesson.id] : null;
+
+    if (!chapterExam) {
+      alert('ไม่พบข้อสอบของบทนี้ กรุณาลองใหม่อีกครั้ง');
       return;
     }
-    
+
     try {
-      const response = await examAPI.createQuestion(courseExam.id, {
+      const response = await examAPI.createQuestion(chapterExam.id, {
         question_text: 'คำถามใหม่',
         type: 'MULTIPLE_CHOICE',
         score_points: 1,

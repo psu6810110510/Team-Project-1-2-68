@@ -38,6 +38,7 @@ export class ExamController {
         created_at: e.created_at,
         course_name: e.course?.title || 'Unknown Course',
         course_id: e.course_id,
+        lesson_id: e.lesson_id,
       })),
       total: exams.length,
     };
@@ -46,6 +47,23 @@ export class ExamController {
   @Get(':id')
   async getExam(@Param('id') id: string) {
     return this.examService.getFullExam(id);
+  }
+
+  @Get('lesson/:lessonId')
+  async getExamsByLesson(@Param('lessonId') lessonId: string) {
+    const exams = await this.examService.getExamsByLesson(lessonId);
+    return {
+      data: exams.map((e) => ({
+        id: e.id,
+        title: e.title,
+        type: e.type,
+        total_score: e.total_score,
+        lesson_id: e.lesson_id,
+        course_id: e.course_id,
+        created_at: e.created_at,
+      })),
+      total: exams.length,
+    };
   }
 
   @Get('course/:courseId')
