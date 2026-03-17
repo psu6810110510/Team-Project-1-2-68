@@ -42,9 +42,10 @@ export class PaymentController {
     }),
   )
   async submitPayment(@Param('id') id: string, @UploadedFile() file?: Express.Multer.File) {
-    // แก้ให้ชี้ไปที่โดเมนจริงแบบตายตัว 100%
+    // ใช้ BACKEND_URL จาก env หรือ fallback เป็น localhost
+    const baseUrl = process.env.BACKEND_URL || process.env.BASE_URL || 'http://localhost:3000';
     const slipUrl = file
-      ? `https://wd12.pupasoft.com/api/uploads/slips/${file.filename}`
+      ? `${baseUrl}/uploads/slips/${file.filename}`
       : undefined;
       
     const payment = await this.paymentService.submitPayment(id, slipUrl);
