@@ -1,11 +1,16 @@
 import axios from 'axios';
 
+<<<<<<< HEAD
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+=======
 const API_BASE_URL = 'http://10.32.198.3:3000';
+>>>>>>> 49e7064d85adda96b68be14a1e075e1963e489fc
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
   },
 });
 
