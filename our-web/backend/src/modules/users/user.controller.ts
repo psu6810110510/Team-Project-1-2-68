@@ -86,21 +86,21 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Get('me/favorites')
   async getMyFavorites(@Request() req) {
-    const userId = req.user.sub;
+    const userId = req.user.userId || req.user.sub || req.user.id;
     return await this.userService.getUserFavorites(userId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post(':courseId/favorite')
   async addFavorite(@Request() req, @Param('courseId') courseId: string) {
-    const userId = req.user.sub;
+    const userId = req.user.userId || req.user.sub || req.user.id;
     return await this.userService.addFavoriteCourse(userId, courseId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':courseId/favorite')
   async removeFavorite(@Request() req, @Param('courseId') courseId: string) {
-    const userId = req.user.sub;
+    const userId = req.user.userId || req.user.sub || req.user.id;
     return await this.userService.removeFavoriteCourse(userId, courseId);
   }
 

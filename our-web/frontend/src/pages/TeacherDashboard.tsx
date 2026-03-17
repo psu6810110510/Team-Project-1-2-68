@@ -1,4 +1,4 @@
-﻿/* ไฟล์: src/pages/TeacherDashboard.tsx */
+/* ไฟล์: src/pages/TeacherDashboard.tsx */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {

@@ -9,7 +9,7 @@ export class NotificationController {
 
   @Get()
   async getNotifications(@Req() req: any) {
-    const userId = req.user.id; // Or req.user.sub depending on JWT payload
+    const userId = req.user.userId || req.user.sub || req.user.id;
     return this.notificationService.getNotificationsByUser(userId);
   }
 

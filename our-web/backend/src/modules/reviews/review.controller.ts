@@ -29,7 +29,7 @@ export class ReviewController {
     @Param('courseId') courseId: string,
     @Body() body: { rating: number; comment: string },
   ) {
-    const userId = req.user.sub;
+    const userId = req.user.userId || req.user.sub || req.user.id;
     return this.reviewService.createReview(courseId, userId, body.rating, body.comment);
   }
 }
