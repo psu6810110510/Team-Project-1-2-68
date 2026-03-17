@@ -4,7 +4,7 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 64px;
+  height: 80px;
   background: #0A1C39;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   z-index: 1000;
@@ -15,7 +15,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  padding: 0 32px;
 }
 
 .header-left {
@@ -26,7 +26,7 @@
 
 /* Logo */
 .logo {
-  height: 40px;
+  height: 52px;
   width: auto;
   cursor: pointer;
   transition: transform 0.3s ease;
@@ -37,7 +37,7 @@
 }
 
 .logo-name {
-  height: 32px;
+  height: 42px;
   width: auto;
   cursor: pointer;
   transition: transform 0.3s ease;
@@ -59,13 +59,13 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   cursor: pointer;
-  padding: 8px 12px;
+  padding: 10px 16px;
   display: flex;
   align-items: center;
   gap: 8px;
   transition: all 0.3s ease;
   color: white;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
 }
 
@@ -90,8 +90,8 @@
 }
 
 .profile-image {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid rgba(255, 255, 255, 0.2);

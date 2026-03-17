@@ -13,7 +13,7 @@
 
 /* ============= HERO SECTION ============= */
 .hero-section {
-  padding: 130px 20px 80px;
+  padding: 146px 20px 80px;
   background: #183361;
   color: white;
   position: relative;
@@ -32,8 +32,9 @@
 }
 
 .hero-content {
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
+  padding: 0 40px;
+  box-sizing: border-box;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 60px;
@@ -207,9 +208,7 @@
 
 /* ============= FEATURES SECTION ============= */
 .features-section {
-  padding: 80px 20px;
-  max-width: 1200px;
-  margin: 0 auto;
+  padding: 80px 40px;
 }
 
 .section-header {
@@ -228,7 +227,6 @@
   font-size: 1.1rem;
   color: #64748b;
   max-width: 600px;
-  margin: 0 auto;
 }
 
 .features-grid {
@@ -280,8 +278,7 @@
 }
 
 .courses-grid {
-  max-width: 1100px;
-  margin: 0 auto;
+  padding: 0 40px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
@@ -506,9 +503,7 @@
 }
 
 .footer-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  text-align: center;
+  padding: 0 40px;
 }
 
 .footer-content p {
@@ -533,6 +528,94 @@
 .footer-links a:hover {
   opacity: 1;
   text-decoration: underline;
+}
+
+/* ============= TEACHERS HOME SECTION ============= */
+.teachers-home-section {
+  padding: 80px 40px;
+  background: #ffffff;
+}
+
+.teachers-home-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  margin-bottom: 10px;
+}
+
+.teacher-home-card {
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 32px 24px;
+  text-align: center;
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.teacher-home-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 35px rgba(0, 88, 150, 0.12);
+  border-color: #4988C4;
+}
+
+.teacher-home-avatar-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.teacher-home-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #005896;
+  box-shadow: 0 4px 15px rgba(0, 88, 150, 0.2);
+}
+
+.teacher-home-avatar-placeholder {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: #005896;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.teacher-home-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+.teacher-home-education {
+  margin-bottom: 14px;
+}
+
+.teacher-home-edu-item {
+  font-size: 0.85rem;
+  color: #475569;
+  line-height: 1.6;
+  margin: 2px 0;
+}
+
+.teacher-home-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.teacher-home-tag {
+  background: #e0f2fe;
+  color: #005896;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
 }
 
 /* ============= RESPONSIVE ============= */
@@ -563,6 +646,10 @@
   }
 
   .courses-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .teachers-home-grid {
     grid-template-columns: 1fr;
   }
 

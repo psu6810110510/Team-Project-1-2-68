@@ -5,7 +5,6 @@ import logo2 from '../assets/logo2.png';
 const Footer = () => {
   return (
     <footer className="footer">
-      <div className="footer-accent-line"></div>
       <div className="footer-inner">
         {/* Row 1: Brand + Slogan */}
         <div className="footer-top-row">
