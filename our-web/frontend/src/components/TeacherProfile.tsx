@@ -61,7 +61,7 @@ const TeacherProfile: React.FC = () => {
   ];
 
   useEffect(() => {
-    fetch('http://localhost:3000/teachers')
+    fetch('https://wd12.pupasoft.com/api/teachers')
       .then((response) => response.json())
       .then((data) => {
         const mapped = data.map((t: any) => ({

@@ -16,7 +16,7 @@ import Footer from '../components/Footer';
 import { courseAPI, CourseStatus, type Course as APICourse } from '../api/courseAPI';
 import { examAPI, type Question, type Choice } from '../api/examAPI';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://wd12.pupasoft.com/api';
 
 export default function TeacherDashboard() {
   const navigate = useNavigate();

@@ -244,7 +244,7 @@ const CourseDetail = () => {
 
     const fetchReviews = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/courses/${courseId}/reviews`);
+        const res = await fetch(`https://wd12.pupasoft.com/api/courses/${courseId}/reviews`);
         const data = await res.json();
         if (data && data.length > 0) {
           setReviews(data);
@@ -771,7 +771,7 @@ const CourseDetail = () => {
                     if (!userComment.trim()) return alert('กรุณากรอกคอมเมนต์');
                     setSubmittingReview(true);
                     try {
-                      const res = await fetch(`http://localhost:3000/courses/${courseId}/reviews`, {
+                      const res = await fetch(`https://wd12.pupasoft.com/api/courses/${courseId}/reviews`, {
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json',
@@ -782,7 +782,7 @@ const CourseDetail = () => {
                       if (res.ok) {
                         alert('ส่งรีวิวสำเร็จ!');
                         setUserComment('');
-                        const rRes = await fetch(`http://localhost:3000/courses/${courseId}/reviews`);
+                        const rRes = await fetch(`https://wd12.pupasoft.com/api/courses/${courseId}/reviews`);
                         const rData = await rRes.json();
                         setReviews(rData);
                       } else {
