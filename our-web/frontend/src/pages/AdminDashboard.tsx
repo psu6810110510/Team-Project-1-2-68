@@ -425,14 +425,8 @@ export default function AdminDashboard() {
                   </ul>
                 )}
               </li>
-              <li onClick={() => { setActiveMenu('exams'); loadExams(); }} style={{ ...sidebarItemStyle, background: activeMenu === 'exams' ? '#2c5282' : 'transparent', borderLeft: activeMenu === 'exams' ? '4px solid #60a5fa' : '4px solid transparent' }}>
-                <FileText size={20} /> คลังข้อสอบ
-              </li>
               <li onClick={() => { setActiveMenu('finance'); loadPayments(); }} style={{ ...sidebarItemStyle, background: activeMenu === 'finance' ? '#2c5282' : 'transparent', borderLeft: activeMenu === 'finance' ? '4px solid #60a5fa' : '4px solid transparent' }}>
                 <CreditCard size={20} /> การเงินและคำสั่งซื้อ
-              </li>
-              <li onClick={() => { setActiveMenu('bookings'); loadBookings(); }} style={{ ...sidebarItemStyle, background: activeMenu === 'bookings' ? '#2c5282' : 'transparent', borderLeft: activeMenu === 'bookings' ? '4px solid #60a5fa' : '4px solid transparent' }}>
-                <Calendar size={20} /> จัดการการจองคอร์ส
               </li>
               <li onClick={() => setActiveMenu('settings')} style={{ ...sidebarItemStyle, background: activeMenu === 'settings' ? '#2c5282' : 'transparent', borderLeft: activeMenu === 'settings' ? '4px solid #60a5fa' : '4px solid transparent', marginTop: '20px' }}>
                 <Settings size={20} /> ตั้งค่าระบบ
