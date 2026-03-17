@@ -43,7 +43,7 @@ export class PaymentController {
   )
   async submitPayment(@Param('id') id: string, @UploadedFile() file?: Express.Multer.File) {
     const slipUrl = file
-      ? `${process.env.API_URL || 'http://localhost:3000'}/uploads/slips/${file.filename}`
+      ? `${process.env.API_URL || 'https://wd12.pupasoft.com/api'}/uploads/slips/${file.filename}`
       : undefined;
     const payment = await this.paymentService.submitPayment(id, slipUrl);
     return {

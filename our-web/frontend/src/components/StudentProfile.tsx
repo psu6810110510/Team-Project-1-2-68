@@ -12,7 +12,7 @@ import { examAPI } from '../api/examAPI';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 
 // ✅ ดึงค่า URL จากไฟล์ .env
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://wd12.pupasoft.com/api';
 
 export default function StudentProfile() {
   const navigate = useNavigate();

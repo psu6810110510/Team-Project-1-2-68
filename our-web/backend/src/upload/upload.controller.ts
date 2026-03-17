@@ -55,7 +55,7 @@ export class UploadController {
         throw new BadRequestException('ไม่พบไฟล์ที่อัปโหลด');
       }
       
-      const fileUrl = `${process.env.API_URL || 'http://localhost:3000'}/uploads/videos/${file.filename}`;
+      const fileUrl = `${process.env.API_URL || 'https://wd12.pupasoft.com/api'}/uploads/videos/${file.filename}`;
       const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
       
       console.log(`✅ อัปโหลดวีดีโอสำเร็จ: ${file.filename} (${fileSizeMB} MB)`);
@@ -103,7 +103,7 @@ export class UploadController {
         throw new BadRequestException('ไม่พบไฟล์ PDF ที่อัปโหลด');
       }
       
-      const fileUrl = `${process.env.API_URL || 'http://localhost:3000'}/uploads/pdfs/${file.filename}`;
+      const fileUrl = `${process.env.API_URL || 'https://wd12.pupasoft.com/api'}/uploads/pdfs/${file.filename}`;
       const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
       
       console.log(`✅ อัปโหลด PDF สำเร็จ: ${file.filename} (${fileSizeMB} MB)`);

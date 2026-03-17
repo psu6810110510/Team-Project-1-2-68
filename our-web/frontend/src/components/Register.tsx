@@ -48,7 +48,7 @@ export default function Register() {
       const fullName = `${formData.firstName} ${formData.lastName}`;
       
       // 2. เปลี่ยนมาใช้ fetch ยิงตรง เพื่อส่งข้อมูลให้ครบ
-      const response = await fetch('http://localhost:3000/auth/register', {
+      const response = await fetch('https://wd12.pupasoft.com/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

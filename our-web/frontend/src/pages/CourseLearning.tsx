@@ -238,12 +238,12 @@ export default function CourseLearning() {
                                         );
                                     }
 
-                                    const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+                                    const backendUrl = import.meta.env.VITE_API_URL || 'https://wd12.pupasoft.com/api';
                                     let resolvedUrl = activeLesson.video_url;
 
                                     if (resolvedUrl.startsWith('http')) {
                                         // ป้องกันกรณีแอดเดรสเป็น localhost จากเครื่องอื่น
-                                        resolvedUrl = resolvedUrl.replace('http://localhost:3000', backendUrl);
+                                        resolvedUrl = resolvedUrl.replace('https://wd12.pupasoft.com/api', backendUrl);
                                     } else {
                                         // เผื่อจัดเก็บเป็น relative path
                                         resolvedUrl = `${backendUrl}/uploads/videos/${resolvedUrl}`;

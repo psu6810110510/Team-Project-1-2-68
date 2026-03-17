@@ -4,7 +4,7 @@ import { AuthGuard } from '@nestjs/passport';
 @Controller('auth')
 export class AuthController {
 
-    // ให้ Frontend ยิงมาที่ http://localhost:3000/auth/google เพื่อเด้งหน้า Login
+    // ให้ Frontend ยิงมาที่ https://wd12.pupasoft.com/api/auth/google เพื่อเด้งหน้า Login
     @Get('google')
     @UseGuards(AuthGuard('google'))
     async googleAuth(@Req() req) { }
