@@ -60,7 +60,7 @@ export default function CourseLearning() {
                             courseAPI.getLessonsByCourse(courseId),
                         ]);
                         setRealCourse(courseRes.data);
-                        
+
                         const rawLessons = lessonsRes.data.data;
                         if (rawLessons && rawLessons.length > 0) {
                             const grouped: any[] = [];
@@ -81,12 +81,12 @@ export default function CourseLearning() {
 
                                 // Deduplicate sub-lessons by subTitle
                                 const existingLesson = chapterMap[chapterName].lessons.find((l: any) => l.displayTitle === subTitle);
-                                
+
                                 if (existingLesson) {
                                     // Prefer the one with more content
                                     const hasOldContent = !!existingLesson.content || !!existingLesson.video_url;
                                     const hasNewContent = !!lesson.content || !!lesson.video_url;
-                                    
+
                                     if (!hasOldContent && hasNewContent) {
                                         // Replace with the new one that has content
                                         Object.assign(existingLesson, {
@@ -227,21 +227,38 @@ export default function CourseLearning() {
                             overflow: 'hidden'
                         }}>
                             {activeLesson ? (
-                                activeLesson.video_url ? (
-                                    <video
-                                        src={activeLesson.video_url}
-                                        controls
-                                        autoPlay
-                                        onEnded={handleVideoEnded}
-                                        style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'black' }}
-                                    />
-                                ) : (
-                                    <div style={{ textAlign: 'center' }}>
-                                        <FileText size={64} color="#3b82f6" style={{ marginBottom: '16px' }} />
-                                        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>เอกสารประกอบการเรียน</h2>
-                                        <p style={{ color: '#94a3b8', marginTop: '8px' }}>บทเรียนนี้ไม่มีวิดีโอ กรุณาดูเอกสารประกอบ</p>
-                                    </div>
-                                )
+                                (() => {
+                                    if (!activeLesson.video_url) {
+                                        return (
+                                            <div style={{ textAlign: 'center' }}>
+                                                <FileText size={64} color="#3b82f6" style={{ marginBottom: '16px' }} />
+                                                <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>เอกสารประกอบการเรียน</h2>
+                                                <p style={{ color: '#94a3b8', marginTop: '8px' }}>บทเรียนนี้ไม่มีวิดีโอ กรุณาดูเอกสารประกอบ</p>
+                                            </div>
+                                        );
+                                    }
+
+                                    const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+                                    let resolvedUrl = activeLesson.video_url;
+
+                                    if (resolvedUrl.startsWith('http')) {
+                                        // ป้องกันกรณีแอดเดรสเป็น localhost จากเครื่องอื่น
+                                        resolvedUrl = resolvedUrl.replace('http://localhost:3000', backendUrl);
+                                    } else {
+                                        // เผื่อจัดเก็บเป็น relative path
+                                        resolvedUrl = `${backendUrl}/uploads/videos/${resolvedUrl}`;
+                                    }
+
+                                    return (
+                                        <video
+                                            src={resolvedUrl}
+                                            controls
+                                            autoPlay
+                                            onEnded={handleVideoEnded}
+                                            style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'black' }}
+                                        />
+                                    );
+                                })()
                             ) : (
                                 <div style={{ textAlign: 'center' }}>
                                     <MonitorPlay size={64} color="#3b82f6" style={{ marginBottom: '16px' }} />
@@ -287,17 +304,17 @@ export default function CourseLearning() {
                                     </span>
                                 )}
                             </div>
-                            
+
                             {/* Progress Bar */}
                             {realLessons.length > 0 && (
                                 <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '10px', overflow: 'hidden' }}>
-                                    <div 
-                                        style={{ 
+                                    <div
+                                        style={{
                                             width: `${(completedLessons.length / realLessons.reduce((acc, ch) => acc + ch.lessons.length, 0)) * 100}%`,
                                             height: '100%',
                                             background: 'linear-gradient(90deg, #22c55e, #16a34a)',
                                             transition: 'width 0.5s ease-in-out'
-                                        }} 
+                                        }}
                                     />
                                 </div>
                             )}
@@ -310,7 +327,7 @@ export default function CourseLearning() {
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                 {realLessons.map((chapter: any, cIdx: number) => (
                                     <div key={cIdx} style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-                                        <button 
+                                        <button
                                             onClick={() => setExpandedChapters(prev => ({ ...prev, [chapter.title]: !prev[chapter.title] }))}
                                             style={{
                                                 width: '100%',
@@ -333,7 +350,7 @@ export default function CourseLearning() {
                                             </span>
                                             {expandedChapters[chapter.title] ? <ChevronUp size={18} color="#64748b" /> : <ChevronDown size={18} color="#64748b" />}
                                         </button>
-                                        
+
                                         {expandedChapters[chapter.title] && (
                                             <div style={{ display: 'flex', flexDirection: 'column' }}>
                                                 {chapter.lessons.map((lesson: any, sIdx: number) => {
@@ -377,7 +394,7 @@ export default function CourseLearning() {
                                                                 <CheckCircle size={16} color="#16a34a" style={{ marginLeft: '4px' }} />
                                                             )}
                                                             {lesson.pdf_url && (
-                                                                <a 
+                                                                <a
                                                                     href={lesson.pdf_url}
                                                                     target="_blank"
                                                                     rel="noopener noreferrer"

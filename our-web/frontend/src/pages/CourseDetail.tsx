@@ -249,10 +249,10 @@ const CourseDetail = () => {
         if (data && data.length > 0) {
           setReviews(data);
         } else {
-          setReviews(mockReviews);
+          setReviews([]);
         }
       } catch (err) {
-        setReviews(mockReviews);
+        setReviews([]);
       }
     };
     
@@ -712,7 +712,10 @@ const CourseDetail = () => {
           <div className="cd-section">
             <h2 className="cd-section-title">รีวิวจากผู้เรียน ({reviews.length})</h2>
             <div className="cd-reviews-list">
-              {reviews.map((r) => (
+              {reviews.length === 0 ? (
+                <p style={{ color: '#64748b', textAlign: 'center', padding: '20px 0', width: '100%', gridColumn: '1 / -1' }}>ยังไม่มีรีวิวสำหรับคอร์สนี้</p>
+              ) : (
+                reviews.map((r) => (
                 <div key={r.id} className="cd-review-item">
                   <div className="cd-review-header">
                     <div className="cd-review-user">
@@ -734,7 +737,7 @@ const CourseDetail = () => {
                   </div>
                   <p className="cd-review-comment">{r.comment}</p>
                 </div>
-              ))}
+              )))}
             </div>
 
             {/* ฟอร์มเขียนรีวิว */}
@@ -781,7 +784,7 @@ const CourseDetail = () => {
                         setUserComment('');
                         const rRes = await fetch(`http://localhost:3000/courses/${courseId}/reviews`);
                         const rData = await rRes.json();
-                        setReviews(rData.length > 0 ? rData : mockReviews);
+                        setReviews(rData);
                       } else {
                         alert('ส่งรีวิวไม่สำเร็จ');
                       }
