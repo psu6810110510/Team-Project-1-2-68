@@ -43,6 +43,7 @@ export default function AdminDashboard() {
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [homePayments, setHomePayments] = useState<PaymentRecord[]>([]);
   const [loadingPayments, setLoadingPayments] = useState(false);
+  const [selectedSlip, setSelectedSlip] = useState<string | null>(null);
 
   // Users
   const [teachers, setTeachers] = useState<UserRecord[]>([]);
@@ -1264,13 +1265,12 @@ export default function AdminDashboard() {
                           </td>
                           <td style={{ padding: '12px 8px' }}>
                             {p.slip_url ? (
-                              <a href={p.slip_url} target="_blank" rel="noopener noreferrer" title="ดูสลิปโอนเงิน">
-                                <img
-                                  src={p.slip_url}
-                                  alt="สลิปโอนเงิน"
-                                  style={{ width: '56px', height: '56px', objectFit: 'cover', borderRadius: '8px', border: '2px solid #e2e8f0', cursor: 'pointer' }}
-                                />
-                              </a>
+                              <img
+                                src={p.slip_url.startsWith('http') ? p.slip_url : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${p.slip_url}`}
+                                alt="สลิปโอนเงิน"
+                                style={{ width: '56px', height: '56px', objectFit: 'cover', borderRadius: '8px', border: '2px solid #e2e8f0', cursor: 'pointer' }}
+                                onClick={() => setSelectedSlip(p.slip_url.startsWith('http') ? p.slip_url : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${p.slip_url}`)}
+                              />
                             ) : (
                               <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>ไม่มี</span>
                             )}
@@ -1421,8 +1421,79 @@ export default function AdminDashboard() {
             )}
 
             {/* ==========================================
-              SETTINGS
+              CALENDAR MENU (รอบเรียน)
               ========================================== */}
+            {activeMenu === 'calendar' && (
+              <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start', padding: '25px', width: '100%' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: 0, fontWeight: 'bold' }}>📍 รอบเวลาเรียนทั้งหมด ({allSchedules.length} รอบ)</h2>
+                  <button
+                    onClick={loadSchedules}
+                    style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}
+                  >
+                    🔄 โหลดข้อมูล
+                  </button>
+                </div>
+
+                {loadingSchedules ? (
+                  <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b', width: '100%' }}>
+                    <div style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>⏳</div>
+                    <div>กำลังโหลดข้อมูลรอบเรียน...</div>
+                  </div>
+                ) : allSchedules.length === 0 ? (
+                  <p style={{ color: '#94a3b8', textAlign: 'center', padding: '20px 0', width: '100%' }}>ยังไม่มีรอบเวลาเรียนในระบบ</p>
+                ) : (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ color: '#64748b', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0' }}>
+                        <th style={{ padding: '12px 10px', fontWeight: '500' }}>📚 คอร์สเรียน</th>
+                        <th style={{ padding: '12px 10px', fontWeight: '500' }}>⏰ รอบเวลา (ปี/เดือน/วัน)</th>
+                        <th style={{ padding: '12px 10px', fontWeight: '500' }}>📍 สถานที่ / ช่องทาง</th>
+                        <th style={{ padding: '12px 10px', fontWeight: '500' }}>🪑 ที่นั่ง (Onsite)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {allSchedules.map((s: any) => {
+                        const course = adminCourses.find(c => c.id === s.course_id);
+                        return (
+                          <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
+                            <td style={{ padding: '15px 10px', fontWeight: 'bold', color: '#0f172a' }}>
+                              {course ? course.title : 'คอร์สที่ไม่พบ (id: ' + s.course_id.substring(0,6) + '...)'}
+                            </td>
+                            <td style={{ padding: '15px 10px' }}>
+                              <div style={{ fontWeight: '500' }}>
+                                📅 {new Date(s.start_time).toLocaleDateString('th-TH', { 
+                                  weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' 
+                                })}
+                              </div>
+                              <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>
+                                🕐 {new Date(s.start_time).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} - {new Date(s.end_time).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
+                              </div>
+                            </td>
+                            <td style={{ padding: '15px 10px' }}>
+                              {s.room_location ? (
+                                <span style={{ background: '#e0f2fe', color: '#0284c7', padding: '4px 10px', borderRadius: '12px', fontSize: '0.85rem' }}>
+                                  📍 {s.room_location}
+                                </span>
+                              ) : (
+                                <span style={{ color: '#94a3b8' }}>ไม่ได้กำหนด</span>
+                              )}
+                            </td>
+                            <td style={{ padding: '15px 10px' }}>
+                              {s.max_onsite_seats ? (
+                                <span style={{ color: '#10b981', fontWeight: '500' }}>{s.max_onsite_seats} ที่นั่ง</span>
+                              ) : (
+                                <span style={{ color: '#64748b' }}>-</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            )}
             {activeMenu === 'settings' && (
               <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start', padding: '25px', width: '100%' }}>
                 <h2 style={{ fontSize: '1.5rem', color: '#0f172a', marginBottom: '20px', fontWeight: 'bold' }}>ตั้งค่าระบบเบื้องต้น</h2>
@@ -1942,6 +2013,23 @@ export default function AdminDashboard() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Slip Viewer Modal */}
+      {selectedSlip && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, padding: '20px' }} onClick={() => setSelectedSlip(null)}>
+          <div style={{ background: '#fff', borderRadius: '16px', padding: '15px', maxWidth: '500px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a' }}>สลิปโอนเงิน</h3>
+              <button onClick={() => setSelectedSlip(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: '#64748b' }}>✕</button>
+            </div>
+            <img 
+              src={selectedSlip} 
+              alt="สลิปโอนเงินแบบเต็ม" 
+              style={{ width: '100%', maxHeight: '75vh', objectFit: 'contain', borderRadius: '8px' }} 
+            />
           </div>
         </div>
       )}
