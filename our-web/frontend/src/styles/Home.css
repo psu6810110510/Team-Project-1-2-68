@@ -13,7 +13,7 @@
 
 /* ============= HERO SECTION ============= */
 .hero-section {
-  padding: 80px 20px 60px;
+  padding: 130px 20px 80px;
   background: #183361;
   color: white;
   position: relative;
@@ -112,9 +112,9 @@
 }
 
 .hero-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 30px;
+  display: flex;
+  justify-content: center;
+  gap: 60px;
   padding-top: 30px;
   border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
