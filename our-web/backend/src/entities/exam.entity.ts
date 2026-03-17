@@ -9,6 +9,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { Course } from './course.entity';
+import { Lesson } from './lesson.entity';
 import { Question } from './question.entity';
 import { ExamResult } from './exam-result.entity';
 
@@ -27,6 +28,9 @@ export class Exam {
 
   @Column({ type: 'uuid' })
   course_id: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  lesson_id: string;
 
   @Column({ type: 'varchar', length: 255 })
   title: string;
@@ -56,6 +60,10 @@ export class Exam {
   @ManyToOne(() => Course, (course) => course.exams, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'course_id' })
   course: Course;
+
+  @ManyToOne(() => Lesson, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'lesson_id' })
+  lesson: Lesson;
 
   @OneToMany(() => Question, (question) => question.exam)
   questions: Question[];

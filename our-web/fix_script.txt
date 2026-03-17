@@ -1,0 +1,9 @@
+จุดที่ต้องตรวจสอบ:
+1. บรรทัด 714: เปิด <div key={question.id}>
+2. บรรทัด 723: เปิด <div style={{ display: 'flex', alignItems: 'flex-start'>
+3. บรรทัด 842: ปิด </div> (header)
+4. บรรทัด 845+: Choices sections  
+5. บรรทัด 1010: ปิด </div> (question wrapper)  
+6. บรรทัด 1011: ปิด ))} (map)
+
+คาดการ: จำนวนการเปิด-ปิด div ต้องสมดุล

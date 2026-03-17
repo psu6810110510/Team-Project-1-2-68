@@ -13,6 +13,7 @@ import { ExamResult } from '../../entities/exam-result.entity';
 
 export interface CreateExamDto {
   course_id: string;
+  lesson_id?: string;
   title: string;
   description?: string;
   type: ExamType;
@@ -87,6 +88,7 @@ export class ExamService {
 
     const result = await this.examRepo.insert({
       course_id: dto.course_id,
+      lesson_id: dto.lesson_id || undefined,
       title: dto.title,
       description: dto.description || undefined,
       type: dto.type,
@@ -108,6 +110,13 @@ export class ExamService {
     return exam;
   }
 
+  async getExamsByLesson(lessonId: string): Promise<Exam[]> {
+    return this.examRepo.find({
+      where: { lesson_id: lessonId },
+      order: { created_at: 'ASC' },
+    });
+  }
+
   async getExamsByCourse(courseId: string): Promise<Exam[]> {
     // Verify course exists
     const course = await this.courseRepo.findOne({ where: { id: courseId } });
@@ -117,7 +126,7 @@ export class ExamService {
 
     return this.examRepo.find({
       where: { course_id: courseId },
-      order: { created_at: 'DESC' },
+      order: { created_at: 'ASC' },
     });
   }
 

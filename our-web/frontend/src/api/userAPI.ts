@@ -23,6 +23,8 @@ export interface UsersResponse {
 export interface DashboardStats {
   totalStudents: number;
   totalTeachers: number;
+  totalCourses: number;
+  averageRating: number;
 }
 
 // ✅ รวมทุก API ไว้ใน userAPI ก้อนเดียว
