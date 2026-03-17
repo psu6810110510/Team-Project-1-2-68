@@ -252,6 +252,40 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleApproveCourse = async (id: string, currentStatus: CourseStatus) => {
+    try {
+      if (currentStatus === CourseStatus.REQUEST_CREATE) {
+        await courseAPI.approveCreateRequest(id);
+        alert('อนุมัติการสร้างคอร์สเรียบร้อยแล้ว! อาจารย์สามารถเริ่มใส่เนื้อหาได้');
+      } else if (currentStatus === CourseStatus.PENDING_REVIEW) {
+        await courseAPI.approvePublish(id);
+        alert('อนุมัติการขายคอร์สเรียบร้อยแล้ว! คอร์สจะปรากฏในหน้ารวมคอร์ส');
+      }
+      await refreshCourses();
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'เกิดข้อผิดพลาดในการอนุมัติ');
+    }
+  };
+
+  const handleRejectCourse = async (id: string, currentStatus: CourseStatus) => {
+    const reason = prompt('กรุณาระบุเหตุผลในการปฏิเสธ:');
+    if (!reason) return;
+    try {
+      if (currentStatus === CourseStatus.REQUEST_CREATE) {
+        await courseAPI.rejectCreateRequest(id, reason);
+        alert('ปฏิเสธคำขอสร้างคอร์สแล้ว');
+      } else if (currentStatus === CourseStatus.PENDING_REVIEW) {
+        await courseAPI.rejectPublish(id, reason);
+        alert('ส่งคอร์สกลับไปแก้ไขแล้ว');
+      }
+      setIsModalOpen(false);
+      setSelectedCourse(null);
+      await refreshCourses();
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'เกิดข้อผิดพลาดในการปฏิเสธ');
+    }
+  };
+
   const openCourseDetailModal = async (course: APICourse) => {
     setSelectedCourse(course);
     setIsModalOpen(true);
