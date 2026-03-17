@@ -77,8 +77,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedCourse, setSelectedCourse] = useState<APICourse | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [, setCourseLessons] = useState<any[]>([]);
-  const [, setLoadingLessons] = useState(false);
+  const [courseLessons, setCourseLessons] = useState<any[]>([]);
+  const [loadingLessons, setLoadingLessons] = useState(false);
 
   // Payment
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
@@ -277,6 +277,40 @@ export default function AdminDashboard() {
       await loadPayments();
     } catch (err: any) {
       alert(err.response?.data?.message || 'เกิดข้อผิดพลาด');
+    }
+  };
+
+  const handleApproveCourse = async (id: string, status: CourseStatus) => {
+    if (!window.confirm('คุณแน่ใจหรือไม่ว่าต้องการอนุมัติคอร์สนี้?')) return;
+    try {
+      if (status === CourseStatus.REQUEST_CREATE) {
+        await courseAPI.approveCreateRequest(id);
+      } else if (status === CourseStatus.PENDING_REVIEW) {
+        await courseAPI.approvePublish(id);
+      }
+      alert('อนุมัติคอร์สสำเร็จ!');
+      await refreshCourses();
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.message || 'เกิดข้อผิดพลาดในการอนุมัติคอร์ส');
+    }
+  };
+
+  const handleRejectCourse = async (id: string, status: CourseStatus) => {
+    const reason = prompt('ระบุเหตุผลในการปฏิเสธ (ถ้ามี):');
+    if (reason === null) return;
+    try {
+      if (status === CourseStatus.REQUEST_CREATE) {
+        await courseAPI.rejectCreateRequest(id, reason);
+      } else if (status === CourseStatus.PENDING_REVIEW) {
+        await courseAPI.rejectPublish(id, reason);
+      }
+      alert('ปฏิเสธคอร์สสำเร็จ!');
+      await refreshCourses();
+      closeModal();
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.message || 'เกิดข้อผิดพลาดในการปฏิเสธคอร์ส');
     }
   };
 
