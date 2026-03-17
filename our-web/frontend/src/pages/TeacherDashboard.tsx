@@ -516,19 +516,19 @@ export default function TeacherDashboard() {
     }
   };
 
-  const handleUpdateStatus = async (id: string, newStatus: CourseStatus) => {
-    try {
-      if (newStatus === CourseStatus.PENDING_REVIEW) {
-        await courseAPI.submitForReview(id);
-        alert("ส่งเนื้อหาให้แอดมินตรวจสอบแล้ว!");
-      }
-      const coursesResponse = await courseAPI.getCoursesByInstructor(currentUserId);
-      setMyCourses(coursesResponse.data.data);
-    } catch (error: any) {
-      console.error("Error updating status:", error);
-      alert(error.response?.data?.message || "เกิดข้อผิดพลาดในการอัพเดทสถานะ");
-    }
-  };
+  // const handleUpdateStatus = async (id: string, newStatus: CourseStatus) => {
+  //   try {
+  //     if (newStatus === CourseStatus.PENDING_REVIEW) {
+  //       await courseAPI.submitForReview(id);
+  //       alert("ส่งเนื้อหาให้แอดมินตรวจสอบแล้ว!");
+  //     }
+  //     const coursesResponse = await courseAPI.getCoursesByInstructor(currentUserId);
+  //     setMyCourses(coursesResponse.data.data);
+  //   } catch (error: any) {
+  //     console.error("Error updating status:", error);
+  //     alert(error.response?.data?.message || "เกิดข้อผิดพลาดในการอัพเดทสถานะ");
+  //   }
+  // };
 
   const handleDeleteCourse = async (courseId: string, title?: string, status?: CourseStatus) => {
     if (status === CourseStatus.PUBLISHED) {
