@@ -46,14 +46,17 @@ export class TeacherService {
 
   async approveTeacher(id: number): Promise<Teacher> {
     const teacher = await this.getTeacherById(id);
-    teacher.is_approved = true;
-    await this.teacherRepository.save(teacher);
+    
+    if (!teacher.is_approved) {
+      teacher.is_approved = true;
+      await this.teacherRepository.save(teacher);
 
-    if (teacher.user_id) {
-      await this.notificationService.createNotification(
-        teacher.user_id,
-        `ยินดีด้วย! บัญชีอาจารย์ของคุณได้รับการอนุมัติแล้ว สามารถขอเปิดคอร์สใหม่ได้แล้วครับ`
-      );
+      if (teacher.user_id) {
+        await this.notificationService.createNotification(
+          teacher.user_id,
+          `ยินดีด้วย! บัญชีอาจารย์ของคุณได้รับการอนุมัติแล้ว สามารถขอเปิดคอร์สใหม่ได้แล้วครับ`
+        );
+      }
     }
 
     return teacher;
