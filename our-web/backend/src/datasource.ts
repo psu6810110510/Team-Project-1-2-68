@@ -8,9 +8,7 @@ import {
   Exam,
   Question,
   Choice,
-  Booking,
   ExamResult,
-  SeatQuota,
 } from './entities';
 
 export const AppDataSource = new DataSource({
@@ -37,9 +35,7 @@ export const AppDataSource = new DataSource({
     Exam,
     Question,
     Choice,
-    Booking,
     ExamResult,
-    SeatQuota,
   ],
   synchronize: true,
   logging: true,

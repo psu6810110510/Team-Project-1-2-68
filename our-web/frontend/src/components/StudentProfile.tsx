@@ -9,7 +9,6 @@ import Footer from './Footer';
 import { paymentAPI, type PaymentRecord } from '../api/paymentAPI';
 import { courseAPI, type Course as APICourse } from '../api/courseAPI';
 import { examAPI } from '../api/examAPI';
-import MyBookings from './MyBookings';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 
 // ✅ ดึงค่า URL จากไฟล์ .env
@@ -551,7 +550,6 @@ export default function StudentProfile() {
               <li className={`menu-item ${activeMenu === 'courses' ? 'active' : ''}`} onClick={() => setActiveMenu('courses')}><BookOpen size={20} /> คอร์สเรียนของฉัน</li>
               <li className={`menu-item ${activeMenu === 'completed' ? 'active' : ''}`} onClick={() => setActiveMenu('completed')}><CheckSquare size={20} /> เรียนจบแล้ว</li>
               <li className={`menu-item ${activeMenu === 'favorites' ? 'active' : ''}`} onClick={() => setActiveMenu('favorites')}><Heart size={20} /> สิ่งที่ถูกใจ</li>
-              <li className={`menu-item ${activeMenu === 'bookings' ? 'active' : ''}`} onClick={() => setActiveMenu('bookings')}><Calendar size={20} /> การจองของฉัน</li>
               <li className={`menu-item ${activeMenu === 'exams' ? 'active' : ''}`} onClick={() => setActiveMenu('exams')}><MonitorPlay size={20} /> ระบบสอบออนไลน์</li>
               <li className={`menu-item ${activeMenu === 'purchases' ? 'active' : ''}`} onClick={() => setActiveMenu('purchases')}><CheckSquare size={20} /> ประวัติการซื้อ</li>
               <li className={`menu-item ${activeMenu === 'certificates' ? 'active' : ''}`} onClick={() => setActiveMenu('certificates')}><Award size={20} /> ใบประกาศ</li>
@@ -726,11 +724,6 @@ export default function StudentProfile() {
                   </div>
                 )}
               </>
-            )}
-
-            {/* 2.3 หน้า My Bookings */}
-            {activeMenu === 'bookings' && (
-              <MyBookings />
             )}
 
             {/* 2.5. หน้าเรียนจบแล้ว */}

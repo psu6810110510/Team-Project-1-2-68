@@ -38,6 +38,7 @@ export class ExamController {
         created_at: e.created_at,
         course_name: e.course?.title || 'Unknown Course',
         course_id: e.course_id,
+        lesson_id: e.lesson_id,
       })),
       total: exams.length,
     };
@@ -46,6 +47,23 @@ export class ExamController {
   @Get(':id')
   async getExam(@Param('id') id: string) {
     return this.examService.getFullExam(id);
+  }
+
+  @Get('lesson/:lessonId')
+  async getExamsByLesson(@Param('lessonId') lessonId: string) {
+    const exams = await this.examService.getExamsByLesson(lessonId);
+    return {
+      data: exams.map((e) => ({
+        id: e.id,
+        title: e.title,
+        type: e.type,
+        total_score: e.total_score,
+        lesson_id: e.lesson_id,
+        course_id: e.course_id,
+        created_at: e.created_at,
+      })),
+      total: exams.length,
+    };
   }
 
   @Get('course/:courseId')
@@ -96,6 +114,8 @@ export class ExamController {
       id: question.id,
       question_text: question.question_text,
       type: question.type,
+      score_points: question.score_points,
+      lesson_id: question.lesson_id,
       message: 'Question created successfully',
     };
   }
@@ -110,6 +130,7 @@ export class ExamController {
         type: q.type,
         score_points: q.score_points,
         sequence_order: q.sequence_order,
+        lesson_id: q.lesson_id,
       })),
       total: questions.length,
       exam_id: examId,
@@ -165,6 +186,8 @@ export class ExamController {
     return {
       id: choice.id,
       choice_label: choice.choice_label,
+      choice_text: choice.choice_text,
+      is_correct: choice.is_correct,
       message: 'Choice created successfully',
     };
   }

@@ -4,6 +4,7 @@ import apiClient from './authAPI';
 export interface Exam {
   id: string;
   course_id: string;
+  lesson_id?: string;
   title: string;
   description?: string;
   type: 'PRETEST' | 'POSTTEST' | 'MIDTERM' | 'FINAL' | 'QUIZ';
@@ -33,6 +34,7 @@ export interface Choice {
 
 export interface CreateExamData {
   course_id: string;
+  lesson_id?: string;
   title: string;
   description?: string;
   type: 'PRETEST' | 'POSTTEST' | 'MIDTERM' | 'FINAL' | 'QUIZ';
@@ -104,6 +106,12 @@ export const examAPI = {
    */
   getExamsByCourse: (courseId: string) =>
     apiClient.get(`/exams/course/${courseId}`),
+
+  /**
+   * ดูข้อสอบของบทเรียน
+   */
+  getExamsByLesson: (lessonId: string) =>
+    apiClient.get(`/exams/lesson/${lessonId}`),
 
   /**
    * แก้ไขข้อสอบ

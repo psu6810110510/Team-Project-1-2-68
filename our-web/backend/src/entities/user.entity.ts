@@ -10,7 +10,6 @@ import {
   JoinTable,
 } from 'typeorm';
 import { Profile } from './profile.entity';
-import { Booking } from './booking.entity';
 import { Teacher } from './teacher.entity';
 import { ExamResult } from './exam-result.entity';
 import { Course } from './course.entity';
@@ -65,9 +64,6 @@ export class User {
 
   @OneToOne(() => Teacher, (teacher) => teacher.user)
   teacher: Teacher;
-
-  @OneToMany(() => Booking, (booking) => booking.user)
-  bookings: Booking[];
 
   @OneToMany(() => ExamResult, (examResult) => examResult.user)
   exam_results: ExamResult[];

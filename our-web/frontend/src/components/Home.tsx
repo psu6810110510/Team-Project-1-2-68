@@ -15,11 +15,18 @@ import homeicon from '../assets/homeicon.png';
 import Footer from './Footer';
 import { courseAPI, CourseStatus } from '../api/courseAPI';
 import type { Course } from '../api/courseAPI';
+import { userAPI } from '../api/userAPI';
 
 export default function Home() {
   const [user, setUser] = useState<any>(null);
   const [popularCourses, setPopularCourses] = useState<Course[]>([]);
   const [totalCourses, setTotalCourses] = useState<number>(0);
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    totalTeachers: 0,
+    totalCourses: 0,
+    averageRating: 0
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,6 +46,17 @@ export default function Home() {
       .catch(() => {
         setPopularCourses([]);
         setTotalCourses(0);
+      });
+
+    // Fetch dashboard stats
+    userAPI.getDashboardStats()
+      .then(res => {
+        if (res.data) {
+          setStats(res.data);
+        }
+      })
+      .catch(() => {
+        // Keep default values if API fails
       });
   }, []);
 
@@ -65,11 +83,11 @@ export default function Home() {
     }
   ];
 
-  const stats = [
-    { number: '10,000+', label: 'นักเรียน' },
-    { number: '500+', label: 'คอร์สเรียน' },
-    { number: '100+', label: 'อาจารย์' },
-    { number: '4.8/5', label: 'คะแนนเฉลี่ย' }
+  const displayStats = [
+    { number: stats.totalStudents > 0 ? `${stats.totalStudents.toLocaleString()}+` : '0', label: 'นักเรียน' },
+    { number: stats.totalCourses > 0 ? `${stats.totalCourses.toLocaleString()}+` : '0', label: 'คอร์สเรียน' },
+    { number: stats.totalTeachers > 0 ? `${stats.totalTeachers.toLocaleString()}+` : '0', label: 'อาจารย์' },
+    { number: stats.averageRating > 0 ? `${stats.averageRating.toFixed(1)}/5` : 'N/A', label: 'คะแนนเฉลี่ย' }
   ];
 
   return (
@@ -100,7 +118,7 @@ export default function Home() {
 
             {/* Stats */}
             <div className="hero-stats">
-              {stats.map((stat, index) => (
+              {displayStats.map((stat, index) => (
                 <div key={index} className="stat-item">
                   <div className="stat-number">{stat.number}</div>
                   <div className="stat-label">{stat.label}</div>
