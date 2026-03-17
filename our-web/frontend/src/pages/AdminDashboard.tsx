@@ -24,7 +24,7 @@ import userAPI, { type UserRecord, type DashboardStats } from '../api/userAPI';
 const buildFileUrl = (url?: string | null): string | null => {
   if (!url) return null;
   const apiBase = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000';
-  
+
   // ถ้าเป็น absolute URL
   if (url.startsWith('http://') || url.startsWith('https://')) {
     try {
@@ -280,37 +280,36 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleApproveCourse = async (id: string, status: CourseStatus) => {
-    if (!window.confirm('คุณแน่ใจหรือไม่ว่าต้องการอนุมัติคอร์สนี้?')) return;
+  const handleApproveCourse = async (id: string, currentStatus: CourseStatus) => {
     try {
-      if (status === CourseStatus.REQUEST_CREATE) {
+      if (currentStatus === CourseStatus.REQUEST_CREATE) {
         await courseAPI.approveCreateRequest(id);
-      } else if (status === CourseStatus.PENDING_REVIEW) {
+        alert('อนุมัติการสร้างคอร์สเรียบร้อยแล้ว! อาจารย์สามารถเริ่มใส่เนื้อหาได้');
+      } else if (currentStatus === CourseStatus.PENDING_REVIEW) {
         await courseAPI.approvePublish(id);
+        alert('อนุมัติการขายคอร์สเรียบร้อยแล้ว! คอร์สจะปรากฏในหน้ารวมคอร์ส');
       }
-      alert('อนุมัติคอร์สสำเร็จ!');
       await refreshCourses();
-    } catch (err: any) {
-      console.error(err);
-      alert(err.response?.data?.message || 'เกิดข้อผิดพลาดในการอนุมัติคอร์ส');
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'เกิดข้อผิดพลาดในการอนุมัติ');
     }
   };
 
-  const handleRejectCourse = async (id: string, status: CourseStatus) => {
-    const reason = prompt('ระบุเหตุผลในการปฏิเสธ (ถ้ามี):');
-    if (reason === null) return;
+  const handleRejectCourse = async (id: string, currentStatus: CourseStatus) => {
+    const reason = prompt('กรุณาระบุเหตุผลในการปฏิเสธ:');
+    if (!reason) return;
     try {
-      if (status === CourseStatus.REQUEST_CREATE) {
+      if (currentStatus === CourseStatus.REQUEST_CREATE) {
         await courseAPI.rejectCreateRequest(id, reason);
-      } else if (status === CourseStatus.PENDING_REVIEW) {
+        alert('ปฏิเสธคำขอสร้างคอร์สแล้ว');
+      } else if (currentStatus === CourseStatus.PENDING_REVIEW) {
         await courseAPI.rejectPublish(id, reason);
+        alert('ส่งคอร์สกลับไปแก้ไขแล้ว');
       }
-      alert('ปฏิเสธคอร์สสำเร็จ!');
-      await refreshCourses();
       closeModal();
-    } catch (err: any) {
-      console.error(err);
-      alert(err.response?.data?.message || 'เกิดข้อผิดพลาดในการปฏิเสธคอร์ส');
+      await refreshCourses();
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'เกิดข้อผิดพลาดในการปฏิเสธ');
     }
   };
 
@@ -728,7 +727,7 @@ export default function AdminDashboard() {
                   <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>⏳ กำลังโหลดข้อมูลคอร์ส...</div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-                    
+
                     {/* Section 1: รออนุมัติสร้างคอร์ส */}
                     <div style={{ ...cardStyle, flexDirection: 'column', alignItems: 'flex-start' }}>
                       <div style={{ width: '100%', borderBottom: '2px solid #fef08a', paddingBottom: '10px', marginBottom: '15px' }}>
@@ -1262,7 +1261,7 @@ export default function AdminDashboard() {
       {/* ==========================================
           MODALS AREA
           ========================================== */}
-      
+
       {/* Course Detail Modal */}
       {isModalOpen && selectedCourse && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }}>
@@ -1464,23 +1463,23 @@ export default function AdminDashboard() {
               <h2 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a' }}>รายละเอียดการจอง</h2>
               <button onClick={() => setIsBookingModalOpen(false)} style={{ background: 'transparent', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#64748b' }}>✕</button>
             </div>
-            
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '10px', fontSize: '0.95rem' }}>
               <div style={{ color: '#64748b', fontWeight: 'bold' }}>รหัสการจอง:</div>
               <div style={{ color: '#0f172a' }}>{selectedBookingDetails.id}</div>
-              
+
               <div style={{ color: '#64748b', fontWeight: 'bold' }}>ชื่อผู้จอง:</div>
               <div style={{ color: '#0f172a' }}>{selectedBookingDetails.user_name}</div>
-              
+
               <div style={{ color: '#64748b', fontWeight: 'bold' }}>อีเมล:</div>
               <div style={{ color: '#0f172a' }}>{selectedBookingDetails.user_email}</div>
-              
+
               <div style={{ color: '#64748b', fontWeight: 'bold' }}>คอร์สเรียน:</div>
               <div style={{ color: '#0f172a' }}>{selectedBookingDetails.course_name}</div>
-              
+
               <div style={{ color: '#64748b', fontWeight: 'bold' }}>รูปแบบ:</div>
               <div style={{ color: '#0f172a' }}>{selectedBookingDetails.learning_mode}</div>
-              
+
               <div style={{ color: '#64748b', fontWeight: 'bold' }}>วันที่จอง:</div>
               <div style={{ color: '#0f172a' }}>{new Date(selectedBookingDetails.created_at || Date.now()).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
             </div>
