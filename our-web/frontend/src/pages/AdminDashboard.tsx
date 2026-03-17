@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Search, User, Settings, CreditCard, BookOpen, FileText, Home, Users,
-  ArrowUp, MonitorPlay, LogOut, ChevronLeft, Video, File
+  ArrowUp, MonitorPlay, LogOut, ChevronLeft, Video, File, MapPin, Calendar, Clock
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -14,7 +14,7 @@ import '../styles/LoginTheme.css';
 import Footer from '../components/Footer';
 import { courseAPI, CourseStatus, type Course as APICourse } from '../api/courseAPI';
 import { paymentAPI, type PaymentRecord } from '../api/paymentAPI';
-import examAPI, { type Exam } from '../api/examAPI';
+import examAPI from '../api/examAPI';
 import userAPI, { type UserRecord, type DashboardStats } from '../api/userAPI';
 
 // ==========================================
@@ -32,8 +32,8 @@ const BStatus = {
 
 // Mock API สำหรับการจองชั่วคราว (หากคุณมี bookingAPI อยู่แล้ว สามารถลบส่วนนี้และ import มาแทนได้ครับ)
 const bookingAPI = {
-  confirmBooking: async (id: string) => Promise.resolve(),
-  cancelBooking: async (id: string) => Promise.resolve(),
+  confirmBooking: async (_id: string) => Promise.resolve(),
+  cancelBooking: async (_id: string) => Promise.resolve(),
   getAllBookings: async () => Promise.resolve({ data: { data: [] } })
 };
 
@@ -70,7 +70,6 @@ export default function AdminDashboard() {
 
   // Dashboard Stats
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
-  const [loadingStats, setLoadingStats] = useState(false);
 
   // ------------------------------------------
   // เพิ่ม States ที่ขาดหายไปสำหรับ Bookings & Calendar
@@ -78,7 +77,7 @@ export default function AdminDashboard() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-  const [selectedBookingDetails, setSelectedBookingDetails] = useState<any>(null);
+  const [selectedBookingDetails, setSelectedBookingDetails] = useState<any | null>(null);
 
   const [allSchedules, setAllSchedules] = useState<any[]>([]);
   const [loadingSchedules, setLoadingSchedules] = useState(false);
@@ -189,14 +188,11 @@ export default function AdminDashboard() {
   };
 
   const fetchDashboardStats = async () => {
-    setLoadingStats(true);
     try {
       const res = await userAPI.getDashboardStats();
       setDashboardStats(res.data);
     } catch (err) {
       console.error('Error fetching dashboard stats:', err);
-    } finally {
-      setLoadingStats(false);
     }
   };
 
@@ -1438,7 +1434,7 @@ export default function AdminDashboard() {
             )}
 
 
-            
+
             {/* ==========================================
               SETTINGS MENU
               ========================================== */}
@@ -1860,6 +1856,44 @@ export default function AdminDashboard() {
               alt="สลิปโอนเงินแบบเต็ม"
               style={{ width: '100%', maxHeight: '75vh', objectFit: 'contain', borderRadius: '8px' }}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Booking Details Modal */}
+      {isBookingModalOpen && selectedBookingDetails && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }} onClick={() => setIsBookingModalOpen(false)}>
+          <div style={{ background: 'white', borderRadius: '12px', maxWidth: '600px', width: '100%', padding: '25px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column', gap: '15px' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '15px', marginBottom: '10px' }}>
+              <h2 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a' }}>รายละเอียดการจอง</h2>
+              <button onClick={() => setIsBookingModalOpen(false)} style={{ background: 'transparent', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#64748b' }}>✕</button>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '10px', fontSize: '0.95rem' }}>
+              <div style={{ color: '#64748b', fontWeight: 'bold' }}>รหัสการจอง:</div>
+              <div style={{ color: '#0f172a' }}>{selectedBookingDetails.id}</div>
+              
+              <div style={{ color: '#64748b', fontWeight: 'bold' }}>ชื่อผู้จอง:</div>
+              <div style={{ color: '#0f172a' }}>{selectedBookingDetails.user_name}</div>
+              
+              <div style={{ color: '#64748b', fontWeight: 'bold' }}>อีเมล:</div>
+              <div style={{ color: '#0f172a' }}>{selectedBookingDetails.user_email}</div>
+              
+              <div style={{ color: '#64748b', fontWeight: 'bold' }}>คอร์สเรียน:</div>
+              <div style={{ color: '#0f172a' }}>{selectedBookingDetails.course_name}</div>
+              
+              <div style={{ color: '#64748b', fontWeight: 'bold' }}>รูปแบบ:</div>
+              <div style={{ color: '#0f172a' }}>{selectedBookingDetails.learning_mode}</div>
+              
+              <div style={{ color: '#64748b', fontWeight: 'bold' }}>วันที่จอง:</div>
+              <div style={{ color: '#0f172a' }}>{new Date(selectedBookingDetails.created_at || Date.now()).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '15px' }}>
+              <button onClick={() => setIsBookingModalOpen(false)} style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
+                ปิด
+              </button>
+            </div>
           </div>
         </div>
       )}
