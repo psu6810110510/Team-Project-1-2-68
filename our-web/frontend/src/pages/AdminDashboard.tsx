@@ -1236,23 +1236,98 @@ export default function AdminDashboard() {
               <button onClick={closeModal} style={{ background: 'transparent', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#64748b' }}>✕</button>
             </div>
             <div style={{ padding: '30px' }}>
-              <div style={{ marginBottom: '25px', textAlign: 'center' }}>
+              <div style={{ marginBottom: '25px' }}>
                 <img
                   src={selectedCourse.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80'}
                   alt={selectedCourse.title}
-                  style={{ width: '100%', maxHeight: '300px', objectFit: 'cover', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                  style={{ width: '100%', maxHeight: '250px', objectFit: 'cover', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                   onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80'; }}
                 />
               </div>
-              <div style={{ display: 'grid', gap: '20px' }}>
+              <div style={{ display: 'grid', gap: '16px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '5px', fontWeight: 'bold' }}>📚 ชื่อคอร์ส</label>
-                  <div style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#0f172a' }}>{selectedCourse.title}</div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '4px', fontWeight: 'bold' }}>📚 ชื่อคอร์ส</label>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#0f172a' }}>{selectedCourse.title}</div>
                 </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '4px', fontWeight: 'bold' }}>👨‍🏫 ผู้สอน</label>
+                  <div style={{ color: '#0f172a' }}>{selectedCourse.instructor_name || selectedCourse.instructor?.full_name || 'ไม่ระบุ'}</div>
+                </div>
+                {selectedCourse.description && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '4px', fontWeight: 'bold' }}>📝 คำอธิบาย</label>
+                    <div style={{ color: '#334155', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>{selectedCourse.description}</div>
+                  </div>
+                )}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '4px', fontWeight: 'bold' }}>💰 ราคา</label>
+                    <div style={{ color: '#0f172a' }}>{selectedCourse.price ? `฿${selectedCourse.price.toLocaleString('th-TH')}` : 'ฟรี'}</div>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '4px', fontWeight: 'bold' }}>📊 ระดับ</label>
+                    <div style={{ color: '#0f172a' }}>{selectedCourse.level || 'ไม่ระบุ'}</div>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '4px', fontWeight: 'bold' }}>🖥️ ออนไลน์</label>
+                    <div style={{ color: '#0f172a' }}>{selectedCourse.is_online ? `✅ มี${selectedCourse.online_expiry ? ` (หมดอายุ ${selectedCourse.online_expiry} วัน)` : ''}` : '❌ ไม่มี'}</div>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '4px', fontWeight: 'bold' }}>🏫 ออนไซต์</label>
+                    <div style={{ color: '#0f172a' }}>{selectedCourse.is_onsite ? `✅ มี (${selectedCourse.onsite_seats || '-'} ที่นั่ง)` : '❌ ไม่มี'}</div>
+                  </div>
+                </div>
+                {selectedCourse.tags && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '4px', fontWeight: 'bold' }}>🏷️ แท็ก</label>
+                    <div style={{ color: '#0f172a' }}>{selectedCourse.tags}</div>
+                  </div>
+                )}
+                {selectedCourse.video_url && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '8px', fontWeight: 'bold' }}>🎬 วีดีโอตัวอย่าง</label>
+                    <video src={selectedCourse.video_url} controls style={{ width: '100%', borderRadius: '8px', maxHeight: '200px' }} />
+                  </div>
+                )}
+                {selectedCourse.rejection_reason && (
+                  <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '12px' }}>
+                    <label style={{ display: 'block', fontSize: '0.85rem', color: '#dc2626', marginBottom: '4px', fontWeight: 'bold' }}>❌ เหตุผลที่ปฏิเสธก่อนหน้า</label>
+                    <div style={{ color: '#991b1b' }}>{selectedCourse.rejection_reason}</div>
+                  </div>
+                )}
+                {courseLessons.length > 0 && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '8px', fontWeight: 'bold' }}>📖 บทเรียน ({courseLessons.length} บท)</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '200px', overflowY: 'auto' }}>
+                      {courseLessons.map((lesson: any, idx: number) => (
+                        <div key={lesson.id} style={{ padding: '8px 12px', background: '#f8fafc', borderRadius: '6px', fontSize: '0.9rem', color: '#334155' }}>
+                          {idx + 1}. {lesson.title}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {loadingLessons && <div style={{ color: '#64748b', textAlign: 'center' }}>⏳ กำลังโหลดบทเรียน...</div>}
               </div>
             </div>
-            <div style={{ padding: '20px 30px', borderTop: '2px solid #e2e8f0', display: 'flex', gap: '15px', justifyContent: 'flex-end', background: '#f8fafc' }}>
-              <button onClick={closeModal} style={{ background: '#e2e8f0', color: '#475569', border: 'none', padding: '12px 30px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>ปิดหน้าต่าง</button>
+            <div style={{ padding: '20px 30px', borderTop: '2px solid #e2e8f0', display: 'flex', gap: '12px', justifyContent: 'flex-end', background: '#f8fafc', flexWrap: 'wrap' }}>
+              {(selectedCourse.status === CourseStatus.REQUEST_CREATE || selectedCourse.status === CourseStatus.PENDING_REVIEW) && (
+                <>
+                  <button
+                    onClick={() => handleRejectCourse(selectedCourse.id, selectedCourse.status)}
+                    style={{ background: '#ef4444', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+                  >
+                    ❌ ปฏิเสธ
+                  </button>
+                  <button
+                    onClick={() => { handleApproveCourse(selectedCourse.id, selectedCourse.status); closeModal(); }}
+                    style={{ background: '#22c55e', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+                  >
+                    ✅ อนุมัติ
+                  </button>
+                </>
+              )}
+              <button onClick={closeModal} style={{ background: '#e2e8f0', color: '#475569', border: 'none', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>ปิด</button>
             </div>
           </div>
         </div>
