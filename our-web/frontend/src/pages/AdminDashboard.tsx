@@ -376,7 +376,7 @@ export default function AdminDashboard() {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const monthStr = d.toLocaleDateString('th-TH', { month: 'short' });
       const yearStr = d.toLocaleDateString('th-TH', { year: '2-digit' });
-      
+
       const revenue = confirmedPayments.filter(p => {
         const pDate = new Date(p.created_at);
         return pDate.getMonth() === d.getMonth() && pDate.getFullYear() === d.getFullYear();
@@ -627,28 +627,28 @@ export default function AdminDashboard() {
                   {recentPaymentsList.length === 0 ? (
                     <p style={{ color: '#94a3b8', textAlign: 'center', padding: '20px 0', width: '100%' }}>ยังไม่มีรายการซื้อ</p>
                   ) : (
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                    <thead>
-                      <tr style={{ color: '#64748b', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0' }}>
-                        <th style={{ padding: '12px 0', fontWeight: '500' }}>ชื่อ</th>
-                        <th style={{ padding: '12px 0', fontWeight: '500' }}>คอร์ส</th>
-                        <th style={{ padding: '12px 0', fontWeight: '500' }}>วันที่</th>
-                        <th style={{ padding: '12px 0', fontWeight: '500' }}>ยอดเงิน</th>
-                        <th style={{ padding: '12px 0', fontWeight: '500' }}>สถานะ</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {recentPaymentsList.map((p, idx) => (
-                        <tr key={p.id} style={{ borderBottom: idx !== recentPaymentsList.length - 1 ? '1px solid #f1f5f9' : 'none', color: '#334155', fontSize: '0.9rem' }}>
-                          <td style={{ padding: '12px 0' }}>{p.user_name || p.user_email || '-'}</td>
-                          <td style={{ padding: '12px 0' }}>{p.course_titles?.join(', ') || '-'}</td>
-                          <td style={{ padding: '12px 0' }}>{new Date(p.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}</td>
-                          <td style={{ padding: '12px 0', fontWeight: '500' }}>฿{Number(p.total_amount).toLocaleString()}</td>
-                          <td style={{ padding: '12px 0' }}>{renderBadge(p.status)}</td>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                      <thead>
+                        <tr style={{ color: '#64748b', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0' }}>
+                          <th style={{ padding: '12px 0', fontWeight: '500' }}>ชื่อ</th>
+                          <th style={{ padding: '12px 0', fontWeight: '500' }}>คอร์ส</th>
+                          <th style={{ padding: '12px 0', fontWeight: '500' }}>วันที่</th>
+                          <th style={{ padding: '12px 0', fontWeight: '500' }}>ยอดเงิน</th>
+                          <th style={{ padding: '12px 0', fontWeight: '500' }}>สถานะ</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {recentPaymentsList.map((p, idx) => (
+                          <tr key={p.id} style={{ borderBottom: idx !== recentPaymentsList.length - 1 ? '1px solid #f1f5f9' : 'none', color: '#334155', fontSize: '0.9rem' }}>
+                            <td style={{ padding: '12px 0' }}>{p.user_name || p.user_email || '-'}</td>
+                            <td style={{ padding: '12px 0' }}>{p.course_titles?.join(', ') || '-'}</td>
+                            <td style={{ padding: '12px 0' }}>{new Date(p.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}</td>
+                            <td style={{ padding: '12px 0', fontWeight: '500' }}>฿{Number(p.total_amount).toLocaleString()}</td>
+                            <td style={{ padding: '12px 0' }}>{renderBadge(p.status)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   )}
                 </div>
               </>
@@ -675,7 +675,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </div>
-                
+
                 {loadingSchedules ? (
                   <div style={{ padding: '60px', textAlign: 'center', width: '100%', color: '#64748b', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
                     <div className="loader" style={{ width: '40px', height: '40px', border: '4px solid #f3f3f3', borderTop: '4px solid #3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
@@ -694,23 +694,23 @@ export default function AdminDashboard() {
                       const dayStr = startDate.toLocaleDateString('th-TH', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
                       const timeStr = `${startDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} - ${endDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}`;
                       const isOnsite = schedule.course?.learning_mode === 'ONSITE' || schedule.course?.is_onsite || schedule.room_location;
-                      
+
                       return (
-                        <div key={schedule.id || idx} style={{ 
-                          background: 'white', 
-                          borderRadius: '20px', 
-                          padding: '25px', 
-                          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025)', 
-                          border: '1px solid #f1f5f9', 
-                          display: 'flex', 
-                          flexDirection: 'column', 
-                          gap: '15px', 
-                          transition: 'all 0.3s ease', 
+                        <div key={schedule.id || idx} style={{
+                          background: 'white',
+                          borderRadius: '20px',
+                          padding: '25px',
+                          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025)',
+                          border: '1px solid #f1f5f9',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '15px',
+                          transition: 'all 0.3s ease',
                           cursor: 'pointer',
                           position: 'relative',
                           overflow: 'hidden'
                         }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025)'; }}>
-                          
+
                           <div style={{ position: 'absolute', top: 0, left: 0, width: '6px', height: '100%', background: isOnsite ? '#f59e0b' : '#3b82f6' }}></div>
 
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -722,7 +722,7 @@ export default function AdminDashboard() {
                               {isOnsite ? 'Onsite' : 'Online'}
                             </span>
                           </div>
-                          
+
                           <div style={{ flex: 1 }}>
                             <h4 style={{ margin: '0 0 15px 0', fontSize: '1.2rem', color: '#0f172a', fontWeight: '800', lineHeight: '1.4' }}>{schedule.course?.title || 'ไม่มีชื่อคอร์ส'}</h4>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -1025,58 +1025,58 @@ export default function AdminDashboard() {
                 {teachers.length === 0 ? (
                   <p style={{ color: '#94a3b8', textAlign: 'center', padding: '20px 0', width: '100%' }}>ยังไม่มีอาจารย์ในระบบ</p>
                 ) : (
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                  <thead>
-                    <tr style={{ color: '#64748b', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0' }}>
-                      <th style={{ padding: '12px 0', fontWeight: '500' }}>ชื่อ-นามสกุล</th>
-                      <th style={{ padding: '12px 0', fontWeight: '500' }}>อีเมล</th>
-                      <th style={{ padding: '12px 0', fontWeight: '500' }}>เบอร์โทร</th>
-                      <th style={{ padding: '12px 0', fontWeight: '500' }}>สถานะ</th>
-                      <th style={{ padding: '12px 0', fontWeight: '500' }}>วันที่สมัคร</th>
-                       <th style={{ padding: '12px 0', fontWeight: '500', textAlign: 'center' }}>จัดการ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {teachers.map((t) => (
-                      <tr key={t.id} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
-                        <td style={{ padding: '12px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <img
-                            src={t.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${t.full_name || t.id}&backgroundColor=b6e3f4`}
-                            alt={t.full_name || 'Teacher'}
-                            style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #e2e8f0' }}
-                            onError={(e) => { e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${t.full_name || t.id}&backgroundColor=b6e3f4`; }}
-                          />
-                          <span>{t.full_name || '-'}</span>
-                        </td>
-                        <td style={{ padding: '12px 0' }}>{t.email}</td>
-                        <td style={{ padding: '12px 0' }}>{t.phone || '-'}</td>
-                        <td style={{ padding: '12px 0' }}>
-                          <span style={{ color: t.is_active ? '#16a34a' : '#ef4444', fontWeight: 'bold' }}>{t.is_active ? 'Active' : 'Inactive'}</span>
-                          {t.is_approved === false && (
-                            <span style={{ display: 'block', fontSize: '0.75rem', color: '#ca8a04', marginTop: '2px' }}>(รอตรวจสอบ)</span>
-                          )}
-                          {t.is_approved === true && (
-                            <span style={{ display: 'block', fontSize: '0.75rem', color: '#16a34a', marginTop: '2px' }}>(อนุมัติแล้ว)</span>
-                          )}
-                        </td>
-                        <td style={{ padding: '12px 0' }}>{new Date(t.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}</td>
-                        <td style={{ padding: '12px 0', textAlign: 'center' }}>
-                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                            {t.is_approved === false && t.teacher_id && (
-                              <button 
-                                onClick={() => handleApproveTeacher(t.teacher_id!)} 
-                                style={{ background: '#10b981', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
-                              >
-                                อนุมัติ
-                              </button>
-                            )}
-                            <button onClick={() => handleDeleteUser(t.id, 'TEACHER')} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>ลบ</button>
-                          </div>
-                        </td>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ color: '#64748b', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0' }}>
+                        <th style={{ padding: '12px 0', fontWeight: '500' }}>ชื่อ-นามสกุล</th>
+                        <th style={{ padding: '12px 0', fontWeight: '500' }}>อีเมล</th>
+                        <th style={{ padding: '12px 0', fontWeight: '500' }}>เบอร์โทร</th>
+                        <th style={{ padding: '12px 0', fontWeight: '500' }}>สถานะ</th>
+                        <th style={{ padding: '12px 0', fontWeight: '500' }}>วันที่สมัคร</th>
+                        <th style={{ padding: '12px 0', fontWeight: '500', textAlign: 'center' }}>จัดการ</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {teachers.map((t) => (
+                        <tr key={t.id} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
+                          <td style={{ padding: '12px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <img
+                              src={t.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${t.full_name || t.id}&backgroundColor=b6e3f4`}
+                              alt={t.full_name || 'Teacher'}
+                              style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #e2e8f0' }}
+                              onError={(e) => { e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${t.full_name || t.id}&backgroundColor=b6e3f4`; }}
+                            />
+                            <span>{t.full_name || '-'}</span>
+                          </td>
+                          <td style={{ padding: '12px 0' }}>{t.email}</td>
+                          <td style={{ padding: '12px 0' }}>{t.phone || '-'}</td>
+                          <td style={{ padding: '12px 0' }}>
+                            <span style={{ color: t.is_active ? '#16a34a' : '#ef4444', fontWeight: 'bold' }}>{t.is_active ? 'Active' : 'Inactive'}</span>
+                            {t.is_approved === false && (
+                              <span style={{ display: 'block', fontSize: '0.75rem', color: '#ca8a04', marginTop: '2px' }}>(รอตรวจสอบ)</span>
+                            )}
+                            {t.is_approved === true && (
+                              <span style={{ display: 'block', fontSize: '0.75rem', color: '#16a34a', marginTop: '2px' }}>(อนุมัติแล้ว)</span>
+                            )}
+                          </td>
+                          <td style={{ padding: '12px 0' }}>{new Date(t.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}</td>
+                          <td style={{ padding: '12px 0', textAlign: 'center' }}>
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                              {t.is_approved === false && t.teacher_id && (
+                                <button
+                                  onClick={() => handleApproveTeacher(t.teacher_id!)}
+                                  style={{ background: '#10b981', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
+                                >
+                                  อนุมัติ
+                                </button>
+                              )}
+                              <button onClick={() => handleDeleteUser(t.id, 'TEACHER')} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>ลบ</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 )}
               </div>
             )}
@@ -1087,42 +1087,42 @@ export default function AdminDashboard() {
                 {students.length === 0 ? (
                   <p style={{ color: '#94a3b8', textAlign: 'center', padding: '20px 0', width: '100%' }}>ยังไม่มีนักเรียนในระบบ</p>
                 ) : (
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                  <thead>
-                    <tr style={{ color: '#64748b', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0' }}>
-                      <th style={{ padding: '12px 0', fontWeight: '500' }}>ชื่อ-นามสกุล</th>
-                      <th style={{ padding: '12px 0', fontWeight: '500' }}>อีเมล</th>
-                      <th style={{ padding: '12px 0', fontWeight: '500' }}>เบอร์โทร</th>
-                      <th style={{ padding: '12px 0', fontWeight: '500' }}>สถานะ</th>
-                      <th style={{ padding: '12px 0', fontWeight: '500' }}>วันที่สมัคร</th>
-                       <th style={{ padding: '12px 0', fontWeight: '500', textAlign: 'center' }}>จัดการ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {students.map((s) => (
-                      <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
-                        <td style={{ padding: '12px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <img
-                            src={s.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.full_name || s.id}&backgroundColor=d1fae5`}
-                            alt={s.full_name || 'Student'}
-                            style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #e2e8f0' }}
-                            onError={(e) => { e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.full_name || s.id}&backgroundColor=d1fae5`; }}
-                          />
-                          <span>{s.full_name || '-'}</span>
-                        </td>
-                        <td style={{ padding: '12px 0' }}>{s.email}</td>
-                        <td style={{ padding: '12px 0' }}>{s.phone || '-'}</td>
-                        <td style={{ padding: '12px 0' }}>
-                          <span style={{ color: s.is_active ? '#16a34a' : '#ef4444', fontWeight: 'bold' }}>{s.is_active ? 'Active' : 'Inactive'}</span>
-                        </td>
-                        <td style={{ padding: '12px 0' }}>{new Date(s.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}</td>
-                        <td style={{ padding: '12px 0', textAlign: 'center' }}>
-                          <button onClick={() => handleDeleteUser(s.id, 'STUDENT')} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>ลบ</button>
-                        </td>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ color: '#64748b', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0' }}>
+                        <th style={{ padding: '12px 0', fontWeight: '500' }}>ชื่อ-นามสกุล</th>
+                        <th style={{ padding: '12px 0', fontWeight: '500' }}>อีเมล</th>
+                        <th style={{ padding: '12px 0', fontWeight: '500' }}>เบอร์โทร</th>
+                        <th style={{ padding: '12px 0', fontWeight: '500' }}>สถานะ</th>
+                        <th style={{ padding: '12px 0', fontWeight: '500' }}>วันที่สมัคร</th>
+                        <th style={{ padding: '12px 0', fontWeight: '500', textAlign: 'center' }}>จัดการ</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {students.map((s) => (
+                        <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
+                          <td style={{ padding: '12px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <img
+                              src={s.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.full_name || s.id}&backgroundColor=d1fae5`}
+                              alt={s.full_name || 'Student'}
+                              style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #e2e8f0' }}
+                              onError={(e) => { e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.full_name || s.id}&backgroundColor=d1fae5`; }}
+                            />
+                            <span>{s.full_name || '-'}</span>
+                          </td>
+                          <td style={{ padding: '12px 0' }}>{s.email}</td>
+                          <td style={{ padding: '12px 0' }}>{s.phone || '-'}</td>
+                          <td style={{ padding: '12px 0' }}>
+                            <span style={{ color: s.is_active ? '#16a34a' : '#ef4444', fontWeight: 'bold' }}>{s.is_active ? 'Active' : 'Inactive'}</span>
+                          </td>
+                          <td style={{ padding: '12px 0' }}>{new Date(s.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}</td>
+                          <td style={{ padding: '12px 0', textAlign: 'center' }}>
+                            <button onClick={() => handleDeleteUser(s.id, 'STUDENT')} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>ลบ</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 )}
               </div>
             )}
@@ -1157,53 +1157,53 @@ export default function AdminDashboard() {
                 ) : exams.length === 0 ? (
                   <p style={{ color: '#94a3b8', textAlign: 'center', padding: '20px 0', width: '100%' }}>ยังไม่มีข้อสอบในระบบ</p>
                 ) : (
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                  <thead>
-                    <tr style={{ color: '#64748b', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0' }}>
-                      <th style={{ padding: '12px 10px', fontWeight: '500' }}>วันที่สร้าง</th>
-                      <th style={{ padding: '12px 10px', fontWeight: '500' }}>ชื่อชุดข้อสอบ</th>
-                      <th style={{ padding: '12px 10px', fontWeight: '500' }}>คอร์สที่เกี่ยวข้อง</th>
-                      <th style={{ padding: '12px 10px', fontWeight: '500' }}>ประเภท</th>
-                      <th style={{ padding: '12px 10px', fontWeight: '500' }}>คะแนนเต็ม</th>
-                      <th style={{ padding: '12px 10px', fontWeight: '500', textAlign: 'right' }}>การจัดการ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {exams.map((e: any) => (
-                      <tr key={e.id} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
-                        <td style={{ padding: '12px 10px' }}>{new Date(e.created_at).toLocaleDateString('th-TH')}</td>
-                        <td style={{ padding: '12px 10px', fontWeight: 'bold' }}>{e.title}</td>
-                        <td style={{ padding: '12px 10px' }}>{e.course_title || e.course_name}</td>
-                        <td style={{ padding: '12px 10px' }}>
-                          <span style={{
-                            background: e.type === 'PRETEST' ? '#fef08a' : e.type === 'POSTTEST' ? '#bbf7d0' : '#e0e7ff',
-                            color: e.type === 'PRETEST' ? '#ca8a04' : e.type === 'POSTTEST' ? '#16a34a' : '#4338ca',
-                            padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold'
-                          }}>
-                            {e.type}
-                          </span>
-                        </td>
-                        <td style={{ padding: '12px 10px' }}>{e.total_score} คะแนน</td>
-                        <td style={{ padding: '12px 10px', textAlign: 'right' }}>
-                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                            <button
-                              onClick={() => navigate(`/exam-management/${e.course_id}`)}
-                              style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
-                            >
-                              จัดการ
-                            </button>
-                            <button
-                              onClick={() => handleDeleteExam(e.id, e.title)}
-                              style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
-                            >
-                              ลบ
-                            </button>
-                          </div>
-                        </td>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ color: '#64748b', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0' }}>
+                        <th style={{ padding: '12px 10px', fontWeight: '500' }}>วันที่สร้าง</th>
+                        <th style={{ padding: '12px 10px', fontWeight: '500' }}>ชื่อชุดข้อสอบ</th>
+                        <th style={{ padding: '12px 10px', fontWeight: '500' }}>คอร์สที่เกี่ยวข้อง</th>
+                        <th style={{ padding: '12px 10px', fontWeight: '500' }}>ประเภท</th>
+                        <th style={{ padding: '12px 10px', fontWeight: '500' }}>คะแนนเต็ม</th>
+                        <th style={{ padding: '12px 10px', fontWeight: '500', textAlign: 'right' }}>การจัดการ</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {exams.map((e: any) => (
+                        <tr key={e.id} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
+                          <td style={{ padding: '12px 10px' }}>{new Date(e.created_at).toLocaleDateString('th-TH')}</td>
+                          <td style={{ padding: '12px 10px', fontWeight: 'bold' }}>{e.title}</td>
+                          <td style={{ padding: '12px 10px' }}>{e.course_title || e.course_name}</td>
+                          <td style={{ padding: '12px 10px' }}>
+                            <span style={{
+                              background: e.type === 'PRETEST' ? '#fef08a' : e.type === 'POSTTEST' ? '#bbf7d0' : '#e0e7ff',
+                              color: e.type === 'PRETEST' ? '#ca8a04' : e.type === 'POSTTEST' ? '#16a34a' : '#4338ca',
+                              padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold'
+                            }}>
+                              {e.type}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px 10px' }}>{e.total_score} คะแนน</td>
+                          <td style={{ padding: '12px 10px', textAlign: 'right' }}>
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                              <button
+                                onClick={() => navigate(`/exam-management/${e.course_id}`)}
+                                style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
+                              >
+                                จัดการ
+                              </button>
+                              <button
+                                onClick={() => handleDeleteExam(e.id, e.title)}
+                                style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
+                              >
+                                ลบ
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 )}
               </div>
             )}
@@ -1269,7 +1269,12 @@ export default function AdminDashboard() {
                                 src={p.slip_url.startsWith('http') ? p.slip_url : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${p.slip_url}`}
                                 alt="สลิปโอนเงิน"
                                 style={{ width: '56px', height: '56px', objectFit: 'cover', borderRadius: '8px', border: '2px solid #e2e8f0', cursor: 'pointer' }}
-                                onClick={() => setSelectedSlip(p.slip_url.startsWith('http') ? p.slip_url : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${p.slip_url}`)}
+                                onClick={() => {
+                                  const url = p.slip_url;
+                                  if (url) {
+                                    setSelectedSlip(url.startsWith('http') ? url : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${url}`);
+                                  }
+                                }}
                               />
                             ) : (
                               <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>ไม่มี</span>
@@ -1458,12 +1463,12 @@ export default function AdminDashboard() {
                         return (
                           <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9', color: '#334155', fontSize: '0.9rem' }}>
                             <td style={{ padding: '15px 10px', fontWeight: 'bold', color: '#0f172a' }}>
-                              {course ? course.title : 'คอร์สที่ไม่พบ (id: ' + s.course_id.substring(0,6) + '...)'}
+                              {course ? course.title : 'คอร์สที่ไม่พบ (id: ' + s.course_id.substring(0, 6) + '...)'}
                             </td>
                             <td style={{ padding: '15px 10px' }}>
                               <div style={{ fontWeight: '500' }}>
-                                📅 {new Date(s.start_time).toLocaleDateString('th-TH', { 
-                                  weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' 
+                                📅 {new Date(s.start_time).toLocaleDateString('th-TH', {
+                                  weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
                                 })}
                               </div>
                               <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>
@@ -1629,7 +1634,7 @@ export default function AdminDashboard() {
                           <div style={{ fontWeight: 'bold', color: '#0f172a' }}>{selectedCourse.onsite_duration} สัปดาห์</div>
                         </div>
                       )}
-                      
+
                       {selectedCourse.onsite_exam_schedule && (
                         <div style={{ gridColumn: '1 / -1', marginTop: '10px' }}>
                           <label style={{ fontSize: '0.85rem', color: '#78716c', display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>📅 กำหนดการสอน / กำหนดสอบ</label>
@@ -1642,7 +1647,7 @@ export default function AdminDashboard() {
                                     <div key={idx} style={{ background: '#fef3c7', padding: '10px 14px', borderRadius: '8px', border: '1px solid #fde68a', color: '#92400e', fontSize: '0.9rem', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                       <span>รอบที่ {idx + 1}:</span>
                                       <span style={{ fontWeight: 'bold' }}>
-                                        {new Date(item.startDate).toString() !== 'Invalid Date' ? new Date(item.startDate).toLocaleDateString('th-TH') : item.startDate} - 
+                                        {new Date(item.startDate).toString() !== 'Invalid Date' ? new Date(item.startDate).toLocaleDateString('th-TH') : item.startDate} -
                                         {new Date(item.endDate).toString() !== 'Invalid Date' ? new Date(item.endDate).toLocaleDateString('th-TH') : item.endDate}
                                       </span>
                                     </div>
@@ -2025,10 +2030,10 @@ export default function AdminDashboard() {
               <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a' }}>สลิปโอนเงิน</h3>
               <button onClick={() => setSelectedSlip(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: '#64748b' }}>✕</button>
             </div>
-            <img 
-              src={selectedSlip} 
-              alt="สลิปโอนเงินแบบเต็ม" 
-              style={{ width: '100%', maxHeight: '75vh', objectFit: 'contain', borderRadius: '8px' }} 
+            <img
+              src={selectedSlip}
+              alt="สลิปโอนเงินแบบเต็ม"
+              style={{ width: '100%', maxHeight: '75vh', objectFit: 'contain', borderRadius: '8px' }}
             />
           </div>
         </div>
