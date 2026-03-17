@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Search, User, Settings, CreditCard, BookOpen, FileText, Home, Users,
-  ArrowUp, MonitorPlay, LogOut, ChevronLeft, Video, File, MapPin, Calendar, Clock
+  ArrowUp, MonitorPlay, LogOut, ChevronLeft, Calendar, Clock
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -49,8 +49,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedCourse, setSelectedCourse] = useState<APICourse | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [courseLessons, setCourseLessons] = useState<any[]>([]);
-  const [loadingLessons, setLoadingLessons] = useState(false);
+  // ...existing code...
 
   // Payment
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
@@ -338,16 +337,7 @@ export default function AdminDashboard() {
     setCourseLessons([]);
   };
 
-  const handleApproveFromModal = async () => {
-    if (!selectedCourse) return;
-    await handleApproveCourse(selectedCourse.id, selectedCourse.status);
-    closeModal();
-  };
-
-  const handleRejectFromModal = async () => {
-    if (!selectedCourse) return;
-    await handleRejectCourse(selectedCourse.id, selectedCourse.status);
-  };
+  // ...existing code...
 
   const handleLogout = () => {
     localStorage.removeItem('access_token');
