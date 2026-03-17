@@ -1580,12 +1580,18 @@ export default function TeacherDashboard() {
                                     ผู้สอน: {course.instructor_name || course.instructor?.full_name || 'ไม่ระบุ'} • ราคา: {course.price ? `฿${course.price.toLocaleString('th-TH')}` : 'ฟรี'}
                                   </p>
                                 </div>
-                                <div style={{ display: 'flex', gap: '10px' }}>
+                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                                   <button
                                     onClick={() => handleOpenContentModal(course)}
                                     style={{ background: '#10b981', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem' }}
                                   >
                                     📚 จัดการเนื้อหา
+                                  </button>
+                                  <button
+                                    onClick={() => navigate(`/exam-management/${course.id}`)}
+                                    style={{ background: '#8b5cf6', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem' }}
+                                  >
+                                    🎯 จัดการข้อสอบ
                                   </button>
                                   <button
                                     onClick={() => handleEditCourse(course)}
@@ -1637,7 +1643,13 @@ export default function TeacherDashboard() {
                                     ผู้สอน: {course.instructor_name || course.instructor?.full_name || 'ไม่ระบุ'} • ราคา: {course.price ? `฿${course.price.toLocaleString('th-TH')}` : 'ฟรี'} • นักเรียน: {course.students_enrolled || 0} คน
                                   </p>
                                 </div>
-                                <div style={{ display: 'flex', gap: '10px' }}>
+                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                  <button
+                                    onClick={() => navigate(`/exam-management/${course.id}?readonly=true`)}
+                                    style={{ background: '#8b5cf6', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem' }}
+                                  >
+                                    📋 ดูข้อสอบ
+                                  </button>
                                   <button
                                     onClick={() => handleEditCourse(course)}
                                     style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem' }}
