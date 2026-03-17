@@ -42,9 +42,11 @@ export class PaymentController {
     }),
   )
   async submitPayment(@Param('id') id: string, @UploadedFile() file?: Express.Multer.File) {
+    // แก้ให้ชี้ไปที่โดเมนจริงแบบตายตัว 100%
     const slipUrl = file
-      ? `${process.env.API_URL || 'https://wd12.pupasoft.com/api'}/uploads/slips/${file.filename}`
+      ? `https://wd12.pupasoft.com/api/uploads/slips/${file.filename}`
       : undefined;
+      
     const payment = await this.paymentService.submitPayment(id, slipUrl);
     return {
       id: payment.id,
