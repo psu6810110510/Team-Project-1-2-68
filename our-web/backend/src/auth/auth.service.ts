@@ -83,6 +83,11 @@ export class AuthService {
       throw new BadRequestException('Invalid email or password');
     }
 
+    if (!user.password_hash) {
+      // User registered via Google or lacks a password
+      throw new BadRequestException('รหัสผ่านไม่ถูกต้อง หรือโปรดเข้าสู่ระบบด้วย Google');
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 
     if (!isPasswordValid) {

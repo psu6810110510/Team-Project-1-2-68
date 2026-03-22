@@ -75,6 +75,7 @@ export class ExamController {
         title: e.title,
         type: e.type,
         total_score: e.total_score,
+        lesson_id: e.lesson_id,
         created_at: e.created_at,
       })),
       total: exams.length,
