@@ -291,7 +291,8 @@ export default function StudentProfile() {
             for (const id of courseIds) {
               try {
                 const examRes = await examAPI.getExamsByCourse(id);
-                const exams = examRes.data.data;
+                // กรองเอาเฉพาะข้อสอบที่ไม่มี lesson_id (ข้อสอบระดับคอร์ส)
+                const exams = examRes.data.data.filter((e: any) => !e.lesson_id);
                 if (exams && exams.length > 0) {
                   const c = courseMap[id];
                   examGroups.push({ courseTitle: c?.title || id, exams });
