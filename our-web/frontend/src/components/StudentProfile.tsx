@@ -52,8 +52,21 @@ export default function StudentProfile() {
   const [loadingFavorites, setLoadingFavorites] = useState(true);
 
   // --- exam state ---
-  const [courseExams, setCourseExams] = useState<Array<{ courseTitle: string; exams: Array<{ id: string; title: string; type: string; total_score: number }> }>>([]);
-  const [loadingExams, setLoadingExams] = useState(false);
+  const [courseExams, setCourseExams] = useState<Array<{
+    courseTitle: string;
+    courseId: string;
+    lessonExams: Array<{
+      lessonId: string;
+      lessonName: string;
+      examId: string;
+      totalScore: number;
+      questions: Array<{
+        id: string; lesson_id?: string; question_text: string; score_points: number; sequence_order?: number;
+        choices: Array<{ id: string; choice_label: string; choice_text: string }>;
+      }>;
+    }>;
+  }>>([]);
+
   const [activeExam, setActiveExam] = useState<null | {
     id: string; title: string; type: string; total_score: number; course_id?: string;
     questions: Array<{
@@ -285,17 +298,55 @@ export default function StudentProfile() {
             certificatesCount: completedCoursesCount
           });
 
-          // โหลดข้อสอบของคอร์สที่ซื้อแล้ว
+          // โหลดข้อสอบแยกตามบทเรียน
           try {
             const examGroups: typeof courseExams = [];
             for (const id of courseIds) {
               try {
+                // โหลด lessons เพื่อดึงชื่อบท
+                const lessonsRes = await courseAPI.getLessonsByCourse(id);
+                const allLessons = lessonsRes.data.data || [];
+                // จัดกลุ่ม lesson ตาม parent topic (เหมือนฝั่งอาจารย์)
+                const topLessonMap: { [key: string]: { id: string; name: string } } = {};
+                allLessons.forEach((lesson: any) => {
+                  const parts = lesson.topic_name.split(' - ');
+                  const parentName = parts[0];
+                  if (!topLessonMap[parentName]) {
+                    topLessonMap[parentName] = { id: lesson.id, name: parentName };
+                  }
+                });
+
+                // โหลด exam ระดับคอร์ส (ไม่มี lesson_id)
                 const examRes = await examAPI.getExamsByCourse(id);
-                // กรองเอาเฉพาะข้อสอบที่ไม่มี lesson_id (ข้อสอบระดับคอร์ส)
-                const exams = examRes.data.data.filter((e: any) => !e.lesson_id);
-                if (exams && exams.length > 0) {
+                const allExams = examRes.data.data || examRes.data || [];
+                const courseExam = allExams.find((e: any) => !e.lesson_id) || allExams[0];
+                if (!courseExam) continue;
+
+                // โหลด questions ของ exam นั้น (ฝั่ง student ไม่เห็น is_correct)
+                const studentExamRes = await examAPI.getExamForStudent(courseExam.id);
+                const allQuestions = studentExamRes.data.questions || [];
+
+                // จัดกลุ่ม questions ตาม lesson_id
+                const questionsByLessonId: { [key: string]: any[] } = {};
+                allQuestions.forEach((q: any) => {
+                  if (q.lesson_id) {
+                    if (!questionsByLessonId[q.lesson_id]) questionsByLessonId[q.lesson_id] = [];
+                    questionsByLessonId[q.lesson_id].push(q);
+                  }
+                });
+
+                // สร้าง lesson exams จาก top-level lessons ที่มีข้อสอบ
+                const lessonExams = Object.values(topLessonMap)
+                  .filter(lesson => (questionsByLessonId[lesson.id]?.length ?? 0) > 0)
+                  .map(lesson => {
+                    const qs = questionsByLessonId[lesson.id];
+                    const totalScore = qs.reduce((sum: number, q: any) => sum + (q.score_points || 1), 0);
+                    return { lessonId: lesson.id, lessonName: lesson.name, examId: courseExam.id, totalScore, questions: qs };
+                  });
+
+                if (lessonExams.length > 0) {
                   const c = courseMap[id];
-                  examGroups.push({ courseTitle: c?.title || id, exams });
+                  examGroups.push({ courseTitle: c?.title || id, courseId: id, lessonExams });
                 }
               } catch { /* course may have no exams */ }
             }
@@ -942,33 +993,31 @@ export default function StudentProfile() {
                         <div key={gi}>
                           <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#0f172a', marginBottom: '0.8rem', paddingBottom: '0.5rem', borderBottom: '2px solid #e2e8f0' }}>📚 {group.courseTitle}</h3>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                            {group.exams.map((exam) => (
-                              <div key={exam.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1rem 1.2rem', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', flexWrap: 'wrap', gap: '12px' }}>
+                            {group.lessonExams.map((lessonExam, li) => (
+                              <div key={li} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1rem 1.2rem', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', flexWrap: 'wrap', gap: '12px' }}>
                                 <div>
-                                  <p style={{ fontWeight: '600', color: '#0f172a', marginBottom: '4px' }}>{exam.title}</p>
+                                  <p style={{ fontWeight: '600', color: '#0f172a', marginBottom: '4px' }}>ข้อสอบ{lessonExam.lessonName}</p>
                                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                    <span style={{ background: '#dbeafe', color: '#1d4ed8', padding: '2px 10px', borderRadius: '20px', fontSize: '0.78rem', fontWeight: '600' }}>{exam.type}</span>
-                                    <span style={{ background: '#f1f5f9', color: '#475569', padding: '2px 10px', borderRadius: '20px', fontSize: '0.78rem' }}>คะแนนเต็ม {exam.total_score}</span>
+                                    <span style={{ background: '#dbeafe', color: '#1d4ed8', padding: '2px 10px', borderRadius: '20px', fontSize: '0.78rem', fontWeight: '600' }}>{lessonExam.questions.length} ข้อ</span>
+                                    <span style={{ background: '#f1f5f9', color: '#475569', padding: '2px 10px', borderRadius: '20px', fontSize: '0.78rem' }}>คะแนนเต็ม {lessonExam.totalScore}</span>
                                   </div>
                                 </div>
                                 <button
-                                  onClick={async () => {
-                                    setLoadingExams(true);
-                                    try {
-                                      const res = await examAPI.getExamForStudent(exam.id);
-                                      setActiveExam(res.data);
-                                      setExamAnswers({});
-                                      setExamResult(null);
-                                      setExamStartTime(new Date());
-                                    } catch (err) {
-                                      console.error(err);
-                                      alert('ไม่สามารถโหลดข้อสอบได้');
-                                    } finally {
-                                      setLoadingExams(false);
-                                    }
+                                  onClick={() => {
+                                    setActiveExam({
+                                      id: lessonExam.examId,
+                                      title: `ข้อสอบ${lessonExam.lessonName}`,
+                                      type: 'QUIZ',
+                                      total_score: lessonExam.totalScore,
+                                      course_id: group.courseId,
+                                      questions: lessonExam.questions,
+                                    });
+                                    setExamAnswers({});
+                                    setExamResult(null);
+                                    setExamStartTime(new Date());
                                   }}
                                   style={{ padding: '8px 20px', background: '#0A1C39', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '500', fontSize: '0.9rem', whiteSpace: 'nowrap' }}
-                                >{loadingExams ? '...' : '🖊️ เข้าทำข้อสอบ'}</button>
+                                >🖊️ เข้าทำข้อสอบ</button>
                               </div>
                             ))}
                           </div>

@@ -312,16 +312,9 @@ export class ExamService {
     let earnedScore = 0;
     const weakLessonIds = new Set<string>();
 
-    for (const q of questions) {
-      const answer = dto.answers.find((a) => a.question_id === q.id);
-      if (!answer) {
-        // If not answered, consider it wrong and track weak lesson
-        wrong++;
-        if (q.lesson_id) {
-          weakLessonIds.add(q.lesson_id);
-        }
-        continue;
-      }
+    for (const answer of dto.answers) {
+      const q = questions.find((question) => question.id === answer.question_id);
+      if (!q) continue;
 
       const choice = await this.choiceRepo.findOne({ where: { id: answer.choice_id, question_id: q.id } });
       if (choice?.is_correct) {
@@ -329,21 +322,22 @@ export class ExamService {
         earnedScore += q.score_points || 1;
       } else {
         wrong++;
-        // Track the lesson_id if answered wrong
         if (q.lesson_id) {
           weakLessonIds.add(q.lesson_id);
         }
       }
     }
 
-    const percentage = exam.total_score > 0 ? (earnedScore / exam.total_score) * 100 : 0;
+    const answeredCount = dto.answers.length;
+    const maxScore = questions.reduce((sum, q) => sum + (q.score_points || 1), 0);
+    const percentage = maxScore > 0 ? (earnedScore / maxScore) * 100 : 0;
 
     const result = this.examResultRepo.create({
       user_id: dto.user_id,
       exam_id: examId,
       total_score: earnedScore,
       percentage,
-      total_questions: questions.length,
+      total_questions: answeredCount,
       correct_answers: correct,
       wrong_answers: wrong,
       time_spent_seconds: dto.time_spent_seconds,
@@ -368,6 +362,7 @@ export class ExamService {
     const questionsWithChoices = await Promise.all(
       questions.map(async (q) => ({
         id: q.id,
+        lesson_id: q.lesson_id,
         question_text: q.question_text,
         type: q.type,
         score_points: q.score_points,

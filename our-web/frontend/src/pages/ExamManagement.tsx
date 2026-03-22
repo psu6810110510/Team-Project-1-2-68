@@ -54,7 +54,7 @@ export default function ExamManagement() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState({
     question_text: '',
-    type: 'MULTIPLE_CHOICE' as 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'ESSAY',
+    type: 'MULTIPLE_CHOICE' as 'MULTIPLE_CHOICE' | 'TRUE_FALSE',
     score_points: 10,
     sequence_order: 1
   });
@@ -765,10 +765,8 @@ export default function ExamManagement() {
                       outline: 'none'
                     }}
                   >
-                    <option value="MULTIPLE_CHOICE">ปรนัย (Multiple Choice)</option>
+                    <option value="MULTIPLE_CHOICE">ปรนัย</option>
                     <option value="TRUE_FALSE">ถูก/ผิด</option>
-                    <option value="SHORT_ANSWER">คำตอบสั้น</option>
-                    <option value="ESSAY">อัตนัย</option>
                   </select>
                   <input
                     type="number"

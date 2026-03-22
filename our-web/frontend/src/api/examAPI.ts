@@ -19,7 +19,7 @@ export interface Question {
   exam_id: string;
   lesson_id?: string;
   question_text: string;
-  type: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'ESSAY';
+  type: 'MULTIPLE_CHOICE' | 'TRUE_FALSE';
   score_points: number;
   sequence_order?: number;
 }
@@ -54,7 +54,7 @@ export interface UpdateExamData {
 
 export interface CreateQuestionData {
   question_text: string;
-  type: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'ESSAY';
+  type: 'MULTIPLE_CHOICE' | 'TRUE_FALSE';
   score_points?: number;
   sequence_order?: number;
   lesson_id?: string;
@@ -62,7 +62,7 @@ export interface CreateQuestionData {
 
 export interface UpdateQuestionData {
   question_text?: string;
-  type?: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'ESSAY';
+  type?: 'MULTIPLE_CHOICE' | 'TRUE_FALSE';
   score_points?: number;
   sequence_order?: number;
   lesson_id?: string;

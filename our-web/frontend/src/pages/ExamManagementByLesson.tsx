@@ -809,8 +809,6 @@ export default function ExamManagementByLesson() {
                                             >
                                               <option value="MULTIPLE_CHOICE">ปรนัย</option>
                                               <option value="TRUE_FALSE">ถูก/ผิด</option>
-                                              <option value="SHORT_ANSWER">ตอบสั้น</option>
-                                              <option value="ESSAY">อัตนัย</option>
                                             </select>
                                           </div>
                                           <div>
@@ -834,9 +832,7 @@ export default function ExamManagementByLesson() {
                                       ) : (
                                         <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
                                           คะแนน: {question.score_points} | ประเภท:{' '}
-                                          {question.type === 'MULTIPLE_CHOICE' ? 'ปรนัย' : 
-                                           question.type === 'TRUE_FALSE' ? 'ถูก/ผิด' :
-                                           question.type === 'SHORT_ANSWER' ? 'ตอบสั้น' : 'อัตนัย'}
+                                          {question.type === 'MULTIPLE_CHOICE' ? 'ปรนัย' : 'ถูก/ผิด'}
                                         </div>
                                       )}
                                     </div>
@@ -1006,27 +1002,6 @@ export default function ExamManagementByLesson() {
                                   </div>
                                 )}
 
-                                {/* Answer field for SHORT_ANSWER and ESSAY */}
-                                {(question.type === 'SHORT_ANSWER' || question.type === 'ESSAY') && (
-                                  <div style={{ marginLeft: '40px', marginTop: '12px' }}>
-                                    <div
-                                      style={{
-                                        padding: '12px',
-                                        background: '#f8fafc',
-                                        borderRadius: '8px',
-                                        border: '1px solid #e2e8f0',
-                                        fontSize: '0.85rem',
-                                        color: '#64748b'
-                                      }}
-                                    >
-                                      💡 {question.type === 'SHORT_ANSWER' ? 'นักเรียนจะพิมพ์คำตอบสั้นๆ' : 'นักเรียนจะพิมพ์คำตอบแบบอัตนัย'}
-                                      <br />
-                                      <span style={{ fontSize: '0.75rem' }}>
-                                        การให้คะแนนต้องตรวจด้วยตนเอง
-                                      </span>
-                                    </div>
-                                  </div>
-                                )}
                                 </div>
                               ))}
                             </div>
