@@ -25,17 +25,17 @@ const buildFileUrl = (url?: string | null): string | null => {
   if (!url) return null;
   const apiBase = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000';
 
-  // ถ้าเป็น absolute URL
   if (url.startsWith('http://') || url.startsWith('https://')) {
     try {
       const parsed = new URL(url);
-      const localBase = new URL(apiBase);
-      // ถ้า domain ต่างกัน (เช่น wd12.pupasoft.com vs localhost)
-      // ให้แปลง URL ให้ชี้ที่ local แทน โดยตัด /api prefix ออกถ้ามี
-      if (localBase.hostname === 'localhost' && parsed.hostname !== 'localhost') {
-        // ตัด /api prefix ออก (production มี /api/ แต่ local ไม่มี)
-        const localPath = parsed.pathname.replace(/^\/api\//, '/');
-        return `${apiBase.replace(/\/$/, '')}${localPath}`;
+      
+      // ถ้า URL ชี้ไปหาไฟล์ uploads ให้ใช้จาก apiBase ตรงๆ เพื่อแก้ปัญหา Production URL vs Local URL
+      if (parsed.pathname.includes('/uploads/')) {
+        let path = parsed.pathname;
+        if (path.startsWith('/api/')) path = path.replace('/api/', '/');
+        // ตัด slash ที่ติดอยู่ข้างหน้าที่เกินมา
+        path = path.replace(/^\/+/, '/');
+        return `${apiBase.replace(/\/$/, '')}${path}`;
       }
       return url;
     } catch {
