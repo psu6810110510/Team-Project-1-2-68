@@ -34,6 +34,9 @@ export class Lesson {
   @Column({ type: 'integer', nullable: true })
   sequence_order: number;
 
+  @Column({ type: 'integer', nullable: true, default: 0 })
+  passing_score: number;
+
   @CreateDateColumn()
   created_at: Date;
 

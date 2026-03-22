@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Course, CourseStatus, CourseLevel } from '../../entities/course.entity';
 import { Lesson } from '../../entities/lesson.entity';
+import { Teacher } from '../../entities/teacher.entity';
 
 export interface CreateCourseRequestDto {
   title: string;
@@ -65,6 +66,7 @@ export class CourseService {
   constructor(
     @InjectRepository(Course) private courseRepo: Repository<Course>,
     @InjectRepository(Lesson) private lessonRepo: Repository<Lesson>,
+    @InjectRepository(Teacher) private teacherRepo: Repository<Teacher>,
   ) {}
 
   // ==========================================
@@ -75,6 +77,13 @@ export class CourseService {
     try {
       console.log('Creating course request with data:', dto);
       
+      if (dto.instructor_id) {
+        const teacher = await this.teacherRepo.findOne({ where: { user_id: dto.instructor_id } });
+        if (!teacher || !teacher.is_approved) {
+          throw new BadRequestException('คุณยังไม่ได้รับการอนุมัติให้เป็นอาจารย์ ไม่สามารถส่งคำขอเปิดคอร์สได้');
+        }
+      }
+
       const result = await this.courseRepo.insert({
         title: dto.title,
         description: dto.description,

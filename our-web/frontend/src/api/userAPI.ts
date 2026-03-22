@@ -8,6 +8,9 @@ export interface UserRecord {
   is_active: boolean;
   phone?: string;
   created_at: string;
+  image?: string;
+  is_approved?: boolean;
+  teacher_id?: string;
 }
 
 export interface UsersResponse {
@@ -20,6 +23,8 @@ export interface UsersResponse {
 export interface DashboardStats {
   totalStudents: number;
   totalTeachers: number;
+  totalCourses: number;
+  averageRating: number;
 }
 
 // ✅ รวมทุก API ไว้ใน userAPI ก้อนเดียว
@@ -35,6 +40,12 @@ export const userAPI = {
 
   getDashboardStats: () =>
     apiClient.get<DashboardStats>('/users/dashboard/stats'),
+
+  deleteUser: (id: string) =>
+    apiClient.delete<{ message: string }>(`/users/${id}`),
+
+  approveTeacher: (teacherId: string) =>
+    apiClient.post<any>(`/teachers/${teacherId}/approve`),
 };
 
 export default userAPI;

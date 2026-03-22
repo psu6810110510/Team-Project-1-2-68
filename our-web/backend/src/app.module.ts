@@ -12,23 +12,24 @@ import {
   Exam,
   Question,
   Choice,
-  Booking,
   ExamResult,
-  SeatQuota,
   Payment,
+  Teacher,
+  Notification,
+  Review,
 } from './entities';
 
 
 import { UserModule } from './modules/users/user.module';
 import { CourseModule } from './modules/courses/course.module';
 import { ExamModule } from './modules/exams/exam.module';
-import { BookingModule } from './modules/bookings/booking.module';
-import { SeatQuotaModule } from './modules/seat-quotas/seat-quota.module';
 import { TeacherModule } from './modules/teachers/teacher.module';
 import { UploadModule } from './upload/upload.module';
 import { PaymentModule } from './modules/payments/payment.module';
 import { AuthModule } from './auth/auth.module'; // ✅ Auth module หลัก (JWT + Google OAuth)
 import { ScheduleModule } from './modules/schedules/schedule.module';
+import { NotificationModule } from './modules/notifications/notification.module';
+import { ReviewModule } from './modules/reviews/review.module';
 
 @Module({
   imports: [
@@ -60,10 +61,11 @@ import { ScheduleModule } from './modules/schedules/schedule.module';
         Exam,
         Question,
         Choice,
-        Booking,
         ExamResult,
-        SeatQuota,
         Payment,
+        Teacher,
+        Notification,
+        Review,
       ],
       synchronize: true,
       logging: true,
@@ -73,11 +75,11 @@ import { ScheduleModule } from './modules/schedules/schedule.module';
     CourseModule,
     ScheduleModule,
     ExamModule,
-    BookingModule,
-    SeatQuotaModule,
     TeacherModule,
     UploadModule,
     PaymentModule,
+    NotificationModule,
+    ReviewModule,
   ],
   controllers: [AppController],
   providers: [AppService],

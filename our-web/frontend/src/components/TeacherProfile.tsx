@@ -61,11 +61,22 @@ const TeacherProfile: React.FC = () => {
   ];
 
   useEffect(() => {
-    // ลอง fetch จาก API ก่อน ถ้าไม่ได้ให้ใช้ mock data
-    fetch('/api/teachers')
+    fetch('https://wd12.pupasoft.com/api/teachers')
       .then((response) => response.json())
       .then((data) => {
-        setTeachers(data);
+        const mapped = data.map((t: any) => ({
+          id: t.id,
+          name: t.name || t.user?.full_name || '-',
+          bachelorDegree: t.bachelorDegree || '',
+          masterDegree: t.masterDegree || '',
+          doctorateDegree: t.doctorateDegree || '',
+          expertise: t.expertise || '',
+          profileImage: t.user?.image || '',
+          email: t.user?.email || '',
+          phone: t.user?.phone || '',
+          description: t.user?.description || '',
+        }));
+        setTeachers(mapped);
         setLoading(false);
       })
       .catch((error) => {

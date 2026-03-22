@@ -33,4 +33,9 @@ export class TeacherController {
   async deleteTeacher(@Param('id') id: number): Promise<void> {
     return this.teacherService.deleteTeacher(id);
   }
+
+  @Post(':id/approve')
+  async approveTeacher(@Param('id') id: number): Promise<Teacher> {
+    return this.teacherService.approveTeacher(id);
+  }
 }

@@ -259,7 +259,7 @@ const Courses = () => {
                         onChange={(e) => setFilterOnline(e.target.checked)}
                         className="filter-checkbox"
                       />
-                      <span>🖥️ ออนไลน์</span>
+                      <span>ออนไลน์</span>
                     </label>
                     <label className="checkbox-label">
                       <input
@@ -268,7 +268,7 @@ const Courses = () => {
                         onChange={(e) => setFilterOnsite(e.target.checked)}
                         className="filter-checkbox"
                       />
-                      <span>🏫 ออนไซต์</span>
+                      <span>ออนไซต์</span>
                     </label>
                   </div>
                 </div>
@@ -302,18 +302,7 @@ const Courses = () => {
               const formattedPrice = isNaN(price) || price === 0 ? 'ฟรี' : `฿${price.toLocaleString('th-TH')}`;
               const instructorName = course.instructor_name || course.instructor?.full_name || 'ไม่ระบุ';
               
-              // Parse tags properly to check for level
-              const tags = (course.tags || '').toLowerCase();
-              const tagArray = tags.split(/[\s,]+/).filter(t => t.startsWith('#'));
-              
-              let level: string | null = null;
-              if (tagArray.includes('#beginner')) {
-                level = 'Beginner';
-              } else if (tagArray.includes('#intermediate')) {
-                level = 'Intermediate';
-              } else if (tagArray.includes('#hard')) {
-                level = 'Hard';
-              }
+
               
               const enrolledCount = course.students_enrolled ?? 0;
 
@@ -333,11 +322,6 @@ const Courses = () => {
                     )}
                     {!course.is_active && (
                       <div className="inactive-badge">ปิดการใช้งาน</div>
-                    )}
-                    {level && (
-                      <div className={`course-level-badge level-${level.toLowerCase()}`}>
-                        {level}
-                      </div>
                     )}
                     <button
                       className="like-button"
@@ -377,8 +361,8 @@ const Courses = () => {
 
                     <div className="course-meta">
                       <div className="course-delivery-badges">
-                        {course.is_online && <span className="delivery-badge online">🖥️ ออนไลน์</span>}
-                        {course.is_onsite && <span className="delivery-badge onsite">🏫 ออนไซต์</span>}
+                        {course.is_online && <span className="delivery-badge online">ออนไลน์</span>}
+                        {course.is_onsite && <span className="delivery-badge onsite">ออนไซต์</span>}
                       </div>
                       <div className="course-enrolled">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

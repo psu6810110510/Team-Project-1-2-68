@@ -18,7 +18,7 @@ async function bootstrap() {
   app.use(urlencoded({ extended: true, limit: '500mb' }));
   
   // Serve static files from uploads directory
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+  app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',
   });
   

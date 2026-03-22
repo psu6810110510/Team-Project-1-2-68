@@ -7,11 +7,14 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { User, UserRole } from '../entities/user.entity'; 
+import { Teacher } from '../entities/teacher.entity'; 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    @InjectRepository(Teacher)
+    private teacherRepository: Repository<Teacher>,
     private jwtService: JwtService,
   ) {}
 
@@ -38,6 +41,18 @@ export class AuthService {
     });
 
     const savedUser = await this.usersRepository.save(user);
+
+    if (role === 'TEACHER') {
+      await this.teacherRepository.save(this.teacherRepository.create({
+        user_id: savedUser.id,
+        name: full_name || '',
+        bachelorDegree: registerDto.bachelorDegree || '',
+        masterDegree: registerDto.masterDegree,
+        doctorateDegree: registerDto.doctorateDegree,
+        expertise: registerDto.expertise || '',
+        is_approved: false,
+      }));
+    }
 
     const access_token = this.jwtService.sign({
       sub: savedUser.id,
@@ -66,6 +81,11 @@ export class AuthService {
 
     if (!user) {
       throw new BadRequestException('Invalid email or password');
+    }
+
+    if (!user.password_hash) {
+      // User registered via Google or lacks a password
+      throw new BadRequestException('รหัสผ่านไม่ถูกต้อง หรือโปรดเข้าสู่ระบบด้วย Google');
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
@@ -115,7 +135,6 @@ export class AuthService {
         email: googleUser.email,
         full_name: `${googleUser.firstName} ${googleUser.lastName}`.trim(),
         google_id: googleUser.email, // ใช้ email เป็น google_id
-        image: googleUser.picture,
         role: UserRole.STUDENT,
         password_hash: null as any, // Google user ไม่มี password
       });
@@ -124,9 +143,6 @@ export class AuthService {
       // อัพเดทข้อมูลจาก Google ถ้ามี user อยู่แล้ว
       if (!user.google_id) {
         user.google_id = googleUser.email;
-      }
-      if (googleUser.picture && !user.image) {
-        user.image = googleUser.picture;
       }
       if (!user.full_name && googleUser.firstName) {
         user.full_name = `${googleUser.firstName} ${googleUser.lastName}`.trim();
@@ -155,6 +171,7 @@ export class AuthService {
   async findOne(id: any): Promise<User | null> {
     return this.usersRepository.findOne({
       where: { id },
+      relations: ['teacher'],
     });
   }
 

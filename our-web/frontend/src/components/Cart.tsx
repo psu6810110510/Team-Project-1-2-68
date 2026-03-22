@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import '../styles/Cart.css';
-import qrImage from "../assets/QR.png";
+import qrImage from "../assets/qrreal.jpg";
 import { paymentAPI } from '../api/paymentAPI';
-import bookingAPI, { LearningMode } from '../api/bookingAPI';
 
 interface CartItem {
   id: string;
@@ -96,28 +95,7 @@ export default function Cart() {
     try {
       setSubmitting(true);
       
-      // 1. Create bookings (reserve seats) for onsite courses
-      // We do this before creating payment to ensure seats are available
-      for (const item of itemsToCheckout) {
-        if ((item.selectedType === 'onsite' || (!item.is_online && item.is_onsite)) && item.schedule_id) {
-          try {
-            await bookingAPI.createBooking({
-              user_id: user.id,
-              schedule_id: item.schedule_id,
-              learning_mode: LearningMode.ONSITE,
-              notes: 'จองผ่านระบบตะกร้าสินค้า (รอตรวจสอบชำระเงิน)',
-            });
-          } catch (err: any) {
-            console.error('Failed to create booking for', item.title, err);
-            const msg = err.response?.data?.message || 'รอบเวลาเรียนนี้อาจจะเต็ม หรือคุณได้จองไปแล้ว';
-            alert(`ไม่สามารถจองคอร์ส ${item.title} ได้: ${msg}`);
-            setSubmitting(false);
-            return; // Stop checkout process entirely if one fails
-          }
-        }
-      }
-
-      // 2. Create Payment Record
+      // Create Payment Record
       const res = await paymentAPI.createPayment({
         user_id: user.id,
         user_name: user.full_name || user.email,
@@ -179,7 +157,20 @@ export default function Cart() {
         <div className="cart-container">
           <h1 className="cart-title">ตะกร้าคอร์สเรียน</h1>
 
-          {cartItems.length === 0 ? (
+          {user?.role === 'TEACHER' ? (
+            <div className="empty-cart">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="80" height="80" style={{ color: '#fbbf24' }}>
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+              </svg>
+              <p>ผู้สอนไม่สามารถซื้อคอร์สได้</p>
+              <p style={{ fontSize: '0.9rem', color: '#94a3b8', marginTop: '8px' }}>
+                บัญชีผู้สอนไม่สามารถเพิ่มคอร์สลงตะกร้าหรือชำระเงินได้
+              </p>
+              <button className="browse-courses-btn" onClick={() => navigate('/courses')} style={{ marginTop: '1.5rem' }}>
+                เรียกดูคอร์สทั้งหมด
+              </button>
+            </div>
+          ) : cartItems.length === 0 ? (
             <div className="empty-cart">
               <svg viewBox="0 0 24 24" fill="currentColor" width="80" height="80">
                 <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>

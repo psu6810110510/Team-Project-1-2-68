@@ -8,7 +8,7 @@ import fullLogo from '../assets/name.png';
 import Footer from './Footer';
 
 // ✅ ดึงค่า URL จากไฟล์ .env
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://wd12.pupasoft.com/api';
 
 export default function Login() {
   const [email, setEmail] = useState('');

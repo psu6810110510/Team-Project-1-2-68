@@ -9,7 +9,8 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User, UserRole } from '../../entities/user.entity';
 import { Profile } from '../../entities/profile.entity';
-import { Course } from '../../entities/course.entity';
+import { Course, CourseStatus } from '../../entities/course.entity';
+import { Review } from '../../entities/review.entity';
 
 export interface CreateUserDto {
   email: string;
@@ -31,6 +32,7 @@ export class UserService {
     @InjectRepository(User) private userRepo: Repository<User>,
     @InjectRepository(Profile) private profileRepo: Repository<Profile>,
     @InjectRepository(Course) private courseRepo: Repository<Course>,
+    @InjectRepository(Review) private reviewRepo: Repository<Review>,
   ) {}
 
   async createUser(dto: CreateUserDto): Promise<User> {
@@ -107,6 +109,7 @@ export class UserService {
       take: limit,
       skip: offset,
       order: { created_at: 'DESC' },
+      relations: ['teacher'],
     });
   }
 
@@ -121,10 +124,23 @@ export class UserService {
     const totalTeachers = await this.userRepo.count({
       where: { role: UserRole.TEACHER },
     });
+    const totalCourses = await this.courseRepo.count({
+      where: { status: CourseStatus.PUBLISHED, is_active: true },
+    });
+    
+    // Calculate average rating from all reviews
+    const result = await this.reviewRepo
+      .createQueryBuilder('review')
+      .select('AVG(review.rating)', 'average')
+      .getRawOne();
+    
+    const averageRating = result?.average ? parseFloat(parseFloat(result.average).toFixed(1)) : 0;
     
     return {
       totalStudents,
-      totalTeachers
+      totalTeachers,
+      totalCourses,
+      averageRating
     };
   }
 
@@ -196,5 +212,17 @@ export class UserService {
     await this.userRepo.save(user);
 
     return { message: 'Course removed from favorites' };
+  }
+
+  async deleteUser(id: string) {
+    // 1. Delete Profile first to prevent Foreign Key restricts
+    await this.profileRepo.delete({ user_id: id });
+    
+    // 2. Delete User
+    const result = await this.userRepo.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException('User not found');
+    }
+    return { message: 'User deleted successfully' };
   }
 }

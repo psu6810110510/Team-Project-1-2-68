@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, Query, Delete, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Query, Delete, UseGuards, Request, UnauthorizedException } from '@nestjs/common';
 import { UserService } from './user.service';
 import type { CreateUserDto, UpdateUserDto } from './user.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -44,6 +44,9 @@ export class UserController {
         is_active: u.is_active,
         phone: u.phone,
         created_at: u.created_at,
+        image: u.image,
+        is_approved: u.teacher?.is_approved,
+        teacher_id: u.teacher?.id,
       })),
       total,
       limit: Number(limit),
@@ -83,21 +86,30 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Get('me/favorites')
   async getMyFavorites(@Request() req) {
-    const userId = req.user.sub;
+    const userId = req.user.userId || req.user.sub || req.user.id;
     return await this.userService.getUserFavorites(userId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post(':courseId/favorite')
   async addFavorite(@Request() req, @Param('courseId') courseId: string) {
-    const userId = req.user.sub;
+    const userId = req.user.userId || req.user.sub || req.user.id;
     return await this.userService.addFavoriteCourse(userId, courseId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':courseId/favorite')
   async removeFavorite(@Request() req, @Param('courseId') courseId: string) {
-    const userId = req.user.sub;
+    const userId = req.user.userId || req.user.sub || req.user.id;
     return await this.userService.removeFavoriteCourse(userId, courseId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id')
+  async deleteUser(@Request() req, @Param('id') id: string) {
+    if (req.user.role !== 'ADMIN') {
+      throw new UnauthorizedException('Only admins can delete users');
+    }
+    return await this.userService.deleteUser(id);
   }
 }

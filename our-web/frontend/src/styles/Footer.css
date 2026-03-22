@@ -1,12 +1,144 @@
+/* ==========================================
+   Footer — Compact & Symmetrical
+   ========================================== */
 .footer {
   background-color: #0A1C39;
-  height: 100px;
+  color: #c8d6e5;
+  width: 100%;
+}
+
+.footer-accent-line {
+  height: 3px;
+  background: linear-gradient(90deg, #1a6fb5, #2196f3, #1a6fb5);
+}
+
+.footer-inner {
+  width: 100%;
+  padding: 18px 40px 14px 40px;
+  box-sizing: border-box;
+}
+
+/* ---- Row 1: Brand + Slogan ---- */
+.footer-top-row {
   display: flex;
   align-items: center;
-  padding: 0 20px;
+  gap: 28px;
+  margin-bottom: 14px;
+  flex-wrap: nowrap;
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .footer-logo {
-  height: 50px;
+  height: 38px;
   width: auto;
+}
+
+.footer-brand-name {
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: #7dd3fc;
+  letter-spacing: 0.5px;
+  font-style: italic;
+  text-shadow: 0 0 12px rgba(125, 211, 252, 0.3);
+  white-space: nowrap;
+}
+
+.footer-slogan {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  margin: 0;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+/* ---- Row 2: Info split left / right ---- */
+.footer-bottom-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 40px;
+  flex-wrap: nowrap;
+}
+
+.footer-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.footer-right {
+  flex: 0 0 auto;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.footer-block {
+  margin-bottom: 0;
+}
+
+.footer-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #64748b;
+  margin: 0 0 3px 0;
+  letter-spacing: 0.3px;
+}
+
+.footer-text {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  margin: 0;
+  line-height: 1.65;
+}
+
+/* ==========================================
+   Responsive
+   ========================================== */
+@media (max-width: 768px) {
+  .footer-inner {
+    padding: 18px 24px 16px 24px;
+  }
+
+  .footer-top-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .footer-bottom-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .footer-right {
+    text-align: left;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-inner {
+    padding: 14px 16px 12px 16px;
+  }
+
+  .footer-brand-name {
+    font-size: 1.2rem;
+  }
+
+  .footer-slogan {
+    font-size: 0.78rem;
+  }
+
+  .footer-text,
+  .footer-label {
+    font-size: 0.76rem;
+  }
 }

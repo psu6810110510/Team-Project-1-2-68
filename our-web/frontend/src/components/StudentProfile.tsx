@@ -9,11 +9,11 @@ import Footer from './Footer';
 import { paymentAPI, type PaymentRecord } from '../api/paymentAPI';
 import { courseAPI, type Course as APICourse } from '../api/courseAPI';
 import { examAPI } from '../api/examAPI';
-import MyBookings from './MyBookings';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
+import signatureImage from '../assets/signature.png';
 
 // ✅ ดึงค่า URL จากไฟล์ .env
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://wd12.pupasoft.com/api';
 
 export default function StudentProfile() {
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ export default function StudentProfile() {
     lastName: '',
     email: '',
     phone: '',
-    image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200',
+    image: '',
     description: ''
   });
 
@@ -52,8 +52,21 @@ export default function StudentProfile() {
   const [loadingFavorites, setLoadingFavorites] = useState(true);
 
   // --- exam state ---
-  const [courseExams, setCourseExams] = useState<Array<{ courseTitle: string; exams: Array<{ id: string; title: string; type: string; total_score: number }> }>>([]);
-  const [loadingExams, setLoadingExams] = useState(false);
+  const [courseExams, setCourseExams] = useState<Array<{
+    courseTitle: string;
+    courseId: string;
+    lessonExams: Array<{
+      lessonId: string;
+      lessonName: string;
+      examId: string;
+      totalScore: number;
+      questions: Array<{
+        id: string; lesson_id?: string; question_text: string; score_points: number; sequence_order?: number;
+        choices: Array<{ id: string; choice_label: string; choice_text: string }>;
+      }>;
+    }>;
+  }>>([]);
+
   const [activeExam, setActiveExam] = useState<null | {
     id: string; title: string; type: string; total_score: number; course_id?: string;
     questions: Array<{
@@ -94,7 +107,7 @@ export default function StudentProfile() {
           email: userObj.email || '',
           phone: userObj.phone || prev.phone,
           description: userObj.description || prev.description,
-          image: userObj.image || prev.image
+          image: userObj.image || ''
         }));
 
         // ดึงประวัติการชำระเงิน
@@ -285,16 +298,55 @@ export default function StudentProfile() {
             certificatesCount: completedCoursesCount
           });
 
-          // โหลดข้อสอบของคอร์สที่ซื้อแล้ว
+          // โหลดข้อสอบแยกตามบทเรียน
           try {
             const examGroups: typeof courseExams = [];
             for (const id of courseIds) {
               try {
+                // โหลด lessons เพื่อดึงชื่อบท
+                const lessonsRes = await courseAPI.getLessonsByCourse(id);
+                const allLessons = lessonsRes.data.data || [];
+                // จัดกลุ่ม lesson ตาม parent topic (เหมือนฝั่งอาจารย์)
+                const topLessonMap: { [key: string]: { id: string; name: string } } = {};
+                allLessons.forEach((lesson: any) => {
+                  const parts = lesson.topic_name.split(' - ');
+                  const parentName = parts[0];
+                  if (!topLessonMap[parentName]) {
+                    topLessonMap[parentName] = { id: lesson.id, name: parentName };
+                  }
+                });
+
+                // โหลด exam ระดับคอร์ส (ไม่มี lesson_id)
                 const examRes = await examAPI.getExamsByCourse(id);
-                const exams = examRes.data.data;
-                if (exams && exams.length > 0) {
+                const allExams = examRes.data.data || examRes.data || [];
+                const courseExam = allExams.find((e: any) => !e.lesson_id) || allExams[0];
+                if (!courseExam) continue;
+
+                // โหลด questions ของ exam นั้น (ฝั่ง student ไม่เห็น is_correct)
+                const studentExamRes = await examAPI.getExamForStudent(courseExam.id);
+                const allQuestions = studentExamRes.data.questions || [];
+
+                // จัดกลุ่ม questions ตาม lesson_id
+                const questionsByLessonId: { [key: string]: any[] } = {};
+                allQuestions.forEach((q: any) => {
+                  if (q.lesson_id) {
+                    if (!questionsByLessonId[q.lesson_id]) questionsByLessonId[q.lesson_id] = [];
+                    questionsByLessonId[q.lesson_id].push(q);
+                  }
+                });
+
+                // สร้าง lesson exams จาก top-level lessons ที่มีข้อสอบ
+                const lessonExams = Object.values(topLessonMap)
+                  .filter(lesson => (questionsByLessonId[lesson.id]?.length ?? 0) > 0)
+                  .map(lesson => {
+                    const qs = questionsByLessonId[lesson.id];
+                    const totalScore = qs.reduce((sum: number, q: any) => sum + (q.score_points || 1), 0);
+                    return { lessonId: lesson.id, lessonName: lesson.name, examId: courseExam.id, totalScore, questions: qs };
+                  });
+
+                if (lessonExams.length > 0) {
                   const c = courseMap[id];
-                  examGroups.push({ courseTitle: c?.title || id, exams });
+                  examGroups.push({ courseTitle: c?.title || id, courseId: id, lessonExams });
                 }
               } catch { /* course may have no exams */ }
             }
@@ -516,7 +568,17 @@ export default function StudentProfile() {
         <div className="profile-container">
           <aside className="profile-sidebar">
             <div style={{ position: 'relative', display: 'inline-block', marginBottom: '1rem' }}>
-              <img src={userData.image} alt="Profile" className="sidebar-avatar" style={{ objectFit: 'cover', cursor: 'pointer' }} onClick={() => setExpandedImage(userData.image)} />
+              {userData.image ? (
+                <img src={userData.image} alt="Profile" className="sidebar-avatar" style={{ objectFit: 'cover', cursor: 'pointer' }} onClick={() => setExpandedImage(userData.image)} />
+              ) : (
+                <div className="sidebar-avatar" style={{ 
+                  background: '#f1f5f9', display: 'flex', alignItems: 'center', 
+                  justifyContent: 'center', color: '#64748b', cursor: 'pointer',
+                  width: '100px', height: '100px', borderRadius: '50%', border: '4px solid #e2e8f0'
+                }}>
+                  <User size={48} />
+                </div>
+              )}
               <div
                 onClick={handleCameraClick}
                 style={{
@@ -541,7 +603,6 @@ export default function StudentProfile() {
               <li className={`menu-item ${activeMenu === 'courses' ? 'active' : ''}`} onClick={() => setActiveMenu('courses')}><BookOpen size={20} /> คอร์สเรียนของฉัน</li>
               <li className={`menu-item ${activeMenu === 'completed' ? 'active' : ''}`} onClick={() => setActiveMenu('completed')}><CheckSquare size={20} /> เรียนจบแล้ว</li>
               <li className={`menu-item ${activeMenu === 'favorites' ? 'active' : ''}`} onClick={() => setActiveMenu('favorites')}><Heart size={20} /> สิ่งที่ถูกใจ</li>
-              <li className={`menu-item ${activeMenu === 'bookings' ? 'active' : ''}`} onClick={() => setActiveMenu('bookings')}><Calendar size={20} /> การจองของฉัน</li>
               <li className={`menu-item ${activeMenu === 'exams' ? 'active' : ''}`} onClick={() => setActiveMenu('exams')}><MonitorPlay size={20} /> ระบบสอบออนไลน์</li>
               <li className={`menu-item ${activeMenu === 'purchases' ? 'active' : ''}`} onClick={() => setActiveMenu('purchases')}><CheckSquare size={20} /> ประวัติการซื้อ</li>
               <li className={`menu-item ${activeMenu === 'certificates' ? 'active' : ''}`} onClick={() => setActiveMenu('certificates')}><Award size={20} /> ใบประกาศ</li>
@@ -588,7 +649,6 @@ export default function StudentProfile() {
               <>
                 <div className="section-header"><span className="section-title-text">บริการสำหรับผู้เรียน</span></div>
                 <div className="services-grid">
-                  <div className="service-card"><div className="service-icon-box"><FileText size={32} /></div><div className="service-text">คลังโจทย์</div></div>
                   <div className="service-card" style={{ cursor: 'pointer' }} onClick={() => setActiveMenu('exams')}><div className="service-icon-box"><MonitorPlay size={32} /></div><div className="service-text">ระบบสอบออนไลน์</div></div>
                 </div>
 
@@ -716,11 +776,6 @@ export default function StudentProfile() {
                   </div>
                 )}
               </>
-            )}
-
-            {/* 2.3 หน้า My Bookings */}
-            {activeMenu === 'bookings' && (
-              <MyBookings />
             )}
 
             {/* 2.5. หน้าเรียนจบแล้ว */}
@@ -938,33 +993,31 @@ export default function StudentProfile() {
                         <div key={gi}>
                           <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#0f172a', marginBottom: '0.8rem', paddingBottom: '0.5rem', borderBottom: '2px solid #e2e8f0' }}>📚 {group.courseTitle}</h3>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                            {group.exams.map((exam) => (
-                              <div key={exam.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1rem 1.2rem', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', flexWrap: 'wrap', gap: '12px' }}>
+                            {group.lessonExams.map((lessonExam, li) => (
+                              <div key={li} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1rem 1.2rem', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', flexWrap: 'wrap', gap: '12px' }}>
                                 <div>
-                                  <p style={{ fontWeight: '600', color: '#0f172a', marginBottom: '4px' }}>{exam.title}</p>
+                                  <p style={{ fontWeight: '600', color: '#0f172a', marginBottom: '4px' }}>ข้อสอบ{lessonExam.lessonName}</p>
                                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                    <span style={{ background: '#dbeafe', color: '#1d4ed8', padding: '2px 10px', borderRadius: '20px', fontSize: '0.78rem', fontWeight: '600' }}>{exam.type}</span>
-                                    <span style={{ background: '#f1f5f9', color: '#475569', padding: '2px 10px', borderRadius: '20px', fontSize: '0.78rem' }}>คะแนนเต็ม {exam.total_score}</span>
+                                    <span style={{ background: '#dbeafe', color: '#1d4ed8', padding: '2px 10px', borderRadius: '20px', fontSize: '0.78rem', fontWeight: '600' }}>{lessonExam.questions.length} ข้อ</span>
+                                    <span style={{ background: '#f1f5f9', color: '#475569', padding: '2px 10px', borderRadius: '20px', fontSize: '0.78rem' }}>คะแนนเต็ม {lessonExam.totalScore}</span>
                                   </div>
                                 </div>
                                 <button
-                                  onClick={async () => {
-                                    setLoadingExams(true);
-                                    try {
-                                      const res = await examAPI.getExamForStudent(exam.id);
-                                      setActiveExam(res.data);
-                                      setExamAnswers({});
-                                      setExamResult(null);
-                                      setExamStartTime(new Date());
-                                    } catch (err) {
-                                      console.error(err);
-                                      alert('ไม่สามารถโหลดข้อสอบได้');
-                                    } finally {
-                                      setLoadingExams(false);
-                                    }
+                                  onClick={() => {
+                                    setActiveExam({
+                                      id: lessonExam.examId,
+                                      title: `ข้อสอบ${lessonExam.lessonName}`,
+                                      type: 'QUIZ',
+                                      total_score: lessonExam.totalScore,
+                                      course_id: group.courseId,
+                                      questions: lessonExam.questions,
+                                    });
+                                    setExamAnswers({});
+                                    setExamResult(null);
+                                    setExamStartTime(new Date());
                                   }}
                                   style={{ padding: '8px 20px', background: '#0A1C39', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '500', fontSize: '0.9rem', whiteSpace: 'nowrap' }}
-                                >{loadingExams ? '...' : '🖊️ เข้าทำข้อสอบ'}</button>
+                                >🖊️ เข้าทำข้อสอบ</button>
                               </div>
                             ))}
                           </div>
@@ -1106,59 +1159,125 @@ export default function StudentProfile() {
             {activeMenu === 'certificates' && (
               <>
                 <div className="content-header"><span className="content-title">ใบประกาศนียบัตรของฉัน</span></div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginTop: '1rem' }}>
-                  {/* Certificate 1 */}
-                  <div id="cert-1" style={{
-                    border: '8px double #c9a84c', borderRadius: '12px', background: 'linear-gradient(135deg, #fffbeb 0%, #fff8dc 100%)',
-                    padding: '2.5rem', position: 'relative', boxShadow: '0 4px 20px rgba(201,168,76,0.2)', textAlign: 'center', fontFamily: 'Kanit, sans-serif'
-                  }}>
-                    <div style={{ position: 'absolute', top: '10px', left: '20px', fontSize: '2rem', opacity: 0.15 }}>🏅</div>
-                    <div style={{ position: 'absolute', top: '10px', right: '20px', fontSize: '2rem', opacity: 0.15 }}>🏅</div>
-                    <p style={{ color: '#a16207', fontSize: '0.85rem', letterSpacing: '4px', fontWeight: '600', marginBottom: '0.5rem' }}>BORN2CODE INSTITUTE</p>
-                    <h2 style={{ fontSize: '1.6rem', color: '#78350f', fontWeight: 'bold', marginBottom: '0.3rem' }}>ใบประกาศนียบัตร</h2>
-                    <p style={{ color: '#92400e', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Certificate of Completion</p>
-                    <div style={{ width: '60px', height: '3px', background: '#c9a84c', margin: '0 auto 1.5rem' }}></div>
-                    <p style={{ color: '#78350f', fontSize: '0.95rem', marginBottom: '0.4rem' }}>ขอมอบให้แก่</p>
-                    <h3 style={{ fontSize: '1.8rem', color: '#1e3a5f', fontWeight: 'bold', fontStyle: 'italic', marginBottom: '1.5rem' }}>{userData.firstName}</h3>
-                    <p style={{ color: '#78350f', fontSize: '0.95rem', marginBottom: '0.4rem' }}>เพื่อยืนยันว่าได้สำเร็จการเรียนหลักสูตร</p>
-                    <h4 style={{ fontSize: '1.3rem', color: '#0f172a', fontWeight: 'bold', margin: '0.5rem 0 1.5rem', padding: '0.6rem 1.5rem', background: '#fef08a', borderRadius: '8px', display: 'inline-block' }}>
-                      Data Science with Python
-                    </h4>
-                    <p style={{ color: '#64748b', fontSize: '0.85rem', marginTop: '0.5rem' }}>ผ่านเมื่อวันที่ 31 มกราคม พ.ศ. 2568</p>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem', alignItems: 'flex-end' }}>
-                      <div style={{ textAlign: 'center' }}><div style={{ width: '120px', height: '1px', background: '#c9a84c', marginBottom: '5px' }}></div><p style={{ fontSize: '0.75rem', color: '#92400e' }}>ผู้อำนวยการสถาบัน</p></div>
-                      <div style={{ width: '60px', height: '60px', border: '2px solid #c9a84c', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff' }}><Award size={28} color="#c9a84c" /></div>
-                      <div style={{ textAlign: 'center' }}><div style={{ width: '120px', height: '1px', background: '#c9a84c', marginBottom: '5px' }}></div><p style={{ fontSize: '0.75rem', color: '#92400e' }}>หัวหน้าหลักสูตร</p></div>
+                
+                {realMyCourses.filter(c => c.progress === 100).length === 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginTop: '1rem' }}>
+                    {/* Certificate 1 (Demo) */}
+                    <div id="cert-1" style={{
+                      border: '8px double #c9a84c', borderRadius: '12px', background: 'linear-gradient(135deg, #fffbeb 0%, #fff8dc 100%)',
+                      padding: '2.5rem', position: 'relative', boxShadow: '0 4px 20px rgba(201,168,76,0.2)', textAlign: 'center', fontFamily: 'Kanit, sans-serif'
+                    }}>
+                      <div style={{ position: 'absolute', top: '10px', left: '20px', fontSize: '2rem', opacity: 0.15 }}>🏅</div>
+                      <div style={{ position: 'absolute', top: '10px', right: '20px', fontSize: '2rem', opacity: 0.15 }}>🏅</div>
+                      <p style={{ color: '#a16207', fontSize: '0.85rem', letterSpacing: '4px', fontWeight: '600', marginBottom: '0.5rem' }}>BORN2CODE INSTITUTE</p>
+                      <h2 style={{ fontSize: '1.6rem', color: '#78350f', fontWeight: 'bold', marginBottom: '0.3rem' }}>ใบประกาศนียบัตร</h2>
+                      <p style={{ color: '#92400e', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Certificate of Completion</p>
+                      <div style={{ width: '60px', height: '3px', background: '#c9a84c', margin: '0 auto 1.5rem' }}></div>
+                      <p style={{ color: '#78350f', fontSize: '0.95rem', marginBottom: '0.4rem' }}>ขอมอบให้แก่</p>
+                      <h3 style={{ fontSize: '1.8rem', color: '#1e3a5f', fontWeight: 'bold', fontStyle: 'italic', marginBottom: '1.5rem' }}>{userData.firstName} {userData.lastName}</h3>
+                      <p style={{ color: '#78350f', fontSize: '0.95rem', marginBottom: '0.4rem' }}>เพื่อยืนยันว่าได้สำเร็จการเรียนหลักสูตร</p>
+                      <h4 style={{ fontSize: '1.3rem', color: '#0f172a', fontWeight: 'bold', margin: '0.5rem 0 1.5rem', padding: '0.6rem 1.5rem', background: '#fef08a', borderRadius: '8px', display: 'inline-block' }}>
+                        Data Science with Python
+                      </h4>
+                      <p style={{ color: '#64748b', fontSize: '0.85rem', marginTop: '0.5rem' }}>ผ่านเมื่อวันที่ 31 มกราคม พ.ศ. 2568</p>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem', alignItems: 'flex-end' }}>
+                        <div style={{ textAlign: 'center', width: '200px' }}>
+                          <img src={signatureImage} alt="Director Signature" style={{ height: '50px', objectFit: 'contain', marginBottom: '5px' }} />
+                          <div style={{ width: '120px', height: '1px', background: '#c9a84c', margin: '0 auto 5px' }}></div>
+                          <p style={{ fontSize: '0.75rem', color: '#92400e' }}>ผู้อำนวยการสถาบัน</p>
+                        </div>
+                        <div style={{ width: '60px', height: '60px', border: '2px solid #c9a84c', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff' }}><Award size={28} color="#c9a84c" /></div>
+                        <div style={{ textAlign: 'center', width: '200px' }}>
+                          <p style={{ fontSize: '1.3rem', fontFamily: 'Kanit, sans-serif', color: '#1e3a5f', marginBottom: '5px', fontStyle: 'italic', fontWeight: 'bold' }}>Aj. Data Science</p>
+                          <div style={{ width: '120px', height: '1px', background: '#c9a84c', margin: '0 auto 5px' }}></div>
+                          <p style={{ fontSize: '0.75rem', color: '#92400e' }}>อาจารย์ผู้สอน</p>
+                        </div>
+                      </div>
+                      <button onClick={() => printCertificate('cert-1')} style={{ marginTop: '1.5rem', padding: '8px 20px', background: '#1e3a5f', color: 'white', border: 'none', borderRadius: '20px', cursor: 'pointer', fontSize: '0.9rem' }}>🖨️ พิมพ์ / ดาวน์โหลด</button>
                     </div>
-                    <button onClick={() => printCertificate('cert-1')} style={{ marginTop: '1.5rem', padding: '8px 20px', background: '#1e3a5f', color: 'white', border: 'none', borderRadius: '20px', cursor: 'pointer', fontSize: '0.9rem' }}>🖨️ พิมพ์ / ดาวน์โหลด</button>
-                  </div>
 
-                  {/* Certificate 2 */}
-                  <div id="cert-2" style={{
-                    border: '8px double #6366f1', borderRadius: '12px', background: 'linear-gradient(135deg, #eef2ff 0%, #ede9fe 100%)',
-                    padding: '2.5rem', position: 'relative', boxShadow: '0 4px 20px rgba(99,102,241,0.2)', textAlign: 'center', fontFamily: 'Kanit, sans-serif'
-                  }}>
-                    <div style={{ position: 'absolute', top: '10px', left: '20px', fontSize: '2rem', opacity: 0.15 }}>🎓</div>
-                    <div style={{ position: 'absolute', top: '10px', right: '20px', fontSize: '2rem', opacity: 0.15 }}>🎓</div>
-                    <p style={{ color: '#4338ca', fontSize: '0.85rem', letterSpacing: '4px', fontWeight: '600', marginBottom: '0.5rem' }}>BORN2CODE INSTITUTE</p>
-                    <h2 style={{ fontSize: '1.6rem', color: '#3730a3', fontWeight: 'bold', marginBottom: '0.3rem' }}>ใบประกาศนียบัตร</h2>
-                    <p style={{ color: '#4338ca', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Certificate of Completion</p>
-                    <div style={{ width: '60px', height: '3px', background: '#6366f1', margin: '0 auto 1.5rem' }}></div>
-                    <p style={{ color: '#3730a3', fontSize: '0.95rem', marginBottom: '0.4rem' }}>ขอมอบให้แก่</p>
-                    <h3 style={{ fontSize: '1.8rem', color: '#1e3a5f', fontWeight: 'bold', fontStyle: 'italic', marginBottom: '1.5rem' }}>{userData.firstName}</h3>
-                    <p style={{ color: '#3730a3', fontSize: '0.95rem', marginBottom: '0.4rem' }}>เพื่อยืนยันว่าได้สำเร็จการเรียนหลักสูตร</p>
-                    <h4 style={{ fontSize: '1.3rem', color: '#0f172a', fontWeight: 'bold', margin: '0.5rem 0 1.5rem', padding: '0.6rem 1.5rem', background: '#c7d2fe', borderRadius: '8px', display: 'inline-block' }}>
-                      Data Visualization
-                    </h4>
-                    <p style={{ color: '#64748b', fontSize: '0.85rem', marginTop: '0.5rem' }}>ผ่านเมื่อวันที่ 31 มกราคม พ.ศ. 2568</p>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem', alignItems: 'flex-end' }}>
-                      <div style={{ textAlign: 'center' }}><div style={{ width: '120px', height: '1px', background: '#6366f1', marginBottom: '5px' }}></div><p style={{ fontSize: '0.75rem', color: '#4338ca' }}>ผู้อำนวยการสถาบัน</p></div>
-                      <div style={{ width: '60px', height: '60px', border: '2px solid #6366f1', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff' }}><Award size={28} color="#6366f1" /></div>
-                      <div style={{ textAlign: 'center' }}><div style={{ width: '120px', height: '1px', background: '#6366f1', marginBottom: '5px' }}></div><p style={{ fontSize: '0.75rem', color: '#4338ca' }}>หัวหน้าหลักสูตร</p></div>
+                    {/* Certificate 2 (Demo) */}
+                    <div id="cert-2" style={{
+                      border: '8px double #6366f1', borderRadius: '12px', background: 'linear-gradient(135deg, #eef2ff 0%, #ede9fe 100%)',
+                      padding: '2.5rem', position: 'relative', boxShadow: '0 4px 20px rgba(99,102,241,0.2)', textAlign: 'center', fontFamily: 'Kanit, sans-serif'
+                    }}>
+                      <div style={{ position: 'absolute', top: '10px', left: '20px', fontSize: '2rem', opacity: 0.15 }}>🎓</div>
+                      <div style={{ position: 'absolute', top: '10px', right: '20px', fontSize: '2rem', opacity: 0.15 }}>🎓</div>
+                      <p style={{ color: '#4338ca', fontSize: '0.85rem', letterSpacing: '4px', fontWeight: '600', marginBottom: '0.5rem' }}>BORN2CODE INSTITUTE</p>
+                      <h2 style={{ fontSize: '1.6rem', color: '#3730a3', fontWeight: 'bold', marginBottom: '0.3rem' }}>ใบประกาศนียบัตร</h2>
+                      <p style={{ color: '#4338ca', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Certificate of Completion</p>
+                      <div style={{ width: '60px', height: '3px', background: '#6366f1', margin: '0 auto 1.5rem' }}></div>
+                      <p style={{ color: '#3730a3', fontSize: '0.95rem', marginBottom: '0.4rem' }}>ขอมอบให้แก่</p>
+                      <h3 style={{ fontSize: '1.8rem', color: '#1e3a5f', fontWeight: 'bold', fontStyle: 'italic', marginBottom: '1.5rem' }}>{userData.firstName} {userData.lastName}</h3>
+                      <p style={{ color: '#3730a3', fontSize: '0.95rem', marginBottom: '0.4rem' }}>เพื่อยืนยันว่าได้สำเร็จการเรียนหลักสูตร</p>
+                      <h4 style={{ fontSize: '1.3rem', color: '#0f172a', fontWeight: 'bold', margin: '0.5rem 0 1.5rem', padding: '0.6rem 1.5rem', background: '#c7d2fe', borderRadius: '8px', display: 'inline-block' }}>
+                        Data Visualization
+                      </h4>
+                      <p style={{ color: '#64748b', fontSize: '0.85rem', marginTop: '0.5rem' }}>ผ่านเมื่อวันที่ 31 มกราคม พ.ศ. 2568</p>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem', alignItems: 'flex-end' }}>
+                        <div style={{ textAlign: 'center', width: '200px' }}>
+                          <img src={signatureImage} alt="Director Signature" style={{ height: '50px', objectFit: 'contain', marginBottom: '5px' }} />
+                          <div style={{ width: '120px', height: '1px', background: '#6366f1', margin: '0 auto 5px' }}></div>
+                          <p style={{ fontSize: '0.75rem', color: '#4338ca' }}>ผู้อำนวยการสถาบัน</p>
+                        </div>
+                        <div style={{ width: '60px', height: '60px', border: '2px solid #6366f1', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff' }}><Award size={28} color="#6366f1" /></div>
+                        <div style={{ textAlign: 'center', width: '200px' }}>
+                          <p style={{ fontSize: '1.3rem', fontFamily: 'Kanit, sans-serif', color: '#1e3a5f', marginBottom: '5px', fontStyle: 'italic', fontWeight: 'bold' }}>Aj. Data Viz</p>
+                          <div style={{ width: '120px', height: '1px', background: '#6366f1', margin: '0 auto 5px' }}></div>
+                          <p style={{ fontSize: '0.75rem', color: '#4338ca' }}>อาจารย์ผู้สอน</p>
+                        </div>
+                      </div>
+                      <button onClick={() => printCertificate('cert-2')} style={{ marginTop: '1.5rem', padding: '8px 20px', background: '#4338ca', color: 'white', border: 'none', borderRadius: '20px', cursor: 'pointer', fontSize: '0.9rem' }}>🖨️ พิมพ์ / ดาวน์โหลด</button>
                     </div>
-                    <button onClick={() => printCertificate('cert-2')} style={{ marginTop: '1.5rem', padding: '8px 20px', background: '#4338ca', color: 'white', border: 'none', borderRadius: '20px', cursor: 'pointer', fontSize: '0.9rem' }}>🖨️ พิมพ์ / ดาวน์โหลด</button>
                   </div>
-                </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginTop: '1rem' }}>
+                    {realMyCourses.filter(c => c.progress === 100).map((course, idx) => {
+                      const isEven = idx % 2 === 0;
+                      const colorPrimary = isEven ? '#c9a84c' : '#6366f1';
+                      const colorSecondary = isEven ? '#a16207' : '#4338ca';
+                      const colorText = isEven ? '#78350f' : '#3730a3';
+                      const bgGradient = isEven ? 'linear-gradient(135deg, #fffbeb 0%, #fff8dc 100%)' : 'linear-gradient(135deg, #eef2ff 0%, #ede9fe 100%)';
+                      const tagBg = isEven ? '#fef08a' : '#c7d2fe';
+                      const iconCorner = isEven ? '🏅' : '🎓';
+
+                      return (
+                        <div id={`cert-${course.id}`} key={course.id} style={{
+                          border: `8px double ${colorPrimary}`, borderRadius: '12px', background: bgGradient,
+                          padding: '2.5rem', position: 'relative', boxShadow: `0 4px 20px rgba(${isEven ? '201,168,76' : '99,102,241'},0.2)`, textAlign: 'center', fontFamily: 'Kanit, sans-serif'
+                        }}>
+                          <div style={{ position: 'absolute', top: '10px', left: '20px', fontSize: '2rem', opacity: 0.15 }}>{iconCorner}</div>
+                          <div style={{ position: 'absolute', top: '10px', right: '20px', fontSize: '2rem', opacity: 0.15 }}>{iconCorner}</div>
+                          <p style={{ color: colorSecondary, fontSize: '0.85rem', letterSpacing: '4px', fontWeight: '600', marginBottom: '0.5rem' }}>BORN2CODE INSTITUTE</p>
+                          <h2 style={{ fontSize: '1.6rem', color: colorText, fontWeight: 'bold', marginBottom: '0.3rem' }}>ใบประกาศนียบัตร</h2>
+                          <p style={{ color: colorSecondary, fontSize: '0.9rem', marginBottom: '1.5rem' }}>Certificate of Completion</p>
+                          <div style={{ width: '60px', height: '3px', background: colorPrimary, margin: '0 auto 1.5rem' }}></div>
+                          <p style={{ color: colorText, fontSize: '0.95rem', marginBottom: '0.4rem' }}>ขอมอบให้แก่</p>
+                          <h3 style={{ fontSize: '1.8rem', color: '#1e3a5f', fontWeight: 'bold', fontStyle: 'italic', marginBottom: '1.5rem' }}>{userData.firstName} {userData.lastName}</h3>
+                          <p style={{ color: colorText, fontSize: '0.95rem', marginBottom: '0.4rem' }}>เพื่อยืนยันว่าได้สำเร็จการเรียนหลักสูตร</p>
+                          <h4 style={{ fontSize: '1.3rem', color: '#0f172a', fontWeight: 'bold', margin: '0.5rem 0 1.5rem', padding: '0.6rem 1.5rem', background: tagBg, borderRadius: '8px', display: 'inline-block' }}>
+                            {course.title}
+                          </h4>
+                          <p style={{ color: '#64748b', fontSize: '0.85rem', marginTop: '0.5rem' }}>ผ่านเมื่อวันที่ {new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem', alignItems: 'flex-end' }}>
+                            <div style={{ textAlign: 'center', width: '200px' }}>
+                              <img src={signatureImage} alt="Director Signature" style={{ height: '50px', objectFit: 'contain', marginBottom: '5px' }} />
+                              <div style={{ width: '120px', height: '1px', background: colorPrimary, margin: '0 auto 5px' }}></div>
+                              <p style={{ fontSize: '0.75rem', color: colorSecondary }}>ผู้อำนวยการสถาบัน</p>
+                            </div>
+                            <div style={{ width: '60px', height: '60px', border: `2px solid ${colorPrimary}`, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff' }}><Award size={28} color={colorPrimary} /></div>
+                            <div style={{ textAlign: 'center', width: '200px' }}>
+                              <p style={{ fontSize: '1.3rem', fontFamily: 'Kanit, sans-serif', color: '#1e3a5f', marginBottom: '5px', fontStyle: 'italic', fontWeight: 'bold' }}>{course.instructor}</p>
+                              <div style={{ width: '120px', height: '1px', background: colorPrimary, margin: '0 auto 5px' }}></div>
+                              <p style={{ fontSize: '0.75rem', color: colorSecondary }}>อาจารย์ผู้สอน</p>
+                            </div>
+                          </div>
+                          <button onClick={() => printCertificate(`cert-${course.id}`)} style={{ marginTop: '1.5rem', padding: '8px 20px', background: colorPrimary, color: 'white', border: 'none', borderRadius: '20px', cursor: 'pointer', fontSize: '0.9rem' }}>🖨️ พิมพ์ / ดาวน์โหลด</button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </>
             )}
           </main>

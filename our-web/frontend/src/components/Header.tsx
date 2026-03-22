@@ -19,6 +19,20 @@ export default function Header({ user }: HeaderProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const [cartCount, setCartCount] = useState(0);
+  const [localUser, setLocalUser] = useState<any>(null);
+
+  useEffect(() => {
+    if (user) {
+      setLocalUser(user);
+    } else {
+      const stored = localStorage.getItem('user');
+      if (stored) {
+        try {
+          setLocalUser(JSON.parse(stored));
+        } catch (e) {}
+      }
+    }
+  }, [user]);
 
   // ฟังก์ชันโหลดจำนวนสินค้าในตะกร้า
   const updateCartCount = () => {
@@ -129,8 +143,9 @@ export default function Header({ user }: HeaderProps) {
                   className="menu-item"
                   onClick={() => {
                     let path = '/profile';
-                    if (user?.role === 'ADMIN' || user?.role === 'admin') path = '/admin-dashboard';
-                    else if (user?.role === 'TEACHER' || user?.role === 'teacher') path = '/teacher-dashboard';
+                    const activeUser = localUser;
+                    if (activeUser?.role === 'ADMIN' || activeUser?.role === 'admin') path = '/admin-dashboard';
+                    else if (activeUser?.role === 'TEACHER' || activeUser?.role === 'teacher') path = '/teacher-dashboard';
                     else {
                       try {
                         const stored = localStorage.getItem('user');
@@ -168,7 +183,7 @@ export default function Header({ user }: HeaderProps) {
 
           <div className="profile-section" onClick={() => {
               // ถ้ายังไม่ login ให้ไปหน้า login
-              if (!user) {
+              if (!localUser) {
                 const stored = localStorage.getItem('user');
                 if (!stored) {
                   navigate('/login');
@@ -186,14 +201,14 @@ export default function Header({ user }: HeaderProps) {
                 return;
               }
               // ถ้า login แล้ว ไปตาม role
-              const role = user.role?.toUpperCase();
+              const role = localUser.role?.toUpperCase();
               if (role === 'ADMIN') navigate('/admin-dashboard');
               else if (role === 'TEACHER') navigate('/teacher-dashboard');
               else navigate('/profile');
             }} style={{ cursor: 'pointer' }}>
-            {user?.image || user?.profileImage ? (
+            {localUser?.image || localUser?.profileImage ? (
               <img 
-                src={user.image || user.profileImage} 
+                src={localUser.image || localUser.profileImage} 
                 alt="Profile" 
                 className="profile-image"
               />

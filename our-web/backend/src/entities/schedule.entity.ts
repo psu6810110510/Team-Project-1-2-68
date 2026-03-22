@@ -9,8 +9,6 @@ import {
   OneToMany,
 } from 'typeorm';
 import { Course } from './course.entity';
-import { Booking } from './booking.entity';
-import { SeatQuota } from './seat-quota.entity';
 
 @Entity('schedules')
 export class Schedule {
@@ -44,10 +42,4 @@ export class Schedule {
   })
   @JoinColumn({ name: 'course_id' })
   course: Course;
-
-  @OneToMany(() => Booking, (booking) => booking.schedule)
-  bookings: Booking[];
-
-  @OneToMany(() => SeatQuota, (seatQuota) => seatQuota.schedule)
-  seat_quotas: SeatQuota[];
 }

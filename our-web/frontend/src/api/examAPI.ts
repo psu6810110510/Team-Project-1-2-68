@@ -4,6 +4,7 @@ import apiClient from './authAPI';
 export interface Exam {
   id: string;
   course_id: string;
+  lesson_id?: string;
   title: string;
   description?: string;
   type: 'PRETEST' | 'POSTTEST' | 'MIDTERM' | 'FINAL' | 'QUIZ';
@@ -18,7 +19,7 @@ export interface Question {
   exam_id: string;
   lesson_id?: string;
   question_text: string;
-  type: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'ESSAY';
+  type: 'MULTIPLE_CHOICE' | 'TRUE_FALSE';
   score_points: number;
   sequence_order?: number;
 }
@@ -33,6 +34,7 @@ export interface Choice {
 
 export interface CreateExamData {
   course_id: string;
+  lesson_id?: string;
   title: string;
   description?: string;
   type: 'PRETEST' | 'POSTTEST' | 'MIDTERM' | 'FINAL' | 'QUIZ';
@@ -52,7 +54,7 @@ export interface UpdateExamData {
 
 export interface CreateQuestionData {
   question_text: string;
-  type: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'ESSAY';
+  type: 'MULTIPLE_CHOICE' | 'TRUE_FALSE';
   score_points?: number;
   sequence_order?: number;
   lesson_id?: string;
@@ -60,7 +62,7 @@ export interface CreateQuestionData {
 
 export interface UpdateQuestionData {
   question_text?: string;
-  type?: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'ESSAY';
+  type?: 'MULTIPLE_CHOICE' | 'TRUE_FALSE';
   score_points?: number;
   sequence_order?: number;
   lesson_id?: string;
@@ -100,16 +102,16 @@ export const examAPI = {
     apiClient.get(`/exams/${id}`),
 
   /**
-   * ดูข้อสอบทั้งหมดในระบบ (สำหรับ Admin)
-   */
-  getAllExams: () =>
-    apiClient.get('/exams'),
-
-  /**
    * ดูข้อสอบทั้งหมดในคอร์ส
    */
   getExamsByCourse: (courseId: string) =>
     apiClient.get(`/exams/course/${courseId}`),
+
+  /**
+   * ดูข้อสอบของบทเรียน
+   */
+  getExamsByLesson: (lessonId: string) =>
+    apiClient.get(`/exams/lesson/${lessonId}`),
 
   /**
    * แก้ไขข้อสอบ
