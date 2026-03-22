@@ -62,16 +62,6 @@ async function bootstrap() {
       await examService.createChoice({ question_id: q2.id, choice_label: 'T', choice_text: 'จริง (True)', is_correct: true });
       await examService.createChoice({ question_id: q2.id, choice_label: 'F', choice_text: 'เท็จ (False)', is_correct: false });
       
-      // 4. Create Question 3 (Short Answer)
-      const q3 = await examService.createQuestion({
-          exam_id: exam.id,
-          question_text: 'เลขฐานสองของค่า 10 คืออะไร?',
-          type: QuestionType.SHORT_ANSWER,
-          score_points: 10,
-          sequence_order: 3
-      });
-      console.log('Created Q3:', q3.id);
-      
       console.log('Mock exam generated successfully!');
   } catch (err) {
       console.error('Error generating mock exam:', err);
