@@ -597,7 +597,6 @@ export default function StudentProfile() {
               <>
                 <div className="section-header"><span className="section-title-text">บริการสำหรับผู้เรียน</span></div>
                 <div className="services-grid">
-                  <div className="service-card"><div className="service-icon-box"><FileText size={32} /></div><div className="service-text">คลังโจทย์</div></div>
                   <div className="service-card" style={{ cursor: 'pointer' }} onClick={() => setActiveMenu('exams')}><div className="service-icon-box"><MonitorPlay size={32} /></div><div className="service-text">ระบบสอบออนไลน์</div></div>
                 </div>
 
